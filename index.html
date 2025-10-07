@@ -1,153 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>TeraBox Player</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <style>
-    body {
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 0;
-    }
-    #teraboxVideoPlayer {
-      width: 90%;
-      max-width: 800px;
-      border: 2px solid #333;
-      border-radius: 10px;
-      background: #000;
-      margin-top: 20px;
-    }
-    input, button {
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      margin: 8px;
-      font-size: 16px;
-    }
-    button {
-      background: #0ff;
-      color: #000;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #0aa;
-    }
-    #teraboxLoadingContainer {
-      display: none;
-      color: #0ff;
-      margin-top: 10px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeraBox Player</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+body { background: #000; color: #fff; font-family: Arial; text-align: center; padding: 20px; }
+input, button { padding: 10px; margin: 5px; border-radius: 6px; border: none; font-size: 16px; }
+button { background: #0ff; color: #000; cursor: pointer; transition: 0.3s; }
+button:hover { background: #0aa; }
+#loading { color: #0ff; display: none; margin-top: 10px; }
+#videoContainer { display: none; margin-top: 15px; }
+video { width: 90%; max-width: 800px; border-radius: 10px; border: 2px solid #333; background: #000; }
+</style>
 </head>
 <body>
 
-  <h2>🎬 TeraBox Video Player</h2>
-  <input type="text" id="teraboxUrl" placeholder="Enter TeraBox link (e.g. https://terabox.com/s/abc123)" size="60">
-  <button onclick="loadTeraboxVideo()">▶️ Play Video</button>
+<h2>🎬 TeraBox Video Player</h2>
+<input type="text" id="teraboxUrl" placeholder="Enter TeraBox Link (https://terabox.com/s/abc123)" size="60">
+<button onclick="loadVideo()">▶️ Play Video</button>
+<div id="loading">Loading video...</div>
+<div id="videoContainer">
+  <video id="videoPlayer" controls autoplay playsinline></video>
+</div>
 
-  <div id="teraboxLoadingContainer">Loading video...</div>
+<script>
+class TeraboxPlayer {
+  constructor() {
+    this.proxyEndpoints = [
+      'https://terafastonline.sonukalakhari76.workers.dev',
+      'https://terabox-hls-proxy-3.eron8318.workers.dev',
+      'https://terabox-hls-proxy-4.ronnie6667770.workers.dev',
+      'https://terabox-hls-proxy.mohdamir7505.workers.dev'
+    ];
+    this.currentProxy = 0;
+    this.hls = null;
+  }
 
-  <div id="teraboxVideoContainer" style="display:none;">
-    <video id="teraboxVideoPlayer" controls autoplay playsinline></video>
-  </div>
+  async loadVideo() {
+    const url = document.getElementById('teraboxUrl').value.trim();
+    if (!url) return alert('⚠️ Enter TeraBox link');
+    if (!this.isValidUrl(url)) return alert('⚠️ Invalid TeraBox link');
 
-  <script>
-    class TeraboxPlayer {
-      constructor() {
-        this.proxyEndpoints = [
-          'https://terafastonline.sonukalakhari76.workers.dev',
-          'https://terabox-hls-proxy-3.eron8318.workers.dev',
-          'https://terabox-hls-proxy-4.ronnie6667770.workers.dev',
-          'https://terabox-hls-proxy.mohdamir7505.workers.dev'
-        ];
-        this.currentProxy = 0;
-        this.hls = null;
-      }
-
-      async loadVideo() {
-        const url = document.getElementById('teraboxUrl').value.trim();
-        if (!url) return alert('⚠️ Please enter a Terabox link.');
-
-        if (!this.isValidTeraboxUrl(url)) {
-          alert('⚠️ Invalid link. It must contain /s/');
-          return;
-        }
-
-        this.showLoading(true);
-        try {
-          const m3u8Url = await this.getM3U8Url(url);
-          await this.initializePlayer(m3u8Url);
-          this.showVideoSection(true);
-        } catch (error) {
-          alert('Failed to load video: ' + error.message);
-          console.error(error);
-        }
-        this.showLoading(false);
-      }
-
-      async getM3U8Url(teraboxUrl) {
-        // API endpoint for extracting .m3u8 (replace with your backend if needed)
-        const api = `https://teraboxapi.vercel.app/api?url=${encodeURIComponent(teraboxUrl)}`;
-        const response = await fetch(api);
-        const data = await response.json();
-        if (!data.success) throw new Error('Unable to get video stream');
-        return data.m3u8;
-      }
-
-      async initializePlayer(m3u8Url) {
-        const video = document.getElementById('teraboxVideoPlayer');
-        if (this.hls) this.hls.destroy();
-
-        this.hls = new Hls({
-          enableWorker: true,
-          lowLatencyMode: true,
-          xhrSetup: (xhr, url) => {
-            if (url.includes('freeterabox.com')) {
-              const proxy = this.getNextProxy();
-              xhr.open('GET', `${proxy}/proxy?url=${encodeURIComponent(url)}`, true);
-            }
-          }
-        });
-
-        this.hls.loadSource(m3u8Url);
-        this.hls.attachMedia(video);
-      }
-
-      getNextProxy() {
-        const proxy = this.proxyEndpoints[this.currentProxy];
-        this.currentProxy = (this.currentProxy + 1) % this.proxyEndpoints.length;
-        return proxy;
-      }
-
-      isValidTeraboxUrl(url) {
-        return url.startsWith('https://') && url.includes('/s/');
-      }
-
-      showLoading(show) {
-        document.getElementById('teraboxLoadingContainer').style.display = show ? 'block' : 'none';
-      }
-
-      showVideoSection(show) {
-        document.getElementById('teraboxVideoContainer').style.display = show ? 'block' : 'none';
-      }
+    this.showLoading(true);
+    try {
+      const m3u8Url = await this.getM3U8(url);
+      await this.initPlayer(m3u8Url);
+      document.getElementById('videoContainer').style.display = 'block';
+    } catch(err) {
+      console.error(err);
+      alert('Failed to load video: ' + err.message);
+    } finally {
+      this.showLoading(false);
     }
+  }
 
-    const player = new TeraboxPlayer();
+  async getM3U8(url) {
+    // 🔹 Replace this with your own API endpoint if needed
+    const apiUrl = `https://teraboxapi.vercel.app/api?url=${encodeURIComponent(url)}`;
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+    if(!data.success) throw new Error('Unable to get .m3u8');
+    return data.m3u8;
+  }
 
-    function loadTeraboxVideo() {
-      player.loadVideo();
-    }
-  </script>
+  async initPlayer(m3u8) {
+    const video = document.getElementById('videoPlayer');
+    if (this.hls) this.hls.destroy();
+
+    this.hls = new Hls({
+      enableWorker: true,
+      lowLatencyMode: true,
+      xhrSetup: (xhr, url) => {
+        if(url.includes('freeterabox.com')) {
+          const proxy = this.getNextProxy();
+          xhr.open('GET', `${proxy}/proxy?url=${encodeURIComponent(url)}`, true);
+        }
+      }
+    });
+
+    this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      console.log('Video loaded with ' + this.hls.levels.length + ' quality levels');
+    });
+
+    this.hls.on(Hls.Events.ERROR, (event, data) => {
+      console.error('HLS Error', data);
+      if(data.fatal){
+        switch(data.type){
+          case Hls.ErrorTypes.NETWORK_ERROR: this.hls.startLoad(); break;
+          case Hls.ErrorTypes.MEDIA_ERROR: this.hls.recoverMediaError(); break;
+          default: this.hls.destroy(); alert('Playback error'); break;
+        }
+      }
+    });
+
+    this.hls.loadSource(m3u8);
+    this.hls.attachMedia(video);
+  }
+
+  getNextProxy() {
+    const proxy = this.proxyEndpoints[this.currentProxy];
+    this.currentProxy = (this.currentProxy + 1) % this.proxyEndpoints.length;
+    return proxy;
+  }
+
+  isValidUrl(url) {
+    return url.startsWith('https://') && url.includes('/s/');
+  }
+
+  showLoading(show){
+    document.getElementById('loading').style.display = show ? 'block' : 'none';
+  }
+}
+
+const player = new TeraboxPlayer();
+function loadVideo(){ player.loadVideo(); }
+</script>
 
 </body>
 </html>
