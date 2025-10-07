@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TeraBox Player</title>
+<title>TeraBox Video Player</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <style>
-body { background: #000; color: #fff; font-family: Arial; text-align: center; padding: 20px; }
+body { background: #000; color: #fff; font-family: Arial, sans-serif; text-align: center; padding: 20px; }
 input, button { padding: 10px; margin: 5px; border-radius: 6px; border: none; font-size: 16px; }
 button { background: #0ff; color: #000; cursor: pointer; transition: 0.3s; }
 button:hover { background: #0aa; }
@@ -18,7 +18,7 @@ video { width: 90%; max-width: 800px; border-radius: 10px; border: 2px solid #33
 <body>
 
 <h2>🎬 TeraBox Video Player</h2>
-<input type="text" id="teraboxUrl" placeholder="Enter TeraBox Link (https://terabox.com/s/abc123)" size="60">
+<input type="text" id="teraboxUrl" placeholder="Enter TeraBox Link (e.g. https://terabox.com/s/abc123)" size="60">
 <button onclick="loadVideo()">▶️ Play Video</button>
 <div id="loading">Loading video...</div>
 <div id="videoContainer">
@@ -40,8 +40,8 @@ class TeraboxPlayer {
 
   async loadVideo() {
     const url = document.getElementById('teraboxUrl').value.trim();
-    if (!url) return alert('⚠️ Enter TeraBox link');
-    if (!this.isValidUrl(url)) return alert('⚠️ Invalid TeraBox link');
+    if(!url) return alert('⚠️ Enter a TeraBox link');
+    if(!this.isValidUrl(url)) return alert('⚠️ Invalid TeraBox link');
 
     this.showLoading(true);
     try {
@@ -57,21 +57,27 @@ class TeraboxPlayer {
   }
 
   async getM3U8(url) {
-    // 🔹 Replace this with your own API endpoint if needed
+    // Public API to get .m3u8 stream from TeraBox link
     const apiUrl = `https://teraboxapi.vercel.app/api?url=${encodeURIComponent(url)}`;
     const res = await fetch(apiUrl);
-    const data = await res.json();
-    if(!data.success) throw new Error('Unable to get .m3u8');
+    const text = await res.text();
+
+    // Check if API returned HTML instead of JSON
+    if(text.startsWith('<')) throw new Error('API returned HTML. Check your TeraBox link or API status.');
+
+    const data = JSON.parse(text);
+    if(!data.success || !data.m3u8) throw new Error('Unable to fetch video stream');
     return data.m3u8;
   }
 
   async initPlayer(m3u8) {
     const video = document.getElementById('videoPlayer');
-    if (this.hls) this.hls.destroy();
+    if(this.hls) this.hls.destroy();
 
     this.hls = new Hls({
       enableWorker: true,
       lowLatencyMode: true,
+      backBufferLength: 60,
       xhrSetup: (xhr, url) => {
         if(url.includes('freeterabox.com')) {
           const proxy = this.getNextProxy();
