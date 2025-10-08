@@ -2,117 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>TeraBox Video Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TeraBox Video Player - Server 2</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 ratio */
+      overflow: hidden;
+      border-radius: 0.75rem;
+      background: #000;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
     }
-    h1 {
-      text-align: center;
-      color: #00d1ff;
-    }
-    #inputSection {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    #teraboxLink {
-      width: 80%;
-      max-width: 500px;
-      padding: 10px;
-      border-radius: 6px;
-      border: none;
-      outline: none;
-      font-size: 16px;
-    }
-    #downloadV1Button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      background: #00d1ff;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-      margin-left: 10px;
-    }
-    .api-output {
-      margin-top: 20px;
-    }
-    a { cursor: pointer; text-decoration:none; }
-    /* 9:16 modal video ratio */
-    #videoModal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.9);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-    #closeModal {
+    .video-wrapper video {
       position: absolute;
-      top: 20px; right: 20px;
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: #ff4444;
-      color: #fff;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       border: none;
-      cursor: pointer;
-      font-size: 18px;
-      font-weight: bold;
+      border-radius: 0.75rem;
+      object-fit: cover;
+    }
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 10000;
-    }
-    .video-box {
-      background: #000;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      aspect-ratio: 9 / 16;
-      overflow: hidden;
-    }
-    #popupVideo {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      background: #000;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
-<body>
 
-  <h1>TeraBox Video Player</h1>
+<body class="bg-gray-950 flex flex-col min-h-screen text-white">
 
-  <div id="inputSection">
-    <input type="text" id="teraboxLink" placeholder="Paste TeraBox link here..." />
-    <button id="downloadV1Button">Fetch Video</button>
-  </div>
+  <!-- Header -->
+  <header class="w-full h-16 bg-gray-900 text-white flex items-center justify-between px-4 shadow-lg">
+    <h1 class="text-lg font-semibold text-cyan-400">TeraPlayer - Server 2</h1>
+    <a href="https://t.me/+Q656m5kaC245Njg1" 
+       target="_blank" rel="noopener noreferrer"
+       class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium">
+      Join Channel
+    </a>
+  </header>
 
-  <div id="outputFast" class="api-output"></div>
-  <div id="outputFasts2" class="api-output"></div>
+  <!-- Main -->
+  <main class="flex-grow w-full max-w-3xl mx-auto mt-4 flex flex-col items-center px-3">
+    <h2 id="file-info" class="text-center text-lg font-medium text-gray-300 mb-3">
+      Loading file info...
+    </h2>
 
-  <!-- Modal -->
-  <div id="videoModal">
-    <button id="closeModal">✕</button>
-    <div class="video-box">
-      <video id="popupVideo" controls></video>
+    <div id="video-container" class="w-full bg-black rounded-lg relative">
+      <div class="video-wrapper">
+        <video id="popupVideo" controls autoplay></video>
+        <div class="loading-overlay" id="loading-text">Fetching video, please wait...</div>
+      </div>
     </div>
-  </div>
+
+    <a id="downloadLink"
+       href="#"
+       target="_blank"
+       rel="noreferrer"
+       class="hidden mt-4 px-5 py-2 rounded bg-emerald-600 hover:bg-emerald-700 font-semibold text-sm shadow-md">
+      Download Video
+    </a>
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full bg-gray-900 text-gray-400 text-center text-xs py-3 mt-auto border-t border-gray-800">
+    ⚡ Wait 10–15 sec to start streaming. Refresh if the video doesn’t load.
+  </footer>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const downloadBtn = document.getElementById("downloadV1Button");
-      const inputField = document.getElementById("teraboxLink");
-      const outputFastDiv = document.getElementById("outputFast");
-      const outputFasts2Div = document.getElementById("outputFasts2");
-      const modal = document.getElementById("videoModal");
+    document.addEventListener("DOMContentLoaded", async () => {
+      const params = new URLSearchParams(window.location.search);
+      const teraboxUrl = params.get("q");
+      const video = document.getElementById("popupVideo");
+      const downloadLink = document.getElementById("downloadLink");
+      const loadingText = document.getElementById("loading-text");
+      const fileInfo = document.getElementById("file-info");
+
+      if (!teraboxUrl) {
+        fileInfo.textContent = "❌ Error: No TeraBox link found in URL.";
+        return;
+      }
+
+      try {
+        const encoded = encodeURIComponent(teraboxUrl);
+        const endpoint = `https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`;
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error("Server 2 request failed");
+        const data = await res.json();
+
+        if (data && data.direct_link) {
+          const finalUrl = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data.direct_link)}`;
+          video.src = finalUrl;
+          video.play();
+          loadingText.style.display = "none";
+          fileInfo.textContent = data.filename || "Now Playing (Server 2)";
+          
+          // Show download button
+          downloadLink.href = data.direct_link;
+          downloadLink.textContent = `⬇️ Download (${data.size || "Video"})`;
+          downloadLink.classList.remove("hidden");
+        } else {
+          loadingText.textContent = "❌ No video found on Server 2.";
+          fileInfo.textContent = "Error loading video.";
+        }
+      } catch (err) {
+        console.error(err);
+        loadingText.textContent = "⚠️ Failed to fetch video from Server 2.";
+        fileInfo.textContent = "Something went wrong.";
+      }
+    });
+  </script>
+</body>
+</html>      const modal = document.getElementById("videoModal");
       const popupVideo = document.getElementById("popupVideo");
       const closeModal = document.getElementById("closeModal");
 
