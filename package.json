@@ -10,7 +10,7 @@
     "telegraf": "^4.17.0"
   },
   "engines": {
-    "node": "18.x"
+    "node": "22.x"
   },
   "author": "Your Name",
   "license": "MIT"
