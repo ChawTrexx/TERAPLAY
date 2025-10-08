@@ -1,5 +1,5 @@
 {
-  "name": "tera-bot",
+  "name": "TERAPLAY",
   "version": "1.0.0",
   "description": "Telegram bot to forward TeraBox links safely",
   "main": "api/bot.js",
