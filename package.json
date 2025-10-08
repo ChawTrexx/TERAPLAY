@@ -1,0 +1,17 @@
+{
+  "name": "tera-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot to forward TeraBox links safely",
+  "main": "api/bot.js",
+  "scripts": {
+    "start": "node api/bot.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.17.0"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}
