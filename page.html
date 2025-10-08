@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TeraBox Video Player - Server 2</title>
+  <title>TeraBox Video Player - Dual API</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -19,6 +19,7 @@
     #videoContainer { margin-top: 20px; }
     #popupVideo { width: 100%; max-width: 800px; height: 450px; background: #000; border-radius: 8px; }
     #downloadLink { display: inline-block; margin-top: 15px; padding: 10px 16px; background: #28a745; color: #fff; border-radius: 6px; text-decoration: none; }
+    #statusBox { margin-top: 10px; font-size: 14px; color: #ccc; }
   </style>
 </head>
 <body>
@@ -30,23 +31,12 @@
 
 <input type="text" id="teraboxLink" placeholder="Paste TeraBox link here..." />
 <button id="downloadBtn" style="margin-top: 4px;">Play Video</button>
+<div id="statusBox"></div>
 
 <div id="videoContainer">
   <video id="popupVideo" controls></video>
   <a id="downloadLink" href="#" target="_blank" rel="noreferrer">Download Video</a>
 </div> 
-
-<!-- Optional ad script -->
-<script>
-(function(tdg){
-var d=document,s=d.createElement('script'),l=d.scripts[d.scripts.length-1];
-s.settings=tdg||{};
-s.src="//scientific-husband.com/bWXgVks.d-Gzl/0-Y/WEcE/heVmG9BunZcU/lXkdPbTZYJ2YNIziAQxFOyD/cRtoNHjAYC3OMiD/Ea4/OYAF";
-s.async=true;
-s.referrerPolicy='no-referrer-when-downgrade';
-l.parentNode.insertBefore(s,l);
-})({})
-</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -54,15 +44,37 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("teraboxLink");
   const video = document.getElementById("popupVideo");
   const downloadLink = document.getElementById("downloadLink");
+  const statusBox = document.getElementById("statusBox");
 
-  // Simple loader while fetching
-  function showLoading(state) {
-    if (state) {
-      downloadLink.textContent = "Fetching video...";
-      downloadLink.style.background = "#ffc107";
-      downloadLink.removeAttribute("href");
-    } else {
-      downloadLink.style.background = "#28a745";
+  async function fetchFromAPI1(encoded) {
+    statusBox.textContent = "Trying Server 1...";
+    const res = await fetch(`https://tboxdownloader.in/tbox/tp/v1/s1_v2.php?url=${encoded}`);
+    if (!res.ok) throw new Error("Server 1 not reachable");
+    const data = await res.json();
+    if (data && data.directlink) return { link: data.directlink, size: data.size, server: "Server 1" };
+    throw new Error("Invalid data from Server 1");
+  }
+
+  async function fetchFromAPI2(encoded) {
+    statusBox.textContent = "Trying Server 2...";
+    const res = await fetch(`https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`);
+    if (!res.ok) throw new Error("Server 2 not reachable");
+    const data = await res.json();
+    if (data && data.direct_link) return { link: data.direct_link, size: data.size, server: "Server 2" };
+    throw new Error("Invalid data from Server 2");
+  }
+
+  async function tryBothAPIs(encoded) {
+    try {
+      return await fetchFromAPI1(encoded);
+    } catch (err1) {
+      console.warn("Server 1 failed:", err1);
+      try {
+        return await fetchFromAPI2(encoded);
+      } catch (err2) {
+        console.error("Server 2 failed:", err2);
+        throw new Error("Both APIs failed");
+      }
     }
   }
 
@@ -71,49 +83,27 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!url) return alert("Please enter a TeraBox link!");
     const encoded = encodeURIComponent(url);
 
-    // --- API 1 (Primary) ---
-    showLoading(true);
+    statusBox.style.color = "#ffc107";
+    statusBox.textContent = "Fetching video...";
+    downloadLink.textContent = "Loading...";
+    downloadLink.removeAttribute("href");
+    video.src = "";
+
     try {
-      const res1 = await fetch(`https://tboxdownloader.in/tbox/tp/v1/s1_v2.php?url=${encoded}`);
-      if (!res1.ok) throw new Error("API 1 failed");
-      const data1 = await res1.json();
+      const data = await tryBothAPIs(encoded);
+      const streamURL = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data.link)}`;
+      video.src = streamURL;
+      video.play();
 
-      if (data1 && data1.directlink) {
-        const playURL = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data1.directlink)}`;
-        video.src = playURL;
-        video.play();
+      downloadLink.href = data.link;
+      downloadLink.textContent = `Download (${data.size || "Unknown"})`;
 
-        downloadLink.href = data1.directlink;
-        downloadLink.textContent = `Download (${data1.size || "Unknown"})`;
-        showLoading(false);
-        return; // Success, stop here
-      }
-      throw new Error("Invalid response from API 1");
-    } catch (err1) {
-      console.warn("API 1 failed:", err1);
-    }
-
-    // --- API 2 (Fallback) ---
-    try {
-      const res2 = await fetch(`https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`);
-      if (!res2.ok) throw new Error("API 2 failed");
-      const data2 = await res2.json();
-
-      if (data2 && data2.direct_link) {
-        const playURL = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data2.direct_link)}`;
-        video.src = playURL;
-        video.play();
-
-        downloadLink.href = data2.direct_link;
-        downloadLink.textContent = `Download (${data2.size || "Unknown"})`;
-        showLoading(false);
-        return;
-      }
-      throw new Error("Invalid response from API 2");
-    } catch (err2) {
-      console.error("API 2 failed:", err2);
-      showLoading(false);
-      alert("Both API 1 and API 2 failed to fetch video!");
+      statusBox.style.color = "#28a745";
+      statusBox.textContent = `✅ Video loaded from ${data.server}`;
+    } catch (err) {
+      statusBox.style.color = "red";
+      statusBox.textContent = "❌ Both Server 1 and Server 2 failed to fetch video!";
+      downloadLink.textContent = "Download Video";
     }
   });
 });
