@@ -1,218 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="TeraBox Video Player - Stream your videos seamlessly" />
-  <title>TeraBox Video Player</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TeraBoxPlayer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="𝗦𝗵𝗮𝗿𝗲𝗱 𝘃𝗶𝗮 𝗧𝗲𝗿𝗮𝗕𝗼𝘅" />
+  <meta property="og:description" content="Watch this content via TeraBox." />
+  <meta property="og:url" content="https://honeycum.fun/play3.html" />
+  <meta property="og:image" content="https://honeycum.fun/Terabox.png" />
+  <meta property="og:site_name" content="TeraBox" />
+
+
+<meta name="f8f501f13db772b6e516a6afb39b7af0faa54e0f" content="f8f501f13db772b6e516a6afb39b7af0faa54e0f" />
+
+  
+  <!-- Twitter Preview -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="𝗦𝗵𝗮𝗿𝗲𝗱 𝘃𝗶𝗮 𝗧𝗲𝗿𝗮𝗕𝗼𝘅" />
+  <meta name="twitter:description" content="Watch this content via TeraBox." />
+  <meta name="twitter:image" content="https://honeycum.fun/Terabox.png" />
+
   <style>
-    :root {
-      --bg-light: #f3f4f6;
-      --bg-dark: #111827;
-      --color-light: #111827;
-      --color-dark: #f3f4f6;
-      --error-color: #dc2626;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      body {
-        background: var(--bg-dark);
-        color: var(--color-dark);
-      }
-      header, footer {
-        background: var(--color-light);
-        color: var(--bg-dark);
-      }
-      .error {
-        color: #f87171;
-      }
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background: var(--bg-light);
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      align-items: center;
-      color: var(--color-light);
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-
-    header {
-      background: var(--color-light);
-      color: var(--bg-light);
-      padding: 1rem;
-      width: 100%;
-      text-align: center;
-      font-size: 1.75rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      user-select: none;
-      box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
-    }
-
-    main {
-      flex: 1;
-      max-width: 900px;
-      width: 100%;
-      padding: 1.25rem 1rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
-    }
-
     .video-wrapper {
       position: relative;
-      padding-top: 56.25%; /* 16:9 ratio */
-      background: black;
-      border-radius: 8px;
-      overflow: hidden;
       width: 100%;
-      max-width: 100%;
-      box-shadow: 0 4px 10px rgb(0 0 0 / 0.25);
-      transition: box-shadow 0.3s ease;
+      padding-top: 177.78%; /* 9:16 */
+      overflow: hidden;
+      border-radius: 0.5rem;
+      background: #000;
     }
-
-    .video-wrapper:hover {
-      box-shadow: 0 8px 16px rgb(0 0 0 / 0.45);
-    }
-
-    iframe {
+    .video-wrapper iframe {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
       border: none;
-      border-radius: 8px;
-      background: #000;
     }
-
-    #info {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #374151;
-      min-height: 1.5em;
-      user-select: none;
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
     }
-
-    .error {
-      color: var(--error-color);
-      font-weight: 700;
+    .error-message {
+      color: #e53e3e;
+      font-size: 1rem;
       text-align: center;
-      user-select: text;
-    }
-
-    footer {
-      background: var(--color-light);
-      color: #9ca3af;
-      padding: 0.75rem 1rem;
-      text-align: center;
-      font-size: 0.9rem;
-      user-select: none;
-      box-shadow: inset 0 1px 2px rgb(255 255 255 / 0.1);
-    }
-
-    /* Loading spinner */
-    .spinner {
-      border: 4px solid #e5e7eb;
-      border-top: 4px solid #3b82f6;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg);}
-      100% { transform: rotate(360deg);}
+      padding: 1rem;
     }
   </style>
 </head>
-<body>
-  <header>TeraBox Video Player</header>
-  <main>
-    <div id="info"><div class="spinner" aria-label="Loading video"></div></div>
-    <div class="video-wrapper" id="video-container" aria-live="polite"></div>
+<body class="bg-gray-100 flex flex-col items-center min-h-screen">
+<script>
+(function(bmp){
+var d = document,
+    s = d.createElement('script'),
+    l = d.scripts[d.scripts.length - 1];
+s.settings = bmp || {};
+s.src = "\/\/scientific-husband.com\/bFXXV\/sod.G\/l\/0rYrWXcq\/YeKmI9SufZEULlsk\/PfT\/YV2\/N-z\/Ajx\/OSDzc\/tKNJjxY\/3VMoDBEn4\/OnAu";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
+  <!-- Header -->
+  <header class="w-full h-16 bg-gray-900 text-white flex items-center justify-between px-4">
+    <h1 class="text-lg font-semibold">TeraPlayer</h1>
+    <a href="https://t.me/+Q656m5kaC245Njg1" target="_blank" rel="noopener noreferrer"
+       class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block">
+      Join Channel
+    </a>
+  </header>
+
+  <!-- Main Stream Container -->
+  <main class="stream-container w-full max-w-4xl mx-auto mt-4 flex flex-col items-center px-2">
+    <!-- File Info -->
+    <h1 id="file-info" class="text-center text-lg font-medium text-gray-800 mb-4">
+      Loading video...
+    </h1>
+
+    <!-- Video Container -->
+    <div id="video-container" class="w-full bg-black rounded-lg relative">
+      <div class="video-wrapper">
+        <div class="loading-overlay" id="loading-text">Loading video...</div>
+      </div>
+    </div>
   </main>
-  <footer>Wait 10-15 seconds for video to load. Refresh if not playing.</footer>
+
+  <!-- Footer -->
+  <footer class="w-full bg-gray-900 text-gray-300 text-center text-xs py-2 mt-auto">
+    ** Wait 10-15 sec to start streaming the video. Refresh this page if video doesn't load **
+  </footer>
 
   <script>
-    (() => {
-      const infoEl = document.getElementById('info');
-      const videoContainer = document.getElementById('video-container');
-      const params = new URLSearchParams(window.location.search);
-      const teraboxUrl = params.get('q');
+    document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const teraboxUrl = params.get('q');
+  const videoContainer = document.getElementById('video-container');
+  const fileInfoDiv = document.getElementById('file-info');
+  const wrapper = videoContainer.querySelector('.video-wrapper');
 
-      const API_KEY = 'terabox_downloader_2025_key';
+  if (!teraboxUrl) {
+    fileInfoDiv.textContent = 'Error: No TeraBox URL provided.';
+    wrapper.innerHTML = `<div class="error-message">Please provide a TeraBox URL using ?q= parameter.</div>`;
+    return;
+  }
 
-      if (!teraboxUrl) {
-        infoEl.textContent = "Error: Please provide Terabox URL as ?q= parameter in URL.";
-        videoContainer.innerHTML = '';
+  // Modify the URL to replace domain as required
+  const modifiedUrl = teraboxUrl.replace(/(https?://)[^/]+/, '$11024terabox.com');
+
+  const API_KEY = 'terabox_downloader_2025_key';
+  const MAX_RETRIES = 3;
+  const BASE_RETRY_DELAY = 2000; // 2 seconds
+
+  // Helper to fetch with timeout
+  const fetchWithTimeout = (resource, options = {}, timeout = 8000) => {
+    return Promise.race([
+      fetch(resource, options),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out')), timeout)
+      )
+    ]);
+  };
+
+  // Generate the player URL from API
+  async function generatePlayerUrl(url) {
+    const response = await fetchWithTimeout('https://api.iteraplay.com/generate-player-url.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-API-Key': API_KEY,
+        'Origin': window.location.origin,
+      },
+      body: `url=${encodeURIComponent(url)}`
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success && result.player_url) {
+      return result.player_url;
+    } else {
+      throw new Error(result.error || 'Failed to generate player URL');
+    }
+  }
+
+  // Retry logic with exponential backoff
+  async function loadVideoWithRetry(url, retries = MAX_RETRIES) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      fileInfoDiv.textContent = `Loading video... (Attempt ${attempt} of ${retries})`;
+      try {
+        const playerUrl = await generatePlayerUrl(url);
+
+        // Clear loading overlay and embed iframe
+        wrapper.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.src = playerUrl;
+        iframe.allow = 'autoplay; fullscreen; encrypted-media';
+        iframe.allowFullscreen = true;
+        iframe.loading = 'lazy';
+        wrapper.appendChild(iframe);
+
+        fileInfoDiv.textContent = ''; // Clear status on success
         return;
-      }
+      } catch (error) {
+        console.warn(`Attempt ${attempt} failed: ${error.message}`);
 
-      const apiUrl = teraboxUrl.replace(/(https?://)[^/]+/, '$11024terabox.com');
-
-      const displayError = (message) => {
-        infoEl.textContent = '';
-        videoContainer.innerHTML = `<div class="error" role="alert">${message}</div>`;
-      };
-
-      const displayLoading = () => {
-        infoEl.innerHTML = '<div class="spinner" aria-label="Loading video"></div>';
-      };
-
-      async function getPlayerUrl(url) {
-        displayLoading();
-        try {
-          const res = await fetch('https://api.iteraplay.com/generate-player-url.php', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'X-API-Key': API_KEY,
-              'Origin': location.origin
-            },
-            body: `url=${encodeURIComponent(url)}`
-          });
-
-          if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-
-          const data = await res.json();
-
-          if (data.success && data.player_url) {
-            return data.player_url;
-          } else {
-            throw new Error(data.error || 'Failed to get player URL');
-          }
-        } catch (err) {
-          throw err;
+        if (attempt < retries) {
+          // Exponential backoff delay
+          const delay = BASE_RETRY_DELAY * Math.pow(2, attempt - 1);
+          await new Promise(res => setTimeout(res, delay));
+        } else {
+          fileInfoDiv.textContent = 'Failed to load video. Please try again.';
+          wrapper.innerHTML = `
+            <div class="error-message">
+              Failed to load video after ${retries} attempts. Please refresh the page.
+            </div>`;
         }
       }
+    }
+  }
 
-      async function loadVideo() {
-        try {
-          const playerUrl = await getPlayerUrl(apiUrl);
-          infoEl.textContent = '';
-          const iframe = document.createElement('iframe');
-          iframe.src = playerUrl;
-          iframe.allow = 'autoplay; fullscreen; encrypted-media';
-          iframe.allowFullscreen = true;
-          iframe.title = "TeraBox Video Player";
-          videoContainer.innerHTML = '';
-          videoContainer.appendChild(iframe);
-        } catch (err) {
-          displayError(`Error loading video: ${err.message}`);
-        }
-      }
-
-      loadVideo();
-    })();
+  loadVideoWithRetry(modifiedUrl);
+});
   </script>
 </body>
-</html>
+</html>     
