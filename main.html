@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeraBox Proxy Video Player</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f3f4f6; margin: 0; padding: 20px; }
+    #video-container { position: relative; padding-top: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000; max-width: 720px; margin: auto; }
+    iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    #status { text-align: center; margin: 1rem 0; font-weight: bold; }
+    #input-section { text-align: center; margin-bottom: 1rem; }
+    input { width: 60%; padding: 8px; font-size: 1rem; }
+    button { padding: 8px 16px; font-size: 1rem; margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <h1 style="text-align:center;">TeraBox Video Player (via Proxy)</h1>
+  <div id="input-section">
+    <input type="url" id="terabox-url" placeholder="Enter TeraBox video URL here" />
+    <button onclick="playVideo()">Play</button>
+  </div>
+  <div id="status"></div>
+  <div id="video-container"></div>
+
+  <script>
+    async function playVideo() {
+      const urlInput = document.getElementById('terabox-url');
+      const videoContainer = document.getElementById('video-container');
+      const status = document.getElementById('status');
+      const teraboxUrl = urlInput.value.trim();
+
+      if (!teraboxUrl) {
+        status.textContent = 'Please enter a valid TeraBox URL.';
+        return;
+      }
+
+      status.textContent = 'Fetching video player URL...';
+      videoContainer.innerHTML = '';
+
+      try {
+        const response = await fetch('/api/terabox-proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: teraboxUrl })
+        });
+
+        if (!response.ok) {
+          status.textContent = 'Failed to fetch video player URL. Try again.';
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.player_url) {
+          status.textContent = '';
+          const iframe = document.createElement('iframe');
+          iframe.src = data.player_url;
+          iframe.allow = 'autoplay; fullscreen; encrypted-media';
+          iframe.allowFullscreen = true;
+          videoContainer.appendChild(iframe);
+        } else {
+          status.textContent = 'Video URL not available or invalid.';
+        }
+      } catch (error) {
+        status.textContent = 'Error occurred: ' + error.message;
+      }
+    }
+  </script>
+</body>
+</html>
