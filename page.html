@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TeraBox Video Player</title>
+  <title>TeraBox Video Player - Server 2</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,282 +11,64 @@
       color: #fff;
       margin: 0;
       padding: 20px;
-    }
-    h1 {
       text-align: center;
-      color: #00d1ff;
     }
-    #inputSection {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    #teraboxLink {
-      width: 80%;
-      max-width: 500px;
-      padding: 10px;
-      border-radius: 6px;
-      border: none;
-      outline: none;
-      font-size: 16px;
-    }
-    #downloadV1Button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      background: #00d1ff;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-      margin-left: 10px;
-    }
-    .api-output {
-      margin-top: 20px;
-    }
-    .video-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    a {
-      cursor: pointer;
-    }
+    h1 { color: #00d1ff; margin-bottom: 20px; }
+    #teraboxLink { width: 80%; max-width: 500px; padding: 10px; border-radius: 6px; border: none; outline: none; font-size: 16px; }
+    #downloadBtn { margin-left: 10px; padding: 10px 20px; border-radius: 6px; border: none; background: #00d1ff; color: #000; font-weight: bold; cursor: pointer; }
+    #videoContainer { margin-top: 20px; }
+    #popupVideo { width: 100%; max-width: 800px; height: 450px; background: #000; border-radius: 8px; }
+    #downloadLink { display: inline-block; margin-top: 15px; padding: 10px 16px; background: #28a745; color: #fff; border-radius: 6px; text-decoration: none; }
   </style>
 </head>
 <body>
 
-  <h1>TeraBox Video Player</h1>
+<h1>TeraBox Video Player - Server 2</h1>
 
-  <div id="inputSection">
-    <input type="text" id="teraboxLink" placeholder="Paste TeraBox link here..." />
-    <button id="downloadV1Button">Fetch Video</button>
-  </div>
+<input type="text" id="teraboxLink" placeholder="Paste TeraBox link here..." />
+<button id="downloadBtn">Play Video</button>
 
-  <div id="outputFast" class="api-output"></div>
-  <div id="outputFasts2" class="api-output"></div>
+<div id="videoContainer">
+  <video id="popupVideo" controls></video>
+  <a id="downloadLink" href="#" target="_blank" rel="noreferrer">Download Video</a>
+</div>
 
-  <!-- Modal -->
-  <div id="videoModal" style="
-    position: fixed;
-    top:0; left:0;
-    width:100%; height:100%;
-    background: rgba(0,0,0,0.8);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-  ">
-    <button id="closeModal" style="
-      position:absolute;
-      top:20px; right:20px;
-      width:36px; height:36px;
-      border-radius:50%;
-      background:#ff4444;
-      color:#fff;
-      border:none;
-      cursor:pointer;
-      font-size:18px;
-      font-weight:bold;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:10000;
-    ">✕</button>
-    <div style="
-      background:#000;
-      border-radius:8px;
-      width:90%;
-      max-width:800px;
-      aspect-ratio:16/9;
-      overflow:hidden;
-    ">
-      <video id="popupVideo" controls style="width:100%; height:100%; object-fit:contain; background:#000;"></video>
-    </div>
-  </div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("downloadBtn");
+  const input = document.getElementById("teraboxLink");
+  const video = document.getElementById("popupVideo");
+  const downloadLink = document.getElementById("downloadLink");
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const downloadBtn = document.getElementById("downloadV1Button");
-      const inputField = document.getElementById("teraboxLink");
-      const outputFastDiv = document.getElementById("outputFast");
-      const outputFasts2Div = document.getElementById("outputFasts2");
+  btn.addEventListener("click", async () => {
+    const url = input.value.trim();
+    if (!url) return alert("Please enter a TeraBox link!");
+    const encoded = encodeURIComponent(url);
 
-      const modal = document.getElementById("videoModal");
-      const popupVideo = document.getElementById("popupVideo");
-      const closeModal = document.getElementById("closeModal");
+    try {
+      const endpoint = `https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`;
+      const res = await fetch(endpoint);
+      if (!res.ok) throw new Error("Server 2 request failed");
+      const data = await res.json();
 
-      // Loader
-      function createLoader() {
-        const loader = document.createElement("div");
-        loader.style.textAlign = "center";
-        loader.style.marginTop = "15px";
-        loader.innerHTML = `
-          <div style="
-            border:4px solid #f3f3f3;
-            border-top:4px solid #00d1ff;
-            border-radius:50%;
-            width:30px;
-            height:30px;
-            animation: spin 1s linear infinite;
-            margin:auto;
-          "></div>
-        `;
-        return loader;
+      if (data && data.direct_link) {
+        // Play video
+        video.src = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data.direct_link)}`;
+        video.play();
+
+        // Set download link
+        downloadLink.href = data.direct_link;
+        downloadLink.textContent = `Download (${data.size})`;
+      } else {
+        alert("No video found on Server 2!");
       }
-
-      const style = document.createElement("style");
-      style.textContent = `
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `;
-      document.head.appendChild(style);
-
-      closeModal.addEventListener("click", () => {
-        popupVideo.pause();
-        popupVideo.src = "";
-        modal.style.display = "none";
-      });
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-          popupVideo.pause();
-          popupVideo.src = "";
-          modal.style.display = "none";
-        }
-      });
-
-      downloadBtn.addEventListener("click", () => {
-        const url = inputField.value.trim();
-        if (!url) return;
-        const encoded = encodeURIComponent(url);
-
-        // --- API 1 ---
-        outputFastDiv.innerHTML = "";
-        const loader1 = createLoader();
-        outputFastDiv.appendChild(loader1);
-
-        (async () => {
-          try {
-            const endpoint1 = `https://tboxdownloader.in/tbox/tp/v1/s1_v2.php?url=${encoded}`;
-            const response = await fetch(endpoint1);
-            if (!response.ok) throw new Error("API 1 request failed");
-            const data = await response.json();
-
-            if (data && data.directlink) {
-              const wrapper = document.createElement("div");
-              wrapper.style.marginTop = "20px";
-              wrapper.style.padding = "15px";
-              wrapper.style.background = "#ffffff22";
-              wrapper.style.borderRadius = "8px";
-              wrapper.style.textAlign = "left";
-
-              wrapper.innerHTML = `
-                <h3 style="margin-bottom:8px; word-break:break-word;">${data.file_name}</h3>
-                <p style="margin-bottom:12px;">Size: ${data.size}</p>
-              `;
-
-              if (data.thumb) {
-                const thumb = document.createElement("img");
-                thumb.src = data.thumb;
-                thumb.alt = "Thumbnail";
-                thumb.style.maxWidth = "100%";
-                thumb.style.borderRadius = "8px";
-                thumb.style.marginBottom = "12px";
-                wrapper.prepend(thumb);
-              }
-
-              const directBtn = document.createElement("a");
-              directBtn.href = data.directlink;
-              directBtn.target = "_blank";
-              directBtn.rel = "noreferrer";
-              directBtn.style.cssText = "display:inline-block;margin-right:10px;padding:10px 16px;background:#007bff;color:#fff;text-decoration:none;border-radius:6px;";
-              directBtn.textContent = "Download";
-              wrapper.appendChild(directBtn);
-
-              const fastLink = data.directlink.replace("https://d.terabox.app","https://d8.freeterabox.com");
-              const fastBtn = document.createElement("a");
-              fastBtn.href = fastLink;
-              fastBtn.target = "_blank";
-              fastBtn.rel = "noreferrer";
-              fastBtn.style.cssText = "display:inline-block;margin-right:10px;padding:10px 16px;background:#28a745;color:#fff;text-decoration:none;border-radius:6px;";
-              fastBtn.textContent = "Fast Download";
-              wrapper.appendChild(fastBtn);
-
-              const playBtn = document.createElement("a");
-              playBtn.href = "#";
-              playBtn.style.cssText = "display:inline-block;margin-top:10px;padding:10px 16px;background:#ffc107;color:#000;text-decoration:none;border-radius:6px;";
-              playBtn.textContent = "Watch Online";
-              playBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                popupVideo.src = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(fastLink)}`;
-                modal.style.display = "flex";
-                popupVideo.play();
-              });
-              wrapper.appendChild(playBtn);
-
-              outputFastDiv.innerHTML = "";
-              outputFastDiv.appendChild(wrapper);
-            }
-          } catch (err) {
-            console.error("API 1 error:", err);
-            outputFastDiv.innerHTML = "<p style='color:red'>API 1 failed.</p>";
-          }
-        })();
-
-        // --- API 2 ---
-        outputFasts2Div.innerHTML = "";
-        const loader2 = createLoader();
-        outputFasts2Div.appendChild(loader2);
-
-        (async () => {
-          try {
-            const endpoint2 = `https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`;
-            const response = await fetch(endpoint2);
-            if (!response.ok) throw new Error("API 2 request failed");
-            const data2 = await response.json();
-
-            if (data2 && data2.direct_link) {
-              const wrapper2 = document.createElement("div");
-              wrapper2.style.marginTop = "20px";
-              wrapper2.style.padding = "15px";
-              wrapper2.style.background = "#ffffff22";
-              wrapper2.style.borderRadius = "8px";
-              wrapper2.style.textAlign = "left";
-
-              wrapper2.innerHTML = `<p style="margin-bottom:12px;">Size: ${data2.size}</p>`;
-
-              const fast2Btn = document.createElement("a");
-              fast2Btn.href = data2.direct_link;
-              fast2Btn.target = "_blank";
-              fast2Btn.rel = "noreferrer";
-              fast2Btn.style.cssText = "display:inline-block;margin-right:10px;padding:10px 16px;background:#17a2b8;color:#fff;text-decoration:none;border-radius:6px;";
-              fast2Btn.textContent = "Fast Download Server 2";
-              wrapper2.appendChild(fast2Btn);
-
-              const play2Btn = document.createElement("a");
-              play2Btn.href = "#";
-              play2Btn.style.cssText = "display:inline-block;margin-top:10px;padding:10px 16px;background:#ffc107;color:#000;text-decoration:none;border-radius:6px;";
-              play2Btn.textContent = "Watch Online";
-              play2Btn.addEventListener("click", (e) => {
-                e.preventDefault();
-                popupVideo.src = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data2.direct_link)}`;
-                modal.style.display = "flex";
-                popupVideo.play();
-              });
-              wrapper2.appendChild(play2Btn);
-
-              outputFasts2Div.innerHTML = "";
-              outputFasts2Div.appendChild(wrapper2);
-            }
-          } catch (err) {
-            console.error("API 2 error:", err);
-            outputFasts2Div.innerHTML = "<p style='color:red'>API 2 failed.</p>";
-          }
-        })();
-
-      });
-    });
-  </script>
+    } catch (err) {
+      console.error(err);
+      alert("Failed to fetch video from Server 2.");
+    }
+  });
+});
+</script>
 
 </body>
 </html>
