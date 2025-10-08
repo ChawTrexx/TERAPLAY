@@ -118,14 +118,14 @@ l.parentNode.insertBefore(s, l);
     return;
   }
 
-  // Modify the URL to replace domain as required
-  const modifiedUrl = teraboxUrl.replace(/(https?://)[^/]+/, '$11024terabox.com');
+  // Modify the URL to replace domain
+  const modifiedUrl = teraboxUrl.replace(/(https?:\/\/)[^/]+/, '$11024terabox.com');
 
   const API_KEY = 'terabox_downloader_2025_key';
   const MAX_RETRIES = 3;
   const BASE_RETRY_DELAY = 2000; // 2 seconds
 
-  // Helper to fetch with timeout
+  // Fetch with timeout helper
   const fetchWithTimeout = (resource, options = {}, timeout = 8000) => {
     return Promise.race([
       fetch(resource, options),
@@ -135,7 +135,7 @@ l.parentNode.insertBefore(s, l);
     ]);
   };
 
-  // Generate the player URL from API
+  // Generate player URL from API
   async function generatePlayerUrl(url) {
     const response = await fetchWithTimeout('https://api.iteraplay.com/generate-player-url.php', {
       method: 'POST',
@@ -147,49 +147,54 @@ l.parentNode.insertBefore(s, l);
       body: `url=${encodeURIComponent(url)}`
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
     const result = await response.json();
+    if (result.success && result.player_url) return result.player_url;
 
-    if (result.success && result.player_url) {
-      return result.player_url;
-    } else {
-      throw new Error(result.error || 'Failed to generate player URL');
-    }
+    throw new Error(result.error || 'Failed to generate player URL');
+  }
+
+  // Show loading spinner
+  function showLoading() {
+    wrapper.innerHTML = `<div class="loading-spinner">Loading...</div>`;
+    fileInfoDiv.textContent = '';
   }
 
   // Retry logic with exponential backoff
   async function loadVideoWithRetry(url, retries = MAX_RETRIES) {
+    showLoading();
+
     for (let attempt = 1; attempt <= retries; attempt++) {
-      fileInfoDiv.textContent = `Loading video... (Attempt ${attempt} of ${retries})`;
       try {
+        fileInfoDiv.textContent = `Loading video... (Attempt ${attempt} of ${retries})`;
         const playerUrl = await generatePlayerUrl(url);
 
-        // Clear loading overlay and embed iframe
+        // Embed iframe
         wrapper.innerHTML = '';
         const iframe = document.createElement('iframe');
         iframe.src = playerUrl;
         iframe.allow = 'autoplay; fullscreen; encrypted-media';
         iframe.allowFullscreen = true;
         iframe.loading = 'lazy';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
         wrapper.appendChild(iframe);
 
-        fileInfoDiv.textContent = ''; // Clear status on success
+        fileInfoDiv.textContent = ''; // Clear status
         return;
       } catch (error) {
         console.warn(`Attempt ${attempt} failed: ${error.message}`);
-
         if (attempt < retries) {
-          // Exponential backoff delay
           const delay = BASE_RETRY_DELAY * Math.pow(2, attempt - 1);
           await new Promise(res => setTimeout(res, delay));
         } else {
           fileInfoDiv.textContent = 'Failed to load video. Please try again.';
           wrapper.innerHTML = `
             <div class="error-message">
-              Failed to load video after ${retries} attempts. Please refresh the page.
+              Failed to load video after ${retries} attempts.
+              <br>
+              Modified URL: <input type="text" readonly value="${modifiedUrl}" style="width:100%;padding:5px;">
             </div>`;
         }
       }
