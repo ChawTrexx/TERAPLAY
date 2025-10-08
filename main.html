@@ -3,69 +3,216 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TeraBox Proxy Video Player</title>
+  <meta name="description" content="TeraBox Video Player - Stream your videos seamlessly" />
+  <title>TeraBox Video Player</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f3f4f6; margin: 0; padding: 20px; }
-    #video-container { position: relative; padding-top: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000; max-width: 720px; margin: auto; }
-    iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-    #status { text-align: center; margin: 1rem 0; font-weight: bold; }
-    #input-section { text-align: center; margin-bottom: 1rem; }
-    input { width: 60%; padding: 8px; font-size: 1rem; }
-    button { padding: 8px 16px; font-size: 1rem; margin-left: 8px; }
+    :root {
+      --bg-light: #f3f4f6;
+      --bg-dark: #111827;
+      --color-light: #111827;
+      --color-dark: #f3f4f6;
+      --error-color: #dc2626;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: var(--bg-dark);
+        color: var(--color-dark);
+      }
+      header, footer {
+        background: var(--color-light);
+        color: var(--bg-dark);
+      }
+      .error {
+        color: #f87171;
+      }
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg-light);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+      color: var(--color-light);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    header {
+      background: var(--color-light);
+      color: var(--bg-light);
+      padding: 1rem;
+      width: 100%;
+      text-align: center;
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      user-select: none;
+      box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+    }
+
+    main {
+      flex: 1;
+      max-width: 900px;
+      width: 100%;
+      padding: 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .video-wrapper {
+      position: relative;
+      padding-top: 56.25%; /* 16:9 ratio */
+      background: black;
+      border-radius: 8px;
+      overflow: hidden;
+      width: 100%;
+      max-width: 100%;
+      box-shadow: 0 4px 10px rgb(0 0 0 / 0.25);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .video-wrapper:hover {
+      box-shadow: 0 8px 16px rgb(0 0 0 / 0.45);
+    }
+
+    iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    #info {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #374151;
+      min-height: 1.5em;
+      user-select: none;
+    }
+
+    .error {
+      color: var(--error-color);
+      font-weight: 700;
+      text-align: center;
+      user-select: text;
+    }
+
+    footer {
+      background: var(--color-light);
+      color: #9ca3af;
+      padding: 0.75rem 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+      user-select: none;
+      box-shadow: inset 0 1px 2px rgb(255 255 255 / 0.1);
+    }
+
+    /* Loading spinner */
+    .spinner {
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
   </style>
 </head>
 <body>
-  <h1 style="text-align:center;">TeraBox Video Player (via Proxy)</h1>
-  <div id="input-section">
-    <input type="url" id="terabox-url" placeholder="Enter TeraBox video URL here" />
-    <button onclick="playVideo()">Play</button>
-  </div>
-  <div id="status"></div>
-  <div id="video-container"></div>
+  <header>TeraBox Video Player</header>
+  <main>
+    <div id="info"><div class="spinner" aria-label="Loading video"></div></div>
+    <div class="video-wrapper" id="video-container" aria-live="polite"></div>
+  </main>
+  <footer>Wait 10-15 seconds for video to load. Refresh if not playing.</footer>
 
   <script>
-    async function playVideo() {
-      const urlInput = document.getElementById('terabox-url');
+    (() => {
+      const infoEl = document.getElementById('info');
       const videoContainer = document.getElementById('video-container');
-      const status = document.getElementById('status');
-      const teraboxUrl = urlInput.value.trim();
+      const params = new URLSearchParams(window.location.search);
+      const teraboxUrl = params.get('q');
+
+      const API_KEY = 'terabox_downloader_2025_key';
 
       if (!teraboxUrl) {
-        status.textContent = 'Please enter a valid TeraBox URL.';
+        infoEl.textContent = "Error: Please provide Terabox URL as ?q= parameter in URL.";
+        videoContainer.innerHTML = '';
         return;
       }
 
-      status.textContent = 'Fetching video player URL...';
-      videoContainer.innerHTML = '';
+      const apiUrl = teraboxUrl.replace(/(https?://)[^/]+/, '$11024terabox.com');
 
-      try {
-        const response = await fetch('/api/terabox-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: teraboxUrl })
-        });
+      const displayError = (message) => {
+        infoEl.textContent = '';
+        videoContainer.innerHTML = `<div class="error" role="alert">${message}</div>`;
+      };
 
-        if (!response.ok) {
-          status.textContent = 'Failed to fetch video player URL. Try again.';
-          return;
+      const displayLoading = () => {
+        infoEl.innerHTML = '<div class="spinner" aria-label="Loading video"></div>';
+      };
+
+      async function getPlayerUrl(url) {
+        displayLoading();
+        try {
+          const res = await fetch('https://api.iteraplay.com/generate-player-url.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-API-Key': API_KEY,
+              'Origin': location.origin
+            },
+            body: `url=${encodeURIComponent(url)}`
+          });
+
+          if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+
+          const data = await res.json();
+
+          if (data.success && data.player_url) {
+            return data.player_url;
+          } else {
+            throw new Error(data.error || 'Failed to get player URL');
+          }
+        } catch (err) {
+          throw err;
         }
+      }
 
-        const data = await response.json();
-
-        if (data.success && data.player_url) {
-          status.textContent = '';
+      async function loadVideo() {
+        try {
+          const playerUrl = await getPlayerUrl(apiUrl);
+          infoEl.textContent = '';
           const iframe = document.createElement('iframe');
-          iframe.src = data.player_url;
+          iframe.src = playerUrl;
           iframe.allow = 'autoplay; fullscreen; encrypted-media';
           iframe.allowFullscreen = true;
+          iframe.title = "TeraBox Video Player";
+          videoContainer.innerHTML = '';
           videoContainer.appendChild(iframe);
-        } else {
-          status.textContent = 'Video URL not available or invalid.';
+        } catch (err) {
+          displayError(`Error loading video: ${err.message}`);
         }
-      } catch (error) {
-        status.textContent = 'Error occurred: ' + error.message;
       }
-    }
+
+      loadVideo();
+    })();
   </script>
 </body>
 </html>
