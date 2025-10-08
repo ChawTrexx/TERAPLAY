@@ -172,7 +172,7 @@ l.parentNode.insertBefore(s, l);
 
   async function loadVideoWithRetry(url, attempt = 1, delay = INITIAL_DELAY) {
     const wrapper = videoContainer.querySelector('.video-wrapper');
-    fileInfoDiv.textContent = `Loading video... (Attempt ${attempt})`;
+    fileInfoDiv.textContent = `Loading video... (${attempt})`;
 
     try {
       const playerUrl = await generatePlayerUrl(url);
