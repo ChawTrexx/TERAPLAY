@@ -53,14 +53,13 @@ bot.on(["text", "photo", "video"], async (ctx) => {
   await ctx.reply("✅ Sent safely to all channels!");
 });
 
-// Vercel handler
 export default async function handler(req, res) {
   try {
     if (req.method === "POST") {
       await bot.handleUpdate(req.body, res);
       res.status(200).end();
     } else {
-      res.status(200).send("OK"); // handle GET requests (optional)
+      res.status(200).send("OK");
     }
   } catch (err) {
     console.error("❌ Error handling update:", err);
