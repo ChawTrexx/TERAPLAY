@@ -107,100 +107,101 @@ l.parentNode.insertBefore(s, l);
   <script>
     document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  const teraboxUrl = params.get('q');
+  const terabox_url = params.get('q');
   const videoContainer = document.getElementById('video-container');
   const fileInfoDiv = document.getElementById('file-info');
-  const wrapper = videoContainer.querySelector('.video-wrapper');
 
-  if (!teraboxUrl) {
+  if (!terabox_url) {
     fileInfoDiv.textContent = 'Error: No TeraBox URL provided.';
-    wrapper.innerHTML = `<div class="error-message">Please provide a TeraBox URL using ?q= parameter.</div>`;
+    videoContainer.innerHTML = `<div class="error-message">Please provide a TeraBox URL using ?q= parameter.</div>`;
     return;
   }
 
-  // Modify the URL to replace domain
-  const modifiedUrl = teraboxUrl.replace(/(https?:\/\/)[^/]+/, '$11024terabox.com');
-
+  const modifiedUrl = terabox_url.replace(/(https?:\/\/)[^/]+/, '$11024terabox.com');
   const API_KEY = 'terabox_downloader_2025_key';
-  const MAX_RETRIES = 3;
-  const BASE_RETRY_DELAY = 2000; // 2 seconds
+  const MAX_RETRIES = 5;
+  const INITIAL_DELAY = 2000; // 2 seconds
+  const TIMEOUT = 10000; // 10 seconds per request
 
-  // Fetch with timeout helper
-  const fetchWithTimeout = (resource, options = {}, timeout = 8000) => {
+  function createIframe(src) {
+    const iframe = document.createElement('iframe');
+    iframe.src = src;
+    iframe.allow = 'autoplay; fullscreen; encrypted-media';
+    iframe.allowFullscreen = true;
+    iframe.width = '100%';
+    iframe.height = '100%';
+    iframe.style.border = 'none';
+    return iframe;
+  }
+
+  function showError(message) {
+    fileInfoDiv.textContent = message;
+    const wrapper = videoContainer.querySelector('.video-wrapper');
+    wrapper.innerHTML = `<div class="error-message">${message}</div>`;
+  }
+
+  async function fetchWithTimeout(url, options = {}, timeout = TIMEOUT) {
     return Promise.race([
-      fetch(resource, options),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timed out')), timeout)
-      )
+      fetch(url, options),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), timeout))
     ]);
-  };
+  }
 
-  // Generate player URL from API
   async function generatePlayerUrl(url) {
-    const response = await fetchWithTimeout('https://api.iteraplay.com/generate-player-url.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-API-Key': API_KEY,
-        'Origin': window.location.origin,
-      },
-      body: `url=${encodeURIComponent(url)}`
-    });
+    try {
+      const response = await fetchWithTimeout('https://api.iteraplay.com/generate-player-url.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-API-Key': API_KEY,
+          'Origin': window.location.origin
+        },
+        body: `url=${encodeURIComponent(url)}`
+      });
 
-    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
-    const result = await response.json();
-    if (result.success && result.player_url) return result.player_url;
-
-    throw new Error(result.error || 'Failed to generate player URL');
+      const result = await response.json();
+      if (result.success && result.player_url) return result.player_url;
+      throw new Error(result.error || 'Failed to generate player URL');
+    } catch (err) {
+      console.error('Error generating player URL:', err);
+      throw err;
+    }
   }
 
-  // Show loading spinner
-  function showLoading() {
-    wrapper.innerHTML = `<div class="loading-spinner">Loading...</div>`;
-    fileInfoDiv.textContent = '';
-  }
+  async function loadVideoWithRetry(url, attempt = 1, delay = INITIAL_DELAY) {
+    const wrapper = videoContainer.querySelector('.video-wrapper');
+    fileInfoDiv.textContent = `Loading video... (Attempt ${attempt})`;
 
-  // Retry logic with exponential backoff
-  async function loadVideoWithRetry(url, retries = MAX_RETRIES) {
-    showLoading();
+    try {
+      const playerUrl = await generatePlayerUrl(url);
+      wrapper.innerHTML = '';
+      wrapper.appendChild(createIframe(playerUrl));
+      fileInfoDiv.textContent = '';
+    } catch (err) {
+      console.warn(`Attempt ${attempt} failed: ${err.message}`);
 
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        fileInfoDiv.textContent = `Loading video... (Attempt ${attempt} of ${retries})`;
-        const playerUrl = await generatePlayerUrl(url);
-
-        // Embed iframe
-        wrapper.innerHTML = '';
-        const iframe = document.createElement('iframe');
-        iframe.src = playerUrl;
-        iframe.allow = 'autoplay; fullscreen; encrypted-media';
-        iframe.allowFullscreen = true;
-        iframe.loading = 'lazy';
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        wrapper.appendChild(iframe);
-
-        fileInfoDiv.textContent = ''; // Clear status
-        return;
-      } catch (error) {
-        console.warn(`Attempt ${attempt} failed: ${error.message}`);
-        if (attempt < retries) {
-          const delay = BASE_RETRY_DELAY * Math.pow(2, attempt - 1);
-          await new Promise(res => setTimeout(res, delay));
-        } else {
-          fileInfoDiv.textContent = 'Failed to load video. Please try again.';
-          wrapper.innerHTML = `
-            <div class="error-message">
-              Failed to load video after ${retries} attempts.
-              <br>
-              Modified URL: <input type="text" readonly value="${modifiedUrl}" style="width:100%;padding:5px;">
-            </div>`;
-        }
+      if (attempt < MAX_RETRIES) {
+        setTimeout(() => loadVideoWithRetry(url, attempt + 1, delay * 1.5), delay);
+      } else {
+        showError('Failed to load video after multiple attempts. You can try refreshing the page or check your TeraBox URL.');
+        // Optional fallback
+        const fallbackLink = document.createElement('a');
+        fallbackLink.href = url;
+        fallbackLink.textContent = 'Open TeraBox Video';
+        fallbackLink.target = '_blank';
+        wrapper.appendChild(fallbackLink);
       }
     }
   }
 
+  // Initialize wrapper
+  videoContainer.innerHTML = `<div class="video-wrapper" style="width:100%;height:100%;position:relative;">
+    <div class="loading-spinner">Loading...</div>
+  </div>`;
+
+  // Start loading
   loadVideoWithRetry(modifiedUrl);
 });
   </script>
