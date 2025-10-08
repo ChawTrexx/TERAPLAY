@@ -10,18 +10,66 @@
       background: #121212;
       color: #fff;
       margin: 0;
-      padding: 20px;
+      padding: 0;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    h1 { color: #00d1ff; margin-bottom: 20px; }
-    #videoContainer { margin-top: 20px; }
+
+    /* Header */
+    header {
+      width: 100%;
+      height: 64px;
+      background: #1f1f1f;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      box-sizing: border-box;
+    }
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    header a {
+      background-color: #e74c3c;
+      padding: 6px 12px;
+      border-radius: 4px;
+      text-decoration: none;
+      color: white;
+      font-size: 0.9rem;
+    }
+    header a:hover {
+      background-color: #c0392b;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+    }
+
+    h1.page-title {
+      color: #00d1ff;
+      margin-bottom: 20px;
+    }
+
+    #videoContainer {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
     #popupVideo {
       width: 100%;
-      max-width: 800px;
-      height: 450px;
+      max-width: 360px; /* Mobile-friendly width for 9:16 */
+      aspect-ratio: 9/16;
       background: #000;
       border-radius: 8px;
     }
+
     #downloadLink {
       display: inline-block;
       margin-top: 15px;
@@ -32,63 +80,89 @@
       text-decoration: none;
       font-weight: bold;
     }
+
     #loadingText {
       font-size: 16px;
       color: #ccc;
       margin-top: 10px;
     }
+
+    /* Footer */
+    footer {
+      width: 100%;
+      background: #1f1f1f;
+      color: #ccc;
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 8px 0;
+    }
   </style>
 </head>
 <body>
 
-<h1>TeraBox Video Player - Server 2</h1>
+  <!-- Header -->
+  <header>
+    <h1>TeraPlayer</h1>
+    <a href="https://t.me/+Q656m5kaC245Njg1" target="_blank" rel="noopener noreferrer">
+      Join Channel
+    </a>
+  </header>
 
-<div id="videoContainer">
-  <video id="popupVideo" controls autoplay playsinline preload="auto"></video>
-  <div id="loadingText">Fetching video, please wait...</div>
-  <a id="downloadLink" href="#" target="_blank" rel="noreferrer" style="display:none;">Download Video</a>
-</div>
+  <main>
+    <h1 class="page-title">TeraBox Video Player - Server 2</h1>
 
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  const params = new URLSearchParams(window.location.search);
-  const teraboxUrl = params.get("q");
-  const video = document.getElementById("popupVideo");
-  const downloadLink = document.getElementById("downloadLink");
-  const loadingText = document.getElementById("loadingText");
+    <div id="videoContainer">
+      <video id="popupVideo" controls autoplay playsinline preload="auto"></video>
+      <div id="loadingText">Fetching video, please wait...</div>
+      <a id="downloadLink" href="#" target="_blank" rel="noreferrer" style="display:none;">Download Video</a>
+    </div>
+  </main>
 
-  if (!teraboxUrl) {
-    loadingText.textContent = "Error: No TeraBox link found in URL.";
-    return;
-  }
+  <!-- Footer -->
+  <footer>
+    ** Wait 10-15 sec to start streaming the video. Refresh this page if video doesn't load **
+  </footer>
 
-  try {
-    const encoded = encodeURIComponent(teraboxUrl);
-    const endpoint = `https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`;
-    const res = await fetch(endpoint);
-    if (!res.ok) throw new Error("Server 2 request failed");
-    const data = await res.json();
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const params = new URLSearchParams(window.location.search);
+      const teraboxUrl = params.get("q");
+      const video = document.getElementById("popupVideo");
+      const downloadLink = document.getElementById("downloadLink");
+      const loadingText = document.getElementById("loadingText");
 
-    if (data && data.direct_link) {
-      const finalUrl = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data.direct_link)}`;
-      video.src = finalUrl;
-      video.play();
+      if (!teraboxUrl) {
+        loadingText.textContent = "Error: No TeraBox link found in URL.";
+        return;
+      }
 
-      loadingText.style.display = "none";
+      try {
+        const encoded = encodeURIComponent(teraboxUrl);
+        const endpoint = `https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`;
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error("Server 2 request failed");
+        const data = await res.json();
 
-      // Show download link
-      downloadLink.href = data.direct_link;
-      downloadLink.textContent = `Download (${data.size || "Video"})`;
-      downloadLink.style.display = "inline-block";
-    } else {
-      loadingText.textContent = "No video found on Server 2!";
-    }
-  } catch (err) {
-    console.error(err);
-    loadingText.textContent = "Failed to fetch video from Server 2.";
-  }
-});
-</script>
+        if (data && data.direct_link) {
+          const finalUrl = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data.direct_link)}`;
+          video.src = finalUrl;
+          video.play();
+
+          loadingText.style.display = "none";
+
+          // Show download link
+          downloadLink.href = data.direct_link;
+          downloadLink.textContent = `Download (${data.size || "Video"})`;
+          downloadLink.style.display = "inline-block";
+        } else {
+          loadingText.textContent = "No video found on Server 2!";
+        }
+      } catch (err) {
+        console.error(err);
+        loadingText.textContent = "Failed to fetch video from Server 2.";
+      }
+    });
+  </script>
 
 </body>
 </html>
