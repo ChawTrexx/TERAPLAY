@@ -14,17 +14,79 @@
       text-align: center;
     }
     h1 { color: #00d1ff; margin-bottom: 20px; }
-    #teraboxLink { width: 80%; max-width: 500px; padding: 10px; border-radius: 6px; border: none; outline: none; font-size: 16px; }
-    #downloadBtn { margin-left: 10px; padding: 10px 20px; border-radius: 6px; border: none; background: #00d1ff; color: #000; font-weight: bold; cursor: pointer; }
-    #videoContainer { margin-top: 20px; }
-    #popupVideo { width: 100%; max-width: 800px; height: 450px; background: #000; border-radius: 8px; }
-    #downloadLink { display: inline-block; margin-top: 15px; padding: 10px 16px; background: #28a745; color: #fff; border-radius: 6px; text-decoration: none; }
+    #teraboxLink {
+      width: 80%;
+      max-width: 500px;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+    }
+    #downloadBtn {
+      margin-left: 10px;
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      background: #00d1ff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn {
+      display: inline-block;
+      margin: 6px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      color: #fff;
+    }
+    .btn-primary { background: #007bff; }
+    .btn-success { background: #28a745; }
+    .btn-warning { background: #ffc107; color: #000; }
+    .btn-info { background: #17a2b8; }
+    #popupVideo {
+      width: 100%;
+      max-width: 800px;
+      height: 450px;
+      background: #000;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    #outputFast, #outputFasts2 {
+      max-width: 850px;
+      margin: 20px auto;
+      text-align: left;
+    }
     #statusBox { margin-top: 10px; font-size: 14px; color: #ccc; }
+    #modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    #modal video {
+      width: 80%;
+      max-width: 800px;
+      border-radius: 10px;
+    }
+    #closeModal {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 30px;
+      color: white;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-<div style="display: flex; align-items: center;justify-content: center; gap: 8px;">
+<div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
   <img src="./logo.png" alt="Logo" width="40" height="40">
   <h1>𝗧𝗘𝗥𝗔𝗣𝗟𝗔𝗬 𝗕𝗼𝘁</h1>
 </div>
@@ -33,77 +95,189 @@
 <button id="downloadBtn" style="margin-top: 4px;">Play Video</button>
 <div id="statusBox"></div>
 
-<div id="videoContainer">
+<!-- API Results -->
+<div id="outputFast"></div>
+<div id="outputFasts2"></div>
+
+<!-- Video Modal -->
+<div id="modal">
+  <span id="closeModal">&times;</span>
   <video id="popupVideo" controls></video>
-  <a id="downloadLink" href="#" target="_blank" rel="noreferrer">Download Video</a>
-</div> 
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("downloadBtn");
-  const input = document.getElementById("teraboxLink");
-  const video = document.getElementById("popupVideo");
-  const downloadLink = document.getElementById("downloadLink");
-  const statusBox = document.getElementById("statusBox");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const inputField = document.getElementById("teraboxLink");
+  const outputFastDiv = document.getElementById("outputFast");
+  const outputFasts2Div = document.getElementById("outputFasts2");
+  const popupVideo = document.getElementById("popupVideo");
+  const modal = document.getElementById("modal");
+  const closeModal = document.getElementById("closeModal");
 
-  async function fetchFromAPI1(encoded) {
-    statusBox.textContent = "Trying Server 1...";
-    const res = await fetch(`https://tboxdownloader.in/tbox/tp/v1/s1_v2.php?url=${encoded}`);
-    if (!res.ok) throw new Error("Server 1 not reachable");
-    const data = await res.json();
-    if (data && data.directlink) return { link: data.directlink, size: data.size, server: "Server 1" };
-    throw new Error("Invalid data from Server 1");
+  closeModal.addEventListener("click", () => {
+    modal.style.display = "none";
+    popupVideo.pause();
+  });
+
+  // Loader generator
+  function createLoader() {
+    const loader = document.createElement("div");
+    loader.innerHTML = "⏳ Loading...";
+    loader.style = "padding:10px;color:#ccc;";
+    return loader;
   }
 
-  async function fetchFromAPI2(encoded) {
-    statusBox.textContent = "Trying Server 2...";
-    const res = await fetch(`https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`);
-    if (!res.ok) throw new Error("Server 2 not reachable");
-    const data = await res.json();
-    if (data && data.direct_link) return { link: data.direct_link, size: data.size, server: "Server 2" };
-    throw new Error("Invalid data from Server 2");
-  }
+  // -----------------------------
+  // MAIN CLICK HANDLER
+  // -----------------------------
+  downloadBtn.addEventListener("click", async () => {
+    const url = inputField.value.trim();
+    if (!url) return alert("Please paste a TeraBox link first.");
 
-  async function tryBothAPIs(encoded) {
-    try {
-      return await fetchFromAPI1(encoded);
-    } catch (err1) {
-      console.warn("Server 1 failed:", err1);
-      try {
-        return await fetchFromAPI2(encoded);
-      } catch (err2) {
-        console.error("Server 2 failed:", err2);
-        throw new Error("Both APIs failed");
-      }
-    }
-  }
-
-  btn.addEventListener("click", async () => {
-    const url = input.value.trim();
-    if (!url) return alert("Please enter a TeraBox link!");
     const encoded = encodeURIComponent(url);
+    outputFastDiv.innerHTML = "";
+    outputFasts2Div.innerHTML = "";
 
-    statusBox.style.color = "#ffc107";
-    statusBox.textContent = "Fetching video...";
-    downloadLink.textContent = "Loading...";
-    downloadLink.removeAttribute("href");
-    video.src = "";
+    const loader1 = createLoader();
+    const loader2 = createLoader();
+    outputFastDiv.appendChild(loader1);
+    outputFasts2Div.appendChild(loader2);
 
+    let api1Success = false;
+    let api2Success = false;
+
+    // -----------------------------
+    // API 1 (v2.php)
+    // -----------------------------
     try {
-      const data = await tryBothAPIs(encoded);
-      const streamURL = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data.link)}`;
-      video.src = streamURL;
-      video.play();
+      const endpoint1 = `https://tboxdownloader.in/tbox/tp/v1/s1_v2.php?url=${encoded}`;
+      const response = await fetch(endpoint1);
+      if (!response.ok) throw new Error("API 1 failed to respond");
 
-      downloadLink.href = data.link;
-      downloadLink.textContent = `Download (${data.size || "Unknown"})`;
+      const data = await response.json();
+      if (data && data.directlink) {
+        api1Success = true;
+        const wrapper = document.createElement("div");
+        wrapper.style = `
+          margin-top:20px;padding:15px;background:#ffffff22;
+          border-radius:8px;text-align:left;
+        `;
+        wrapper.innerHTML = `
+          <h3 style="
+            margin-bottom:8px;
+            word-wrap:break-word;
+            overflow-wrap:break-word;
+            word-break:break-all;
+          ">${data.file_name || "Unknown File"}</h3>
+          <p style="margin-bottom:12px;">Size: ${data.size || "Unknown"}</p>
+        `;
 
-      statusBox.style.color = "#28a745";
-      statusBox.textContent = `✅ Video loaded from ${data.server}`;
+        if (data.thumb) {
+          const thumb = document.createElement("img");
+          thumb.src = data.thumb;
+          thumb.alt = "Thumbnail";
+          thumb.style.cssText = `
+            max-width:100%;border-radius:8px;margin-bottom:12px;
+          `;
+          wrapper.prepend(thumb);
+        }
+
+        const directBtn = document.createElement("a");
+        directBtn.href = data.directlink;
+        directBtn.target = "_blank";
+        directBtn.rel = "noreferrer";
+        directBtn.className = "btn btn-primary";
+        directBtn.textContent = "Download";
+
+        const fastLink = data.directlink.replace(
+          "https://d.terabox.app",
+          "https://d8.freeterabox.com"
+        );
+        const fastBtn = document.createElement("a");
+        fastBtn.href = fastLink;
+        fastBtn.target = "_blank";
+        fastBtn.rel = "noreferrer";
+        fastBtn.className = "btn btn-success";
+        fastBtn.textContent = "Fast Download";
+
+        const playBtn = document.createElement("a");
+        playBtn.href = "#";
+        playBtn.className = "btn btn-warning";
+        playBtn.textContent = "Watch Online";
+        playBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          popupVideo.src = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(fastLink)}`;
+          modal.style.display = "flex";
+          popupVideo.play();
+        });
+
+        wrapper.append(directBtn, fastBtn, playBtn);
+        outputFastDiv.innerHTML = "";
+        outputFastDiv.append(wrapper);
+      }
     } catch (err) {
-      statusBox.style.color = "red";
-      statusBox.textContent = "❌ Both Server 1 and Server 2 failed to fetch video!";
-      downloadLink.textContent = "Download Video";
+      console.error("API 1 error:", err);
+      outputFastDiv.innerHTML = "";
+    }
+
+    // -----------------------------
+    // API 2 (s2_v1.php)
+    // -----------------------------
+    try {
+      const endpoint2 = `https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`;
+      const response = await fetch(endpoint2);
+      if (!response.ok) throw new Error("API 2 failed to respond");
+
+      const data2 = await response.json();
+      if (data2 && data2.direct_link) {
+        api2Success = true;
+        const wrapper2 = document.createElement("div");
+        wrapper2.style = `
+          margin-top:20px;padding:15px;background:#ffffff22;
+          border-radius:8px;text-align:left;
+        `;
+        wrapper2.innerHTML = `
+          <p style="margin-bottom:12px;">Size: ${data2.size || "Unknown"}</p>
+        `;
+
+        const fast2Btn = document.createElement("a");
+        fast2Btn.href = data2.direct_link;
+        fast2Btn.target = "_blank";
+        fast2Btn.rel = "noreferrer";
+        fast2Btn.className = "btn btn-info";
+        fast2Btn.textContent = "Fast Download Server 2";
+
+        const play2Btn = document.createElement("a");
+        play2Btn.href = "#";
+        play2Btn.className = "btn btn-warning";
+        play2Btn.textContent = "Watch Online";
+        play2Btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          popupVideo.src = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data2.direct_link)}`;
+          modal.style.display = "flex";
+          popupVideo.play();
+        });
+
+        wrapper2.append(fast2Btn, play2Btn);
+        outputFasts2Div.innerHTML = "";
+        outputFasts2Div.append(wrapper2);
+      }
+    } catch (err) {
+      console.error("API 2 error:", err);
+      outputFasts2Div.innerHTML = "";
+    }
+
+    // -----------------------------
+    // Final Fallback
+    // -----------------------------
+    if (!api1Success && !api2Success) {
+      outputFastDiv.innerHTML = `
+        <div style="padding:15px;background:#ff4d4d22;color:#ffdddd;border-radius:6px;">
+          ⚠️ Both API 1 and API 2 failed to fetch video!<br>
+          Please check your link or try again later.
+        </div>
+      `;
     }
   });
 });
