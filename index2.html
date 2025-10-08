@@ -3,130 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TeraPlayer</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Open Graph / Twitter -->
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Shared via TeraBox" />
-  <meta property="og:description" content="Watch this content via TeraBox." />
-  <meta property="og:image" content="https://honeycum.fun/Terabox.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-
+  <title>TeraBox Video Player - Server 2</title>
   <style>
-    .video-wrapper {
-      position: relative;
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 { color: #00d1ff; margin-bottom: 20px; }
+    #videoContainer { margin-top: 20px; }
+    #popupVideo {
       width: 100%;
-      padding-top: 56.25%; /* 16:9 aspect ratio */
+      max-width: 800px;
+      height: 450px;
       background: #000;
-      border-radius: 0.5rem;
-      overflow: hidden;
+      border-radius: 8px;
     }
-    .video-wrapper iframe, .video-wrapper video {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-      border-radius: 0.5rem;
-    }
-    .loading-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1rem;
+    #downloadLink {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 10px 16px;
+      background: #28a745;
+      color: #fff;
+      border-radius: 6px;
+      text-decoration: none;
       font-weight: bold;
-      z-index: 10;
+    }
+    #loadingText {
+      font-size: 16px;
+      color: #ccc;
+      margin-top: 10px;
     }
   </style>
 </head>
-<body class="bg-gray-100 flex flex-col items-center min-h-screen">
+<body>
 
-<header class="w-full h-16 bg-gray-900 text-white flex items-center justify-between px-4">
-  <h1 class="text-lg font-semibold">TeraPlayer</h1>
-  <a href="https://t.me/+Q656m5kaC245Njg1" target="_blank" rel="noopener noreferrer"
-     class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm inline-block">
-    Join Channel
-  </a>
-</header>
+<h1>TeraBox Video Player - Server 2</h1>
 
-<main class="stream-container w-full max-w-4xl mx-auto mt-4 flex flex-col items-center px-2">
-  <h1 id="file-info" class="text-center text-lg font-medium text-gray-800 mb-2">
-    Loading video...
-  </h1>
-
-  <div id="video-container" class="w-full bg-black rounded-lg relative">
-    <div class="video-wrapper">
-      <div class="loading-overlay" id="loading-text">Loading video...</div>
-    </div>
-  </div>
-
-  <a id="downloadBtn" href="#" target="_blank" rel="noreferrer"
-     class="mt-4 px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition hidden">
-    Download Video
-  </a>
-</main>
-
-<footer class="w-full bg-gray-900 text-gray-300 text-center text-xs py-2 mt-6">
-  ** Wait 10-15 sec to start streaming the video. Refresh if video doesn't load **
-</footer>
+<div id="videoContainer">
+  <video id="popupVideo" controls autoplay></video>
+  <div id="loadingText">Fetching video, please wait...</div>
+  <a id="downloadLink" href="#" target="_blank" rel="noreferrer" style="display:none;">Download Video</a>
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
   const teraboxUrl = params.get("q");
-  const videoWrapper = document.querySelector(".video-wrapper");
-  const loadingOverlay = document.getElementById("loading-text");
-  const fileInfo = document.getElementById("file-info");
-  const downloadBtn = document.getElementById("downloadBtn");
+  const video = document.getElementById("popupVideo");
+  const downloadLink = document.getElementById("downloadLink");
+  const loadingText = document.getElementById("loadingText");
 
   if (!teraboxUrl) {
-    fileInfo.textContent = "Error: No TeraBox URL provided!";
-    loadingOverlay.style.display = "none";
+    loadingText.textContent = "Error: No TeraBox link found in URL.";
     return;
   }
 
-  const encoded = encodeURIComponent(teraboxUrl);
-
   try {
+    const encoded = encodeURIComponent(teraboxUrl);
     const endpoint = `https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`;
     const res = await fetch(endpoint);
-    if (!res.ok) throw new Error("Failed to fetch video from Server 2");
+    if (!res.ok) throw new Error("Server 2 request failed");
     const data = await res.json();
 
-    if (!data || !data.direct_link) {
-      fileInfo.textContent = "No video found!";
-      loadingOverlay.style.display = "none";
-      return;
+    if (data && data.direct_link) {
+      const finalUrl = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data.direct_link)}`;
+      video.src = finalUrl;
+      video.play();
+
+      loadingText.style.display = "none";
+
+      // Show download link
+      downloadLink.href = data.direct_link;
+      downloadLink.textContent = `Download (${data.size || "Video"})`;
+      downloadLink.style.display = "inline-block";
+    } else {
+      loadingText.textContent = "No video found on Server 2!";
     }
-
-    // Update file info
-    fileInfo.textContent = `${data.file_name || "Video"} - ${data.size || ""}`;
-
-    // Add video player
-    const videoEl = document.createElement("video");
-    videoEl.src = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data.direct_link)}`;
-    videoEl.controls = true;
-    videoEl.autoplay = true;
-    videoWrapper.appendChild(videoEl);
-
-    // Hide loader
-    loadingOverlay.style.display = "none";
-
-    // Show download button
-    downloadBtn.href = data.direct_link;
-    downloadBtn.textContent = `Download (${data.size || "Video"})`;
-    downloadBtn.classList.remove("hidden");
-
   } catch (err) {
     console.error(err);
-    fileInfo.textContent = "Failed to load video. Try refreshing!";
-    loadingOverlay.style.display = "none";
+    loadingText.textContent = "Failed to fetch video from Server 2.";
   }
 });
 </script>
