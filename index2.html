@@ -12,7 +12,7 @@
     .video-wrapper {
       position: relative;
       width: 100%;
-      padding-top: 56.25%; /* 16:9 ratio */
+      padding-top: 56.25%; /* 16:9 */
       overflow: hidden;
       border-radius: 0.75rem;
       background: #000;
@@ -38,7 +38,6 @@
       color: #fff;
       font-size: 1rem;
       font-weight: 600;
-      letter-spacing: 0.5px;
     }
   </style>
 </head>
@@ -47,7 +46,7 @@
 
   <!-- Header -->
   <header class="w-full h-16 bg-gray-900 text-white flex items-center justify-between px-4 shadow-lg">
-    <h1 class="text-lg font-semibold text-cyan-400">TeraPlayer</h1>
+    <h1 class="text-lg font-semibold text-cyan-400">TeraPlayer - Server 2</h1>
     <a href="https://t.me/+Q656m5kaC245Njg1" 
        target="_blank" rel="noopener noreferrer"
        class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium">
@@ -57,14 +56,11 @@
 
   <!-- Main -->
   <main class="flex-grow w-full max-w-3xl mx-auto mt-4 flex flex-col items-center px-3">
-  <h2 id="file-info" class="text-center text-lg font-medium text-gray-300 mb-3">
-      Loading file info...
-  </h2>
 
     <div id="video-container" class="w-full bg-black rounded-lg relative">
       <div class="video-wrapper">
         <video id="popupVideo" controls autoplay></video>
-        <div class="loading-overlay" id="loading-text"> Preparing your video...</div>
+        <div class="loading-overlay" id="loading-text">Fetching video, please wait...</div>
       </div>
     </div>
 
@@ -89,10 +85,9 @@
       const video = document.getElementById("popupVideo");
       const downloadLink = document.getElementById("downloadLink");
       const loadingText = document.getElementById("loading-text");
-      const fileInfo = document.getElementById("file-info");
 
       if (!teraboxUrl) {
-        fileInfo.textContent = "❌ Error: No TeraBox link found in URL.";
+        loadingText.textContent = "❌ Error: No TeraBox link found in URL.";
         return;
       }
 
@@ -109,21 +104,16 @@
           video.play();
           loadingText.style.display = "none";
 
-          // ✅ File name from API
-          fileInfo.textContent = data.filename ? data.filename : "Unknown File";
-
           // ✅ Show download button
           downloadLink.href = data.direct_link;
           downloadLink.textContent = `⬇️ Download (${data.size || "Video"})`;
           downloadLink.classList.remove("hidden");
         } else {
           loadingText.textContent = "❌ No video found on Server 2.";
-          fileInfo.textContent = "Error loading video.";
         }
       } catch (err) {
         console.error(err);
         loadingText.textContent = "⚠️ Failed to fetch video from Server 2.";
-        fileInfo.textContent = "Something went wrong.";
       }
     });
   </script>
