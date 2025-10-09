@@ -131,7 +131,29 @@ l.parentNode.insertBefore(s, l);
 })({})
 </script>
   
-  <main>
+  <main> 
+    <div style="text-align:center; margin-bottom:15px;">
+  <button id="server1" style="background:#00aaff; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Server 1</button>
+  <button id="server2" style="background:#ff007f; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Server 2</button>
+  <button id="server3" style="background:#00c853; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Server 3</button>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const videoUrl = params.get('q');
+
+  document.getElementById('server1').onclick = () => {
+    window.location.href = `https://teraplayer.vercel.app/?q=${encodeURIComponent(videoUrl)}`;
+  };
+
+  document.getElementById('server2').onclick = () => {
+    window.location.href = `https://teraplayer.vercel.app/s2/?q=${encodeURIComponent(videoUrl)}`;
+  };
+
+  document.getElementById('server3').onclick = () => {
+    window.location.href = `https://teraplayer.vercel.app/s3/?q=${encodeURIComponent(videoUrl)}`;
+  };
+</script>
     
     <div id="videoContainer">
       <video id="popupVideo" controls autoplay playsinline preload="auto"></video>
