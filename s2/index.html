@@ -49,11 +49,6 @@
       padding: 10px;
     }
 
-    h1.page-title {
-      color: #00d1ff;
-      margin-bottom: 20px;
-    }
-
     #videoContainer {
       margin-top: 20px;
       display: flex;
@@ -71,7 +66,7 @@
 
     .btn {
       display: inline-block;
-      margin: 5px;
+      margin: 8px;
       padding: 10px 16px;
       border-radius: 6px;
       text-decoration: none;
@@ -80,7 +75,6 @@
     }
     .btn-primary { background: #007bff; }
     .btn-success { background: #28a745; }
-    .btn-warning { background: #ffc107; color: #000; }
 
     #loadingText {
       font-size: 16px;
@@ -139,9 +133,6 @@
       const encoded = encodeURIComponent(teraboxUrl);
       let api1Success = false;
 
-      // -----------------------------
-      // API 1 (v2.php)
-      // -----------------------------
       try {
         const endpoint1 = `https://tboxdownloader.in/tbox/tp/v1/s1_v2.php?url=${encoded}`;
         const response = await fetch(endpoint1);
@@ -166,16 +157,7 @@
             <p style="margin-bottom:12px;">Size: ${data.size || "Unknown"}</p>
           `;
 
-          if (data.thumb) {
-            const thumb = document.createElement("img");
-            thumb.src = data.thumb;
-            thumb.alt = "Thumbnail";
-            thumb.style.cssText = `
-              max-width:100%;border-radius:8px;margin-bottom:12px;
-            `;
-            wrapper.prepend(thumb);
-          }
-
+          // Download buttons
           const directBtn = document.createElement("a");
           directBtn.href = data.directlink;
           directBtn.target = "_blank";
@@ -194,22 +176,13 @@
           fastBtn.className = "btn btn-success";
           fastBtn.textContent = "Fast Download";
 
-          const playBtn = document.createElement("a");
-          playBtn.href = "#";
-          playBtn.className = "btn btn-warning";
-          playBtn.textContent = "Watch Online";
-          playBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            popupVideo.src = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(fastLink)}`;
-            popupVideo.play();
-          });
-
-          wrapper.append(directBtn, fastBtn, playBtn);
+          wrapper.append(directBtn, fastBtn);
           outputFastDiv.innerHTML = "";
           outputFastDiv.append(wrapper);
 
-          // Auto-play on load
-          popupVideo.src = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(fastLink)}`;
+          // Auto-play directly
+          const finalUrl = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(fastLink)}`;
+          popupVideo.src = finalUrl;
           popupVideo.play();
 
           loadingText.style.display = "none";
