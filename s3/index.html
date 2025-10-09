@@ -155,11 +155,20 @@ l.parentNode.insertBefore(s, l);
   };
 </script>
     
-    <div id="videoContainer">
-      <video id="popupVideo" controls autoplay playsinline preload="auto"></video>
-      <div id="loadingText">Fetching video, please wait...</div>
-      <a id="downloadLink" href="#" target="_blank" rel="noreferrer" style="display:none;">Download Video</a>
+      <div class="stream-container w-full max-w-4xl mx-auto mt-1 flex flex-col items-center px-2">
+    <!-- File Info -->
+    <h1 id="file-info" class="text-center text-lg font-medium text-gray-800 mb-1">
+      Loading video...
+    </h1>
+
+    <!-- Video Container -->
+    <div id="video-container" class="w-full bg-black rounded-lg relative">
+      <div class="video-wrapper">
+        <div class="loading-overlay" id="loading-text">Loading video...</div>
+      </div>
     </div>
+      </div>
+    
   </main>
 
   <!-- Footer -->
@@ -167,45 +176,111 @@ l.parentNode.insertBefore(s, l);
     ** Wait 10-15 sec to start streaming the video. Refresh this page if video doesn't load **
   </footer>
 
+  
+
+
+
+
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      const params = new URLSearchParams(window.location.search);
-      const teraboxUrl = params.get("q");
-      const video = document.getElementById("popupVideo");
-      const downloadLink = document.getElementById("downloadLink");
-      const loadingText = document.getElementById("loadingText");
+    document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const terabox_url = params.get('q');
+  const videoContainer = document.getElementById('video-container');
+  const fileInfoDiv = document.getElementById('file-info');
 
-      if (!teraboxUrl) {
-        loadingText.textContent = "Error: No TeraBox link found in URL.";
-        return;
+  if (!terabox_url) {
+    fileInfoDiv.textContent = 'Error: No TeraBox URL provided.';
+    videoContainer.innerHTML = `<div class="error-message">Please provide a TeraBox URL using ?q= parameter.</div>`;
+    return;
+  }
+
+  const modifiedUrl = terabox_url.replace(/(https?:\/\/)[^/]+/, '$11024terabox.com');
+  const API_KEY = 'terabox_downloader_2025_key';
+  const MAX_RETRIES = 5;
+  const INITIAL_DELAY = 2000; // 2 seconds
+  const TIMEOUT = 10000; // 10 seconds per request
+
+  function createIframe(src) {
+    const iframe = document.createElement('iframe');
+    iframe.src = src;
+    iframe.allow = 'autoplay; fullscreen; encrypted-media';
+    iframe.allowFullscreen = true;
+    iframe.width = '100%';
+    iframe.height = '100%';
+    iframe.style.border = 'none';
+    return iframe;
+  }
+
+  function showError(message) {
+    fileInfoDiv.textContent = message;
+    const wrapper = videoContainer.querySelector('.video-wrapper');
+    wrapper.innerHTML = `<div class="error-message">${message}</div>`;
+  }
+
+  async function fetchWithTimeout(url, options = {}, timeout = TIMEOUT) {
+    return Promise.race([
+      fetch(url, options),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), timeout))
+    ]);
+  }
+
+  async function generatePlayerUrl(url) {
+    try {
+      const response = await fetchWithTimeout('https://api.iteraplay.com/generate-player-url.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-API-Key': API_KEY,
+          'Origin': window.location.origin
+        },
+        body: `url=${encodeURIComponent(url)}`
+      });
+
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+
+      const result = await response.json();
+      if (result.success && result.player_url) return result.player_url;
+      throw new Error(result.error || 'Failed to generate player URL');
+    } catch (err) {
+      console.error('Error generating player URL:', err);
+      throw err;
+    }
+  }
+
+  async function loadVideoWithRetry(url, attempt = 1, delay = INITIAL_DELAY) {
+    const wrapper = videoContainer.querySelector('.video-wrapper');
+    fileInfoDiv.textContent = `Loading video... (${attempt})`;
+
+    try {
+      const playerUrl = await generatePlayerUrl(url);
+      wrapper.innerHTML = '';
+      wrapper.appendChild(createIframe(playerUrl));
+      fileInfoDiv.textContent = '';
+    } catch (err) {
+      console.warn(`Attempt ${attempt} failed: ${err.message}`);
+
+      if (attempt < MAX_RETRIES) {
+        setTimeout(() => loadVideoWithRetry(url, attempt + 1, delay * 1.5), delay);
+      } else {
+        showError('Failed to load video after multiple attempts. You can try refreshing the page or check your TeraBox URL.');
+        // Optional fallback
+        const fallbackLink = document.createElement('a');
+        fallbackLink.href = url;
+        fallbackLink.textContent = 'Open TeraBox Video';
+        fallbackLink.target = '_blank';
+        wrapper.appendChild(fallbackLink);
       }
+    }
+  }
 
-      try {
-        const encoded = encodeURIComponent(teraboxUrl);
-        const endpoint = `https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`;
-        const res = await fetch(endpoint);
-        if (!res.ok) throw new Error("Server 2 request failed");
-        const data = await res.json();
+  // Initialize wrapper
+  videoContainer.innerHTML = `<div class="video-wrapper" style="width:100%;height:100%;position:relative;">
+    <div class="loading-spinner">Loading...</div>
+  </div>`;
 
-        if (data && data.direct_link) {
-          const finalUrl = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data.direct_link)}`;
-          video.src = finalUrl;
-          video.play();
-
-          loadingText.style.display = "none";
-
-          // Show download link
-          downloadLink.href = data.direct_link;
-          downloadLink.textContent = `Download (${data.size || "Video"})`;
-          downloadLink.style.display = "inline-block";
-        } else {
-          loadingText.textContent = "No video found on Server 2!";
-        }
-      } catch (err) {
-        console.error(err);
-        loadingText.textContent = "Failed to fetch video from Server 2.";
-      }
-    });
+  // Start loading
+  loadVideoWithRetry(modifiedUrl);
+});
   </script>
 
 </body>
