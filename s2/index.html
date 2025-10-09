@@ -160,7 +160,7 @@ l.parentNode.insertBefore(s, l);
 
       try {
         const encoded = encodeURIComponent(teraboxUrl);
-        const endpoint = `https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`;
+        const endpoint = `https://tboxdownloader.in/tbox/tp/v1/s1_v2.php?data=${encoded}`;
         const res = await fetch(endpoint);
         if (!res.ok) throw new Error("Server 2 request failed");
         const data = await res.json();
