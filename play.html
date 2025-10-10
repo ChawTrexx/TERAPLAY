@@ -2,17 +2,77 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Video Player</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TeraBox Video Player</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    // ---------- Supabase Setup ----------
+    const SUPABASE_URL = "https://lfmwnkbwjjnshwfgsxdu.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmbXdua2J3ampuc2h3ZmdzeGR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MDg5OTQsImV4cCI6MjA3MjM4NDk5NH0.jNiPzEnsbc2tUSq_7uPcAlIx-mM3rnz1rDYxvsdS-rc";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ---------- Fetch playable URL ----------
+    async function fetchTeraBoxStream(teraboxUrl) {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const token = btoa(`${teraboxUrl}_${timestamp}`); // Simple encoding, replace with your HMAC logic if needed
+
+      const res = await fetch("/api/fetch-video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: teraboxUrl, token })
+      });
+
+      const data = await res.json();
+      // pick stream URL
+      if (data?.list?.length) {
+        return data.list[0].fast_stream_url || data.list[0].m3u8_url || data.list[0].stream_url;
+      }
+      throw new Error("No playable video found.");
+    }
+
+    // ---------- Initialize Video ----------
+    async function playVideo() {
+      const videoElement = document.getElementById("player");
+      const teraboxUrl = document.getElementById("teraboxLink").value;
+
+      try {
+        const streamUrl = await fetchTeraBoxStream(teraboxUrl);
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(streamUrl);
+          hls.attachMedia(videoElement);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => videoElement.play());
+        } else if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
+          videoElement.src = streamUrl;
+          videoElement.addEventListener("loadedmetadata", () => videoElement.play());
+        } else {
+          alert("HLS not supported in this browser.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Failed to load video: " + err.message);
+      }
+    }
+
+    // Optional: log video play to Supabase
+    async function logPlay(teraboxUrl) {
+      await supabase.from("video_logs").insert({ url: teraboxUrl, played_at: new Date() });
+    }
+
+    window.playVideo = async () => {
+      const url = document.getElementById("teraboxLink").value;
+      await playVideo();
+      await logPlay(url);
+    };
+  </script>
 </head>
-<body class="bg-gray-900">
-  <div id="root"></div>
-
-  <!-- React dependencies (agar bundle me included nahi) -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
-  <!-- Tumhara bundled JS -->
-  <script src="play.js"></script>
+<body style="background:#121212;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;">
+  <h2>TeraBox Video Player</h2>
+  <input id="teraboxLink" type="text" placeholder="Paste TeraBox link here..." style="width:80%;padding:10px;margin:10px 0;">
+  <button onclick="playVideo()" style="padding:10px 20px;margin-bottom:20px;">Play Video</button>
+  <video id="player" controls style="width:80%;max-width:800px;height:auto;background:#000;"></video>
 </body>
 </html>
