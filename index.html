@@ -199,11 +199,11 @@ l.parentNode.insertBefore(s, l);
           downloadLink.textContent = `Download (${data.size || "Video"})`;
           downloadLink.style.display = "inline-block";
         } else {
-          loadingText.textContent = "No video found on Server 2!";
+          loadingText.textContent = "No video found on Server 1!";
         }
       } catch (err) {
         console.error(err);
-        loadingText.textContent = "Failed to fetch video from Server 2.";
+        loadingText.textContent = "Failed to fetch video..Check another server";
       }
     });
   </script>
