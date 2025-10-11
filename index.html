@@ -5,197 +5,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TeraBox Downloader</title>
   <link rel="icon" href="logo.png">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0a0a0a;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-    }
-
-    header {
-      margin-top: 30px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    header img {
-      width: 45px;
-      height: 45px;
-      border-radius: 8px;
-    }
-
-    header h1 {
-      font-size: 1.8rem;
-      background: linear-gradient(90deg, #00d4ff, #ff00ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin: 0;
-    }
-
-    .container {
-      margin-top: 40px;
-      background: #111;
-      border: 1px solid #222;
-      border-radius: 10px;
-      padding: 20px;
-      width: 90%;
-      max-width: 600px;
-      box-shadow: 0 0 15px rgba(255, 0, 255, 0.2);
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 6px;
-      border: 1px solid #444;
-      background: #1a1a1a;
-      color: #fff;
-      font-size: 16px;
-      outline: none;
-    }
-
-    button {
-      margin-top: 15px;
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      background: linear-gradient(90deg, #ff00ff, #00d4ff);
-      color: #fff;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    button:hover {
-      opacity: 0.85;
-    }
-
-    #output {
-      margin-top: 25px;
-      text-align: center;
-    }
-
-    iframe {
-      width: 100%;
-      max-width: 800px;
-      height: 450px;
-      border-radius: 8px;
-      border: none;
-      margin-top: 20px;
-      box-shadow: 0 0 15px rgba(255, 0, 255, 0.2);
-    }
-
-    a {
-      text-decoration: none;
-      color: inherit;
-    }
+    body { font-family: Arial; background:#0a0a0a; color:#fff; margin:0; padding:0; display:flex; flex-direction:column; align-items:center; min-height:100vh; }
+    header { margin-top:30px; display:flex; align-items:center; gap:10px; }
+    header img { width:45px; height:45px; border-radius:8px; }
+    header h1 { font-size:1.8rem; background:linear-gradient(90deg,#00d4ff,#ff00ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0; }
+    .container { margin-top:40px; background:#111; border:1px solid #222; border-radius:10px; padding:20px; width:90%; max-width:600px; box-shadow:0 0 15px rgba(255,0,255,0.2); }
+    input { width:100%; padding:12px; border-radius:6px; border:1px solid #444; background:#1a1a1a; color:#fff; font-size:16px; outline:none; }
+    button { margin-top:15px; width:100%; padding:12px; border:none; border-radius:6px; background:linear-gradient(90deg,#ff00ff,#00d4ff); color:#fff; font-size:17px; font-weight:bold; cursor:pointer; }
+    button:hover { opacity:0.85; }
+    #output { margin-top:25px; text-align:center; }
+    video { width:100%; max-width:800px; height:450px; margin-top:20px; border-radius:8px; background:#000; }
+    a { text-decoration:none; color:#fff; display:inline-block; margin:10px 5px; padding:10px 16px; border-radius:6px; }
+    .fast { background:#28a745; }
+    .direct { background:#007bff; }
   </style>
 </head>
 <body>
-  <header>
-    <img src="logo.png" alt="Logo">
-    <h1>TeraBox Downloader</h1>
-  </header>
+<header>
+  <img src="logo.png" alt="Logo">
+  <h1>TeraBox Downloader</h1>
+</header>
 
-  <div class="container">
-    <input type="text" id="teraboxLink" placeholder="Paste TeraBox link here..." />
-    <button id="downloadBtn">Get Download Links</button>
-    <div id="output"></div>
-  </div>
+<div class="container">
+  <input type="text" id="teraboxLink" placeholder="Paste TeraBox link here..." />
+  <button id="downloadBtn">Get Download Links</button>
+  <div id="output"></div>
+  <video id="player" controls></video>
+</div>
 
-  <script>
-    const output = document.getElementById('output');
-    const input = document.getElementById('teraboxLink');
-    const btn = document.getElementById('downloadBtn');
+<script>
+const output = document.getElementById('output');
+const input = document.getElementById('teraboxLink');
+const btn = document.getElementById('downloadBtn');
+const videoEl = document.getElementById('player');
 
-    // Function to extract link from ?q=
-    function getQueryParam(name) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(name);
-    }
+// Get query param
+function getQueryParam(name){ const urlParams = new URLSearchParams(window.location.search); return urlParams.get(name); }
 
-    // Function to load video player directly
-    async function loadVideo(link) {
-      if (!link) return;
+// Load video from API
+async function loadVideo(link){
+  if(!link) return;
 
-      output.innerHTML = `
-        <div style="display:flex;justify-content:center;align-items:center;margin-top:25px;">
-          <div style="
-            width:40px;height:40px;
-            border:4px solid #fff;
-            border-top-color:transparent;
-            border-radius:50%;
-            animation:spin 1s linear infinite;">
-          </div>
-        </div>
-        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-      `;
+  output.innerHTML = `<p style="color:#ccc;">Loading video details...</p>`;
 
-      try {
-        const res = await fetch('https://tboxdownloader.in/tbox/basic/v2/tbox_v2.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({ link })
-        });
-
-        const data = await res.json();
-        if (data.error) {
-          output.innerHTML = `<p style="color:#ff4444;">Error: ${data.error}</p>`;
-          return;
-        }
-
-        const file = data.files[0];
-        const fileName = file.file_name || 'Unknown';
-        const fileSize = file.file_size || 'Unknown';
-        const fastLink = file.proxy_download_url;
-        const directLink = file.download_link;
-
-        const encoded = encodeURIComponent(link);
-        const playUrl = `https://teraplayer.vercel.app/s2/?q=${encoded}`;
-
-        output.innerHTML = `
-          <iframe src="${playUrl}" allowfullscreen></iframe>
-          <div style="margin-top:20px;">
-            <p><strong>${fileName}</strong> (${fileSize})</p>
-            <a href="${fastLink}" target="_blank" style="display:inline-block;padding:10px 16px;background:#28a745;border-radius:6px;margin-right:10px;">Fast Download</a>
-            <a href="${directLink}" target="_blank" style="display:inline-block;padding:10px 16px;background:#007bff;border-radius:6px;">Direct Download</a>
-          </div>
-        `;
-      } catch (e) {
-        console.error(e);
-        output.innerHTML = `<p style="color:#ff4444;">Failed to load video details.</p>`;
-      }
-    }
-
-    // Button click handler
-    btn.addEventListener('click', () => {
-      const link = input.value.trim();
-      if (!link) {
-        output.innerHTML = `<p style="color:yellow;">Please enter a valid TeraBox link.</p>`;
-        return;
-      }
-      loadVideo(link);
+  try {
+    const res = await fetch('https://tboxdownloader.in/tbox/basic/v2/tbox_v2.php',{
+      method:'POST',
+      headers:{ 'Content-Type':'application/json','Accept':'application/json' },
+      body: JSON.stringify({ link })
     });
+    const data = await res.json();
+    if(data.error){ output.innerHTML=`<p style="color:#ff4444;">Error: ${data.error}</p>`; return; }
 
-    // Auto play if ?q=link present
-    const queryLink = getQueryParam('q');
-    if (queryLink) {
-      input.value = decodeURIComponent(queryLink);
-      loadVideo(queryLink);
+    const file = data.files[0];
+    const fileName = file.file_name || 'Unknown';
+    const fileSize = file.file_size || 'Unknown';
+    const fastLink = file.proxy_download_url;
+    const directLink = file.download_link;
+    const playLink = file.m3u8_url;
+
+    // Show download buttons
+    output.innerHTML = `
+      <p><strong>${fileName}</strong> (${fileSize})</p>
+      <a href="${fastLink}" target="_blank" class="fast">Fast Download</a>
+      <a href="${directLink}" target="_blank" class="direct">Direct Download</a>
+    `;
+
+    // Play M3U8 using hls.js
+    if(Hls.isSupported()){
+      const hls = new Hls();
+      hls.loadSource(playLink);
+      hls.attachMedia(videoEl);
+      hls.on(Hls.Events.MANIFEST_PARSED,()=>videoEl.play());
+    } else if(videoEl.canPlayType('application/vnd.apple.mpegurl')){
+      videoEl.src = playLink;
+      videoEl.play();
+    } else {
+      alert("Your browser doesn't support HLS.");
     }
-  </script>
+
+  } catch(e){ console.error(e); output.innerHTML=`<p style="color:#ff4444;">Failed to load video.</p>`; }
+}
+
+// Button click
+btn.addEventListener('click',()=>{ const link = input.value.trim(); if(!link){ output.innerHTML=`<p style="color:yellow;">Enter a valid TeraBox link</p>`; return; } loadVideo(link); });
+
+// Auto play from ?q=
+const queryLink = getQueryParam('q');
+if(queryLink){ input.value = decodeURIComponent(queryLink); loadVideo(queryLink); }
+</script>
 </body>
 </html>
