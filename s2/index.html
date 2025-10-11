@@ -133,9 +133,7 @@
   </footer>
 
   <script>
-    // -----------------------------
-    // SERVER BUTTONS
-    // -----------------------------
+   
     const params = new URLSearchParams(window.location.search);
     const videoUrl = params.get('q');
 
@@ -149,9 +147,7 @@
       window.location.href = \`https://teraplayer.vercel.app/s3/?q=\${encodeURIComponent(videoUrl)}\`;
     };
 
-    // -----------------------------
-    // MODAL PLAYER (for HLS)
-    // -----------------------------
+   
     const modal = document.createElement("div");
     modal.style = \`
       position: fixed;
@@ -210,9 +206,7 @@
       }
     };
 
-    // -----------------------------
-    // MAIN FETCH LOGIC
-    // -----------------------------
+   
     document.addEventListener("DOMContentLoaded", async () => {
       const teraboxUrl = params.get("q");
       const popupVideo = document.getElementById("popupVideo");
