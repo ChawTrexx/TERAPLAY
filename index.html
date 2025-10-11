@@ -2,195 +2,120 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9710005261769840"
-     crossorigin="anonymous"></script>
-  <meta name="google-adsense-account" content="ca-pub-9710005261769840">
-  <title>TeraBox Video Player </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TeraBox Video Player</title>
+  <link rel="icon" href="logo.png">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #121212;
+      background: #0a0a0a;
       color: #fff;
       margin: 0;
       padding: 0;
-      text-align: center;
       display: flex;
       flex-direction: column;
+      align-items: center;
       min-height: 100vh;
     }
 
-    /* Header */
     header {
-      width: 100%;
-      height: 64px;
-      background: #1f1f1f;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      box-sizing: border-box;
-    }
-    header h1 {
-      font-size: 1.2rem;
-      font-weight: bold;
-    }
-    header a {
-      background-color: #e74c3c;
-      padding: 6px 12px;
-      border-radius: 4px;
-      text-decoration: none;
-      color: white;
-      font-size: 0.9rem;
-    }
-    header a:hover {
-      background-color: #c0392b;
+      margin-top: 20px;
+      font-size: 1.5rem;
+      color: #00ffff;
+      text-align: center;
     }
 
-    main {
-      flex: 1;
-      padding: 10px;
+    video {
+      margin-top: 20px;
+      width: 90%;
+      max-width: 800px;
+      border-radius: 10px;
+      background: #000;
     }
 
-    h1.page-title {
-      color: #00d1ff;
-      margin-bottom: 20px;
-    }
-
-    #videoContainer {
+    #buttons {
       margin-top: 20px;
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
-    #popupVideo {
-      width: 100%;
-      max-width: 360px; /* Mobile-friendly width for 9:16 */
-      aspect-ratio: 9/16;
-      background: #000;
-      border-radius: 8px;
-    }
-
-    #downloadLink {
-      display: inline-block;
-      margin-top: 15px;
+    a {
       padding: 10px 16px;
-      background: #28a745;
-      color: #fff;
       border-radius: 6px;
       text-decoration: none;
       font-weight: bold;
+      color: #fff;
+      transition: 0.3s;
     }
 
-    #loadingText {
-      font-size: 16px;
-      color: #ccc;
-      margin-top: 10px;
+    a:hover {
+      opacity: 0.8;
     }
 
-    /* Footer */
-    footer {
-      width: 100%;
-      background: #1f1f1f;
-      color: #ccc;
-      font-size: 0.8rem;
-      text-align: center;
-      padding: 8px 0;
-    }
+    #fastDownloadBtn { background: #28a745; }
+    #directDownloadBtn { background: #0056B3; }
   </style>
 </head>
 <body>
-
-  <!-- Header -->
-<header>
-  <div style="display: flex; align-items: center; gap: 8px;">
-    <img src="./logo.png" alt="Logo" width="40" height="40">
-    <h1 style="margin: 0; font-size: 1.2rem; font-weight: bold;">TeraPlayer</h1>
-  </div>
-  <a href="https://t.me/+Q656m5kaC245Njg1" target="_blank" rel="noopener noreferrer">
-    Join Channel
-  </a>
-</header>
-
-  
-  <main> 
-    <div style="text-align:center; margin-bottom:15px;">
-  <button id="server1" style="background:#00aaff; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Server 1</button>
-  <button id="server2" style="background:#ff007f; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Server 2</button>
-  <button id="server3" style="background:#00c853; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Server 3</button>
-</div>
-
-<script>
-  const params = new URLSearchParams(window.location.search);
-  const videoUrl = params.get('q');
-
-  document.getElementById('server1').onclick = () => {
-    window.location.href = `https://teraplayer.vercel.app/?q=${encodeURIComponent(videoUrl)}`;
-  };
-
-  document.getElementById('server2').onclick = () => {
-    window.location.href = `https://teraplayer.vercel.app/s2/?q=${encodeURIComponent(videoUrl)}`;
-  };
-
-  document.getElementById('server3').onclick = () => {
-    window.location.href = `https://teraplayer.vercel.app/s3/?q=${encodeURIComponent(videoUrl)}`;
-  };
-</script>
-    
-    <div id="videoContainer">
-      <video id="popupVideo" controls autoplay playsinline preload="auto"></video>
-      <div id="loadingText">Fetching video, please wait...</div>
-      <a id="downloadLink" href="#" target="_blank" rel="noreferrer" style="display:none;">Download Video</a>
-    </div>
-  </main>
-
-  <!-- Footer -->
-  <footer>
-    ** Wait 10-15 sec to start streaming the video. Refresh this page if video doesn't load **
-  </footer>
+  <header>🎬 TeraBox Video Player</header>
+  <video id="videoPlayer" controls autoplay></video>
+  <div id="buttons"></div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      const params = new URLSearchParams(window.location.search);
-      const teraboxUrl = params.get("q");
-      const video = document.getElementById("popupVideo");
-      const downloadLink = document.getElementById("downloadLink");
-      const loadingText = document.getElementById("loadingText");
+    const videoPlayer = document.getElementById('videoPlayer');
+    const buttonsDiv = document.getElementById('buttons');
 
-      if (!teraboxUrl) {
-        loadingText.textContent = "Error: No TeraBox link found in URL.";
-        return;
-      }
+    // Get TeraBox URL from query param ?q=
+    const urlParams = new URLSearchParams(window.location.search);
+    const teraLink = urlParams.get('q');
 
-      try {
-        const encoded = encodeURIComponent(teraboxUrl);
-        const endpoint = `https://tboxdownloader.in/tbox/tp/v1/s2_v1.php?data=${encoded}`;
-        const res = await fetch(endpoint);
-        if (!res.ok) throw new Error("Server 2 request failed");
-        const data = await res.json();
-
-        if (data && data.direct_link) {
-          const finalUrl = `https://sweet-field-bb2f.hdmovielover.workers.dev/?url=${encodeURIComponent(data.direct_link)}`;
-          video.src = finalUrl;
-          video.play();
-
-          loadingText.style.display = "none";
-
-          // Show download link
-          downloadLink.href = data.direct_link;
-          downloadLink.textContent = `Download (${data.size || "Video"})`;
-          downloadLink.style.display = "inline-block";
-        } else {
-          loadingText.textContent = "No video found on Server 1!";
+    if (!teraLink) {
+      buttonsDiv.innerHTML = '<p style="color:yellow;">No TeraBox link provided.</p>';
+    } else {
+      // Fetch video details from API
+      fetch('https://tboxdownloader.in/tbox/basic/v2/tbox_v2.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ link: teraLink })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          buttonsDiv.innerHTML = `<p style="color:#ff5722;">Error: ${data.error}</p>`;
+          return;
         }
-      } catch (err) {
-        console.error(err);
-        loadingText.textContent = "Failed to fetch video..Check another server";
-      }
-    });
-  </script>
 
+        const file = data.files[0];
+        const fastLink = file.proxy_download_url;
+        const directLink = file.download_link;
+        const playLink = file.m3u8_url;
+
+        // Auto-play the best available stream
+        if (playLink && window.Hls && Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(playLink);
+          hls.attachMedia(videoPlayer);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
+        } else if (playLink && videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+          videoPlayer.src = playLink;
+        } else {
+          videoPlayer.src = fastLink || directLink;
+        }
+
+        // Show download buttons
+        buttonsDiv.innerHTML = `
+          <a id="fastDownloadBtn" href="${fastLink}" target="_blank">Fast Download</a>
+          <a id="directDownloadBtn" href="${directLink}" target="_blank">Download Now</a>
+        `;
+      })
+      .catch(err => {
+        console.error(err);
+        buttonsDiv.innerHTML = '<p style="color:#ff5722;">Failed to fetch video info.</p>';
+      });
+    }
+  </script>
 </body>
 </html>
