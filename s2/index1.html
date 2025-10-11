@@ -157,7 +157,7 @@
       let api1Success = false;
 
       try {
-        const endpoint1 = `https://tboxdownloader.in/tbox/tp/v1/s1_v2.php?url=${encoded}`;
+        const endpoint1 = `https://tboxdownloader.in/tbox/tp/basic/v2/tbox_v2.php?url=${encoded}`;
         const response = await fetch(endpoint1);
         if (!response.ok) throw new Error("API 1 failed to respond");
 
