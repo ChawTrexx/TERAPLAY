@@ -1,293 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TeraBox Video Player</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    header {
-      width: 100%;
-      height: 64px;
-      background: #1f1f1f;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      box-sizing: border-box;
-    }
-
-    header h1 {
-      font-size: 1.2rem;
-      font-weight: bold;
-    }
-
-    header a {
-      background-color: #e74c3c;
-      padding: 6px 12px;
-      border-radius: 4px;
-      text-decoration: none;
-      color: white;
-      font-size: 0.9rem;
-    }
-
-    header a:hover {
-      background-color: #c0392b;
-    }
-
-    main {
-      flex: 1;
-      padding: 10px;
-    }
-
-    #videoContainer {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    #popupVideo {
-      width: 100%;
-      max-width: 360px;
-      aspect-ratio: 9/16;
-      background: #000;
-      border-radius: 8px;
-    }
-
-    .btn {
-      display: inline-block;
-      margin: 8px;
-      padding: 10px 16px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-      color: #fff;
-    }
-
-    .btn-primary { background: #007bff; }
-    .btn-success { background: #28a745; }
-
-    #loadingText {
-      font-size: 16px;
-      color: #ccc;
-      margin-top: 10px;
-    }
-
-    footer {
-      width: 100%;
-      background: #1f1f1f;
-      color: #ccc;
-      font-size: 0.8rem;
-      text-align: center;
-      padding: 8px 0;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TeraBox Player Fixed</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+  body {background:#111;color:#fff;text-align:center;font-family:sans-serif;margin:0;}
+  video {width:100%;max-width:380px;aspect-ratio:9/16;background:#000;border-radius:8px;}
+  .btn{display:inline-block;margin:6px;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-weight:bold}
+  .btn-primary{background:#007bff;color:#fff}
+  .btn-success{background:#28a745;color:#fff}
+  .btn-watch{background:#ffc107;color:#000}
+</style>
 </head>
-
 <body>
-  <!-- Header -->
-  <header>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <img src="https://teraplayer.vercel.app/logo.png" alt="Logo" width="40" height="40">
-      <h1 style="margin: 0;">TeraPlayer</h1>
-    </div>
-    <a href="https://t.me/+Q656m5kaC245Njg1" target="_blank" rel="noopener noreferrer">
-      Join Channel
-    </a>
-  </header>
 
-  <main>
-    <div style="text-align:center; margin-bottom:15px;">
-      <button id="server1" style="background:#00aaff; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Server 1</button>
-      <button id="server2" style="background:#ff007f; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Server 2</button>
-      <button id="server3" style="background:#00c853; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Server 3</button>
-    </div>
+<h2>TeraPlayer</h2>
+<video id="player" controls autoplay playsinline></video>
+<p id="status">Fetching video link...</p>
+<div id="actions"></div>
 
-    <div id="videoContainer">
-      <video id="popupVideo" controls autoplay playsinline preload="auto"></video>
-      <div id="loadingText">Fetching video, please wait...</div>
-      <div id="outputFastDiv"></div>
-    </div>
+<script>
+(async () => {
+  const q = new URLSearchParams(window.location.search).get("q");
+  const status = document.getElementById("status");
+  const player = document.getElementById("player");
+  const actions = document.getElementById("actions");
 
-    <div id="output"></div>
-  </main>
+  if (!q) {
+    status.textContent = "❌ No video link found!";
+    return;
+  }
 
-  <footer>
-    ** Wait 10–15 sec to start streaming the video. Refresh if it doesn't load **
-  </footer>
+  try {
+    const api = `https://tboxdownloader.in/tbox/tp/basic/v2/tbox_v2.php?url=${encodeURIComponent(q)}`;
+    const res = await fetch(api);
+    const data = await res.json();
+    if (!data || !data.directlink) throw new Error("API invalid response");
 
-  <script>
-   
-    const params = new URLSearchParams(window.location.search);
-    const videoUrl = params.get('q');
+    const direct = data.directlink;
+    const fast = direct.replace("https://d.terabox.app", "https://d8.freeterabox.com");
 
-    document.getElementById('server1').onclick = () => {
-      window.location.href = \`https://teraplayer.vercel.app/?q=\${encodeURIComponent(videoUrl)}\`;
-    };
-    document.getElementById('server2').onclick = () => {
-      window.location.href = \`https://teraplayer.vercel.app/s2/?q=\${encodeURIComponent(videoUrl)}\`;
-    };
-    document.getElementById('server3').onclick = () => {
-      window.location.href = \`https://teraplayer.vercel.app/s3/?q=\${encodeURIComponent(videoUrl)}\`;
+    // Buttons
+    actions.innerHTML = `
+      <a href="${direct}" target="_blank" class="btn btn-primary">Download</a>
+      <a href="${fast}" target="_blank" class="btn btn-success">Fast Download</a>
+      <button id="watch" class="btn btn-watch">Watch Online</button>
+    `;
+
+    // default try to play
+    await playVideo(fast);
+    status.textContent = "▶️ Playing video...";
+
+    document.getElementById("watch").onclick = async () => {
+      status.textContent = "Loading player...";
+      await playVideo(fast);
     };
 
-   
-    const modal = document.createElement("div");
-    modal.style = \`
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.85);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    \`;
-    modal.innerHTML = \`
-      <button id="closeModal" style="
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #ff1744;
-        color: #fff;
-        border: none;
-        cursor: pointer;
-        font-size: 20px;
-        font-weight: bold;
-      ">✕</button>
+  } catch (err) {
+    console.error(err);
+    status.textContent = "⚠️ Failed to fetch or play video.";
+  }
 
-      <div style="
-        background: #000;
-        border-radius: 10px;
-        width: 90%;
-        max-width: 800px;
-        aspect-ratio: 16/9;
-        overflow: hidden;
-      ">
-        <video id="popupVideoModal" controls autoplay playsinline style="width:100%; height:100%; object-fit:contain; background:#000;"></video>
-      </div>
-    \`;
-    document.body.appendChild(modal);
-    const popupVideoModal = modal.querySelector("#popupVideoModal");
-    const closeModal = modal.querySelector("#closeModal");
+  async function playVideo(url) {
+    const proxy = `https://cdn.jsdelivr.net/gh/hlsjs/hls.js@master/demo/?url=${encodeURIComponent(url)}`;
+    const finalUrl = url.includes(".m3u8") ? url : proxy;
 
-    closeModal.onclick = () => {
-      popupVideoModal.pause();
-      popupVideoModal.src = "";
-      modal.style.display = "none";
-    };
-
-    modal.onclick = (e) => {
-      if (e.target === modal) {
-        popupVideoModal.pause();
-        popupVideoModal.src = "";
-        modal.style.display = "none";
+    try {
+      if (window.Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(finalUrl);
+        hls.attachMedia(player);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => player.play());
+      } else if (player.canPlayType("application/vnd.apple.mpegurl")) {
+        player.src = finalUrl;
+        player.play();
+      } else {
+        player.src = url;
+        player.play();
       }
-    };
+    } catch (e) {
+      console.error("Play error:", e);
+      status.textContent = "❌ Unable to play video.";
+    }
+  }
+})();
+</script>
 
-   
-    document.addEventListener("DOMContentLoaded", async () => {
-      const teraboxUrl = params.get("q");
-      const popupVideo = document.getElementById("popupVideo");
-      const loadingText = document.getElementById("loadingText");
-      const outputFastDiv = document.getElementById("outputFastDiv");
-
-      if (!teraboxUrl) {
-        loadingText.textContent = "❌ No TeraBox link found in URL.";
-        return;
-      }
-
-      const encoded = encodeURIComponent(teraboxUrl);
-      let api1Success = false;
-
-      try {
-        const endpoint1 = \`https://tboxdownloader.in/tbox/tp/basic/v2/tbox_v2.php?url=\${encoded}\`;
-        const response = await fetch(endpoint1);
-        if (!response.ok) throw new Error("API failed");
-
-        const data = await response.json();
-        if (data && data.directlink) {
-          api1Success = true;
-
-          const wrapper = document.createElement("div");
-          wrapper.style = "margin-top:20px;padding:15px;background:#ffffff22;border-radius:8px;text-align:left;";
-          wrapper.innerHTML = \`
-            <h3 style="margin-bottom:8px;word-wrap:break-word;">\${data.file_name || "Unknown File"}</h3>
-            <p style="margin-bottom:12px;">Size: \${data.size || "Unknown"}</p>
-          \`;
-
-          const directBtn = document.createElement("a");
-          directBtn.href = data.directlink;
-          directBtn.target = "_blank";
-          directBtn.className = "btn btn-primary";
-          directBtn.textContent = "Download";
-
-          const fastLink = data.directlink.replace("https://d.terabox.app", "https://d8.freeterabox.com");
-          const fastBtn = document.createElement("a");
-          fastBtn.href = fastLink;
-          fastBtn.target = "_blank";
-          fastBtn.className = "btn btn-success";
-          fastBtn.textContent = "Fast Download";
-
-          const watchBtn = document.createElement("button");
-          watchBtn.textContent = "Watch Online";
-          watchBtn.style = "margin:8px;padding:10px 16px;border:none;border-radius:6px;background:#ffc107;color:#000;font-weight:bold;cursor:pointer;";
-
-          watchBtn.onclick = () => {
-            modal.style.display = "flex";
-            const playUrl = \`https://sweet-field-bb2f.hdmovielover.workers.dev/?url=\${encodeURIComponent(fastLink)}\`;
-
-            if (window.Hls && Hls.isSupported()) {
-              const hls = new Hls();
-              hls.loadSource(playUrl);
-              hls.attachMedia(popupVideoModal);
-              hls.on(Hls.Events.MANIFEST_PARSED, () => popupVideoModal.play());
-            } else {
-              popupVideoModal.src = playUrl;
-              popupVideoModal.play();
-            }
-          };
-
-          wrapper.append(directBtn, fastBtn, watchBtn);
-          outputFastDiv.innerHTML = "";
-          outputFastDiv.append(wrapper);
-
-          const finalUrl = \`https://sweet-field-bb2f.hdmovielover.workers.dev/?url=\${encodeURIComponent(fastLink)}\`;
-          popupVideo.src = finalUrl;
-          popupVideo.play();
-
-          loadingText.style.display = "none";
-        }
-      } catch (err) {
-        console.error("Error:", err);
-        loadingText.textContent = "⚠️ Failed to fetch video. Try another server.";
-      }
-
-      if (!api1Success) {
-        loadingText.textContent = "No playable link found.";
-      }
-    });
-  </script>
 </body>
 </html>
