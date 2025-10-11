@@ -1,92 +1,283 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TeraBox Player Fixed</title>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<style>
-  body {background:#111;color:#fff;text-align:center;font-family:sans-serif;margin:0;}
-  video {width:100%;max-width:380px;aspect-ratio:9/16;background:#000;border-radius:8px;}
-  .btn{display:inline-block;margin:6px;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-weight:bold}
-  .btn-primary{background:#007bff;color:#fff}
-  .btn-success{background:#28a745;color:#fff}
-  .btn-watch{background:#ffc107;color:#000}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TeraBox Downloader & Player</title>
+  <link rel="icon" href="https://terabox.com/favicon.ico" type="image/x-icon">
+
+  <!-- HLS.js for .m3u8 playback -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top, #111, #000);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: #00ffff;
+      letter-spacing: 1px;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 25px 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,255,255,0.2);
+      width: 90%;
+      max-width: 600px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      margin-bottom: 15px;
+      text-align: center;
+      background: #222;
+      color: #fff;
+    }
+    button {
+      background: linear-gradient(90deg, #00ffff, #0077ff);
+      color: #000;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #00ccff, #0055ff);
+    }
+    #output {
+      margin-top: 25px;
+      color: #fff;
+      font-size: 15px;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 13px;
+      opacity: 0.7;
+    }
+  </style>
 </head>
 <body>
+  <h1>🎬 TeraBox Downloader & Player</h1>
 
-<h2>TeraPlayer</h2>
-<video id="player" controls autoplay playsinline></video>
-<p id="status">Fetching video link...</p>
-<div id="actions"></div>
+  <div class="container">
+    <input type="text" id="teraboxLink" placeholder="Paste your TeraBox link here...">
+    <button id="downloadV1Button">Download / Watch</button>
+    <div id="output"></div>
+  </div>
 
-<script>
-(async () => {
-  const q = new URLSearchParams(window.location.search).get("q");
-  const status = document.getElementById("status");
-  const player = document.getElementById("player");
-  const actions = document.getElementById("actions");
+  <footer>
+    ⚡ Powered by <b>TBoxDownloader.in</b> | Auto Fallback Player
+  </footer>
 
-  if (!q) {
-    status.textContent = "❌ No video link found!";
-    return;
-  }
+  <!-- Your fixed tbox_v4.js -->
+  <script>
+  // ============================================================
+  // TeraBox Video Downloader & Player (v4 - Fixed Version)
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    const downloadV1Button = document.getElementById('downloadV1Button');
+    const output = document.getElementById('output');
+    const linkInput = document.getElementById('teraboxLink');
 
-  try {
-    const api = `https://tboxdownloader.in/tbox/tp/basic/v2/tbox_v2.php?url=${encodeURIComponent(q)}`;
-    const res = await fetch(api);
-    const data = await res.json();
-    if (!data || !data.directlink) throw new Error("API invalid response");
-
-    const direct = data.directlink;
-    const fast = direct.replace("https://d.terabox.app", "https://d8.freeterabox.com");
-
-    // Buttons
-    actions.innerHTML = `
-      <a href="${direct}" target="_blank" class="btn btn-primary">Download</a>
-      <a href="${fast}" target="_blank" class="btn btn-success">Fast Download</a>
-      <button id="watch" class="btn btn-watch">Watch Online</button>
+    // -----------------------------
+    // Video Player Modal
+    // -----------------------------
+    const modal = document.createElement("div");
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100%";
+    modal.style.height = "100%";
+    modal.style.background = "rgba(0,0,0,0.8)";
+    modal.style.display = "none";
+    modal.style.justifyContent = "center";
+    modal.style.alignItems = "center";
+    modal.style.zIndex = "9999";
+    modal.innerHTML = `
+      <button id="closeModal" style="
+        position:absolute;
+        top:20px;
+        right:20px;
+        width:36px;
+        height:36px;
+        border-radius:50%;
+        background:#ff4444;
+        color:#fff;
+        border:none;
+        cursor:pointer;
+        font-size:18px;
+        font-weight:bold;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:10000;
+      ">✖</button>    
+      <div style="
+        background:#000;
+        border-radius:8px;
+        width:90%;
+        max-width:800px;
+        aspect-ratio:16 / 9;
+        overflow:hidden;
+      ">
+        <video id="popupVideo" controls style="width:100%; height:100%; object-fit:contain; background:#000;"></video>
+      </div>
     `;
+    document.body.appendChild(modal);
 
-    // default try to play
-    await playVideo(fast);
-    status.textContent = "▶️ Playing video...";
+    const popupVideo = modal.querySelector("#popupVideo");
+    const closeModal = modal.querySelector("#closeModal");
 
-    document.getElementById("watch").onclick = async () => {
-      status.textContent = "Loading player...";
-      await playVideo(fast);
-    };
+    closeModal.addEventListener("click", () => {
+      popupVideo.pause();
+      popupVideo.src = "";
+      modal.style.display = "none";
+    });
 
-  } catch (err) {
-    console.error(err);
-    status.textContent = "⚠️ Failed to fetch or play video.";
-  }
-
-  async function playVideo(url) {
-    const proxy = `https://cdn.jsdelivr.net/gh/hlsjs/hls.js@master/demo/?url=${encodeURIComponent(url)}`;
-    const finalUrl = url.includes(".m3u8") ? url : proxy;
-
-    try {
-      if (window.Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(finalUrl);
-        hls.attachMedia(player);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => player.play());
-      } else if (player.canPlayType("application/vnd.apple.mpegurl")) {
-        player.src = finalUrl;
-        player.play();
-      } else {
-        player.src = url;
-        player.play();
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        popupVideo.pause();
+        popupVideo.src = "";
+        modal.style.display = "none";
       }
-    } catch (e) {
-      console.error("Play error:", e);
-      status.textContent = "❌ Unable to play video.";
-    }
-  }
-})();
-</script>
+    });
 
+    // -----------------------------
+    // Main Downloader Logic
+    // -----------------------------
+    downloadV1Button.addEventListener('click', async () => {
+      const link = linkInput.value.trim();
+      if (!link) {
+        output.innerHTML = '<p style="color:yellow; text-align:center; margin-top:15px;">Please enter a TeraBox link first.</p>';
+        return;
+      }
+
+      // Loader spinner
+      output.innerHTML = `
+        <div style="display:flex;justify-content:center;align-items:center;margin-top:25px;">
+          <div style="
+            width:40px;height:40px;
+            border:4px solid #fff;
+            border-top-color:transparent;
+            border-radius:50%;
+            animation:spin 1s linear infinite;">
+          </div>
+        </div>
+        <style>
+          @keyframes spin { to { transform: rotate(360deg); } }
+        </style>
+      `;
+
+      try {
+        const res = await fetch('https://tboxdownloader.in/tbox/basic/v2/tbox_v2.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ link })
+        });
+
+        if (!res.ok) throw new Error('Network response was not ok');
+        const data = await res.json();
+
+        if (data.error) {
+          output.innerHTML = `<p style="color:#ff5722; text-align:center; margin-top:15px;">Error: ${data.error}</p>`;
+          return;
+        }
+        
+        const file = data.files && data.files[0];
+        const fileName = file.file_name || 'Unknown File';
+        const fileSize = file.file_size || 'Unknown Size';
+        const thumbnail = file.thumbnail;
+        const fastLink = file.proxy_download_url;
+        const playLink = file.m3u8_url;
+        const directLink = file.download_link;
+
+        const baseBtnStyle = "display:inline-block;margin-right:10px;padding:10px 16px;color:#fff;text-decoration:none;border-radius:6px;";
+
+        output.innerHTML = `
+          <div style="text-align:center; color:#fff; margin-top:25px;">
+            ${thumbnail ? `<img src="${thumbnail}" alt="Thumbnail" style="max-width:200px;border-radius:8px;margin-bottom:10px;">` : ''}
+            <p><strong>File Name:</strong> ${fileName}</p>
+            <p><strong>File Size:</strong> ${fileSize}</p>
+
+            <a id="fastDownloadBtn"
+              href="${fastLink}"
+              target="_blank"
+              rel="noreferrer"
+              style="${baseBtnStyle}background:#28a745;">
+              Fast Download
+            </a>
+
+            <a id="directDownloadBtn"
+              href="${directLink}"
+              target="_blank"
+              rel="noreferrer"
+              style="${baseBtnStyle}background:#0056B3;">
+              Download Now
+            </a>
+
+            <a id="watchOnlineBtn"
+              href="#"
+              style="${baseBtnStyle}background:#ffc107;color:#000;">
+              Watch Online
+            </a>
+          </div>
+        `;
+
+        // -----------------------------
+        // Smart Video Player (Auto Fallback)
+        // -----------------------------
+        const watchOnlineBtn = document.getElementById('watchOnlineBtn');
+        watchOnlineBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          modal.style.display = "flex";
+
+          const streamUrl = playLink || fastLink || directLink;
+
+          if (!streamUrl) {
+            alert("No playable video link found.");
+            modal.style.display = "none";
+            return;
+          }
+
+          if (streamUrl.endsWith(".m3u8") && window.Hls && Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(streamUrl);
+            hls.attachMedia(popupVideo);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => popupVideo.play());
+          } else {
+            popupVideo.src = streamUrl;
+            popupVideo.play();
+          }
+        });
+
+      } catch (err) {
+        console.error(err);
+        output.innerHTML = '<p style="color:#ff5722; text-align:center; margin-top:15px;">Failed to fetch file info. Try again.</p>';
+      }
+    });
+  });
+  </script>
 </body>
 </html>
