@@ -6,19 +6,104 @@
 <title>TeraBox Downloader</title>
 <link rel="icon" href="logo.png">
 <style>
-/* Keep your existing CSS */
-body { font-family: Arial, sans-serif; background:#0a0a0a; color:#fff; margin:0; padding:0; display:flex; flex-direction:column; align-items:center; min-height:100vh; }
-header { margin-top:10px; display:flex; align-items:center; gap:10px; }
-header img { width:45px; height:45px; border-radius:8px; }
-header h1 { font-size:1.8rem; background:linear-gradient(90deg,#00d4ff,#ff00ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0; }
-.container { margin-top:10px; background:#111; border:1px solid #222; border-radius:10px; padding:20px; width:95%; max-width:500px; box-shadow:0 0 15px rgba(255,0,255,0.2); display:flex; flex-direction:column; align-items:center; }
-input { width:90%; max-width:400px; padding:12px; border-radius:6px; border:1px solid #444; background:#1a1a1a; color:#fff; font-size:16px; outline:none; text-align:center; }
-button { margin-top:15px; width:90%; max-width:400px; padding:12px; border:none; border-radius:6px; background:linear-gradient(90deg,#ff00ff,#00d4ff); color:#fff; font-size:17px; font-weight:bold; cursor:pointer; transition:0.3s; }
+body {
+  font-family: Arial, sans-serif;
+  background:#0a0a0a;
+  color:#fff;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-height:100vh;
+}
+header {
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+header img {
+  width:45px;
+  height:45px;
+  border-radius:8px;
+}
+header h1 {
+  font-size:1.8rem;
+  background:linear-gradient(90deg,#00d4ff,#ff00ff);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  margin:0;
+}
+.container {
+  margin-top:10px;
+  background:#111;
+  border:1px solid #222;
+  border-radius:10px;
+  padding:20px;
+  width:95%;
+  max-width:500px;
+  box-shadow:0 0 15px rgba(255,0,255,0.2);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+input {
+  width:90%;
+  max-width:400px;
+  padding:12px;
+  border-radius:6px;
+  border:1px solid #444;
+  background:#1a1a1a;
+  color:#fff;
+  font-size:16px;
+  outline:none;
+  text-align:center;
+}
+button {
+  margin-top:15px;
+  width:90%;
+  max-width:400px;
+  padding:12px;
+  border:none;
+  border-radius:6px;
+  background:linear-gradient(90deg,#ff00ff,#00d4ff);
+  color:#fff;
+  font-size:17px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.3s;
+}
 button:hover { opacity:0.85; }
-#videoContainer { margin-top:25px; width:100%; max-width:800px; background:#000; display:none; border-radius:8px; overflow:hidden; box-shadow:0 0 15px rgba(0,255,255,0.2); }
-#videoPlayer { width:100%; height:100%; object-fit:contain; background:#000; }
-#output { margin-top:15px; text-align:center; word-break: break-word; }
-a { text-decoration:none; color:inherit; display:inline-block; margin:5px 5px 0 0; padding:10px 16px; border-radius:6px; }
+#videoContainer {
+  margin-top:25px;
+  width:100%;
+  max-width:800px;
+  background:#000;
+  display:none; /* hidden by default */
+  border-radius:8px;
+  overflow:hidden;
+  box-shadow:0 0 15px rgba(0,255,255,0.2);
+}
+#videoPlayer {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000;
+}
+#output {
+  margin-top:15px;
+  text-align:center;
+  word-break: break-word;
+}
+a {
+  text-decoration:none;
+  color:inherit;
+  display:inline-block;
+  margin:5px 5px 0 0;
+  padding:10px 16px;
+  border-radius:6px;
+}
 @media (max-width:480px) {
   header h1 { font-size:1.4rem; }
   input, button { font-size:15px; }
@@ -62,10 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
     videoPlayer.src = '';
 
     try {
-      // Call Vercel serverless proxy
-      const res = await fetch('/api/proxy', {
+      const res = await fetch('https://tboxdownloader.in/tbox/basic/v2/tbox_v2.php', {
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
         body: JSON.stringify({ link })
       });
 
@@ -123,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const qLink = params.get('q');
   if (qLink) playTeraBox(qLink);
+
 });
 </script>
 </body>
