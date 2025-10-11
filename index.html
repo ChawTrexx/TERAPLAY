@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TeraBox Video Player</title>
+  <title>TeraBox Auto Player</title>
   <link rel="icon" href="logo.png">
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
@@ -20,18 +20,18 @@
     }
 
     header {
-      margin-top: 20px;
+      margin: 20px 0;
       font-size: 1.5rem;
       color: #00ffff;
       text-align: center;
     }
 
     video {
-      margin-top: 20px;
       width: 90%;
       max-width: 800px;
       border-radius: 10px;
       background: #000;
+      margin-top: 20px;
     }
 
     #buttons {
@@ -60,7 +60,7 @@
   </style>
 </head>
 <body>
-  <header>🎬 TeraBox Video Player</header>
+  <header>🎬 TeraBox Auto Player</header>
   <video id="videoPlayer" controls autoplay></video>
   <div id="buttons"></div>
 
@@ -75,7 +75,7 @@
     if (!teraLink) {
       buttonsDiv.innerHTML = '<p style="color:yellow;">No TeraBox link provided.</p>';
     } else {
-      // Fetch video details from API
+      // Fetch video details from your API
       fetch('https://tboxdownloader.in/tbox/basic/v2/tbox_v2.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -93,16 +93,20 @@
         const directLink = file.download_link;
         const playLink = file.m3u8_url;
 
-        // Auto-play the best available stream
-        if (playLink && window.Hls && Hls.isSupported()) {
+        // Auto-play video
+        const streamUrl = playLink || fastLink || directLink;
+        if (!streamUrl) {
+          buttonsDiv.innerHTML = '<p style="color:yellow;">No playable video found.</p>';
+          return;
+        }
+
+        if (streamUrl.endsWith('.m3u8') && window.Hls && Hls.isSupported()) {
           const hls = new Hls();
-          hls.loadSource(playLink);
+          hls.loadSource(streamUrl);
           hls.attachMedia(videoPlayer);
           hls.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
-        } else if (playLink && videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-          videoPlayer.src = playLink;
         } else {
-          videoPlayer.src = fastLink || directLink;
+          videoPlayer.src = streamUrl;
         }
 
         // Show download buttons
