@@ -9,7 +9,7 @@
 body { font-family: Arial, sans-serif; background:#0a0a0a; color:#fff; margin:0; padding:0; display:flex; flex-direction:column; align-items:center; min-height:100vh; }
 header { margin-top:30px; display:flex; align-items:center; gap:10px; }
 header img { width:45px; height:45px; border-radius:8px; }
-header h1 { font-size:1.8rem; background: linear-gradient(90deg,#00d4ff,#ff00ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0; }
+header h1 { font-size:1.8rem; background:linear-gradient(90deg,#00d4ff,#ff00ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0; }
 .container { margin-top:40px; background:#111; border:1px solid #222; border-radius:10px; padding:20px; width:90%; max-width:600px; box-shadow:0 0 15px rgba(255,0,255,0.2); }
 input { width:100%; padding:12px; border-radius:6px; border:1px solid #444; background:#1a1a1a; color:#fff; font-size:16px; outline:none; }
 button { margin-top:15px; width:100%; padding:12px; border:none; border-radius:6px; background:linear-gradient(90deg,#ff00ff,#00d4ff); color:#fff; font-size:17px; font-weight:bold; cursor:pointer; transition:0.3s; }
@@ -30,7 +30,7 @@ a { text-decoration:none; color:inherit; }
 <input type="text" id="teraboxLink" placeholder="Paste TeraBox link here..." />
 <button id="downloadV1Button">Get Download Links & Play</button>
 <div id="videoContainer">
-<video id="videoPlayer" controls autoplay></video>
+  <video id="videoPlayer" controls autoplay></video>
 </div>
 <div id="output"></div>
 </div>
@@ -46,10 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function playTeraBox(link) {
     if (!link) return;
-    linkInput.value = link; // fill input box
+    linkInput.value = link; // input box fill
+
+    // Loader
     output.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;">
       <div style="width:40px;height:40px;border:4px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
-      </div><style>@keyframes spin{to{transform:rotate(360deg);}}</style>`;
+      </div><style>@keyframes spin { to { transform: rotate(360deg); } }</style>`;
 
     try {
       const res = await fetch('https://tboxdownloader.in/tbox/basic/v2/tbox_v2.php', {
@@ -59,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (!res.ok) throw new Error('Network error');
-
       const data = await res.json();
       if (data.error) { output.innerHTML=`<p style="color:#ff5722;">Error: ${data.error}</p>`; return; }
 
@@ -70,16 +71,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const directLink = file.download_link;
       const playLink = file.m3u8_url;
 
+      // Download buttons
       output.innerHTML = `
         <p><strong>File Name:</strong> ${fileName}</p>
         <p><strong>File Size:</strong> ${fileSize}</p>
         <a href="${fastLink}" target="_blank" style="margin-right:10px;padding:10px 16px;background:#28a745;color:#fff;border-radius:6px;">Fast Download</a>
-        <a href="${directLink}" target="_blank" style="margin-right:10px;padding:10px 16px;background:#0056B3;color:#fff;border-radius:6px;">Download Now</a>`;
+        <a href="${directLink}" target="_blank" style="margin-right:10px;padding:10px 16px;background:#0056B3;color:#fff;border-radius:6px;">Download Now</a>
+      `;
 
       if (!playLink) { videoContainer.style.display='none'; return; }
 
+      // Play video
       videoContainer.style.display='block';
-
       if (Hls.isSupported()) {
         const hls = new Hls();
         hls.loadSource(playLink);
@@ -89,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         videoPlayer.src=playLink;
         videoPlayer.play();
       } else { alert("Your browser doesn't support HLS playback."); }
+
     } catch(err) {
       console.error(err);
       output.innerHTML = '<p style="color:#ff5722;">Failed to fetch file info. Try again.</p>';
@@ -99,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
   downloadV1Button.addEventListener('click', ()=>playTeraBox(linkInput.value.trim()));
 
   // ----------------------------
-  // Check URL param ?q=... for auto-play
+  // Auto-play from URL param ?q=
   // ----------------------------
   const params = new URLSearchParams(window.location.search);
   const qLink = params.get('q');
