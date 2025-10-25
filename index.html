@@ -9,7 +9,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
   import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyALvB7xgYjhBZi5y2JSBamDysNdgIm2mEo",
     authDomain: "wechat-54b07.firebaseapp.com",
@@ -25,18 +24,17 @@
   const db = getDatabase(app);
 
   window.addEventListener("DOMContentLoaded", () => {
-    const chatList = document.getElementById("chat-list");
+    const chatList = document.querySelector("#chat-list ul");
     const nameInput = document.getElementById("username");
     const msgInput = document.getElementById("msg");
     const sendBtn = document.getElementById("sendBtn");
 
     function addMessage(msg) {
       const li = document.createElement("li");
-      li.className = "px-4 py-2 rounded-lg max-w-xs break-words " + 
-        (msg.sender === nameInput.value ? 
-          "bg-green-500 text-white ml-auto rounded-br-none" : 
+      li.className = "px-4 py-2 rounded-lg max-w-xs break-words " +
+        (msg.sender === (nameInput.value || "Anonymous") ?
+          "bg-green-500 text-white ml-auto rounded-br-none" :
           "bg-gray-200 text-black rounded-bl-none");
-
       li.innerHTML = `<strong>${msg.sender}</strong><br>${msg.text}<br><span class="text-xs text-gray-600">${msg.time}</span>`;
       chatList.appendChild(li);
       chatList.scrollTop = chatList.scrollHeight;
@@ -59,11 +57,11 @@
     sendBtn.addEventListener("click", sendMessage);
     msgInput.addEventListener("keydown", e => { if(e.key === "Enter") sendMessage(); });
 
-    // Listen for new messages
-    onChildAdded(ref(db, "messages"), snapshot => {
+    // Listen for messages (existing + new)
+    const messagesRef = ref(db, "messages");
+    onChildAdded(messagesRef, snapshot => {
       const data = snapshot.val();
-      // Format timestamp
-      const time = data.timestamp ? new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+      const time = data.timestamp ? new Date(data.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
       addMessage({ ...data, time });
     });
   });
