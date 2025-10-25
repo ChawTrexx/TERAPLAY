@@ -6,12 +6,11 @@
 <title>Global Chat</title>
 
 <script type="module">
-  // Import Firebase functions
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-analytics.js";
   import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-  // Firebase configuration
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyALvB7xgYjhBZi5y2JSBamDysNdgIm2mEo",
     authDomain: "wechat-54b07.firebaseapp.com",
@@ -39,7 +38,7 @@
     }
     const clientId = localStorage.getItem("clientId");
 
-    // Add message to chat
+    // Add message to chat container
     function addMessage(msg) {
       const li = document.createElement("li");
       li.textContent = msg.text;
@@ -55,24 +54,33 @@
       chatList.scrollTop = chatList.scrollHeight;
     }
 
-    // Send message
+    // Send message to Firebase
     function sendMessage() {
       const text = msgInput.value.trim();
       if (!text) return;
 
-      push(ref(db, "messages"), {
+      const messageData = {
         text,
         clientId,
         timestamp: serverTimestamp()
-      });
+      };
 
-      msgInput.value = "";
+      // Push to database and log success/error
+      push(ref(db, "messages"), messageData)
+        .then(() => {
+          console.log("✅ Message sent to DB:", messageData);
+          msgInput.value = "";
+        })
+        .catch(err => {
+          console.error("❌ Failed to send message:", err);
+        });
     }
 
+    // Event listeners
     sendBtn.addEventListener("click", sendMessage);
     msgInput.addEventListener("keydown", e => { if (e.key === "Enter") sendMessage(); });
 
-    // Listen for all messages
+    // Listen for all messages in real-time
     onChildAdded(ref(db, "messages"), snapshot => {
       const data = snapshot.val();
       addMessage(data);
