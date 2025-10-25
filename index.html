@@ -5,95 +5,148 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Global Chat</title>
 
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, serverTimestamp, onValue, remove } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-// Firebase config
+// 🔹 Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyALvB7xgYjhBZi5y2JSBamDysNdgIm2mEo",
   authDomain: "wechat-54b07.firebaseapp.com",
+  databaseURL: "https://wechat-54b07-default-rtdb.firebaseio.com/",
   projectId: "wechat-54b07",
-  storageBucket: "wechat-54b07.firebasestorage.app",
+  storageBucket: "wechat-54b07.appspot.com",
   messagingSenderId: "221397223557",
-  appId: "1:221397223557:web:40703bc5c13dc1b2ab81ec",
-  measurementId: "G-XJRYS6DHLR",
-  databaseURL: "https://wechat-54b07-default-rtdb.firebaseio.com/"
+  appId: "1:221397223557:web:40703bc5c13dc1b2ab81ec"
 };
 
+// 🔹 Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 window.addEventListener("DOMContentLoaded", () => {
-  const chatList = document.querySelector("#chat-list ul");
+  const chatList = document.querySelector("#chat-list");
   const nameInput = document.getElementById("username");
   const msgInput = document.getElementById("msg");
   const sendBtn = document.getElementById("sendBtn");
+  const typingIndicator = document.getElementById("typing");
 
-  // Assign a unique client ID per device for sent/received styling
-  if(!localStorage.getItem("clientId")) {
+  // 🔹 Unique client ID per device
+  if (!localStorage.getItem("clientId")) {
     localStorage.setItem("clientId", Date.now() + "-" + Math.random().toString(36).substring(2));
   }
   const clientId = localStorage.getItem("clientId");
 
-  function addMessage(msg) {
+  // 🔹 Typing status
+  const typingRef = ref(db, "typing/" + clientId);
+  msgInput.addEventListener("input", () => {
+    const val = msgInput.value.trim();
+    if(val) push(typingRef, true);
+    else remove(typingRef);
+  });
+
+  // 🔹 Listen for typing from others
+  const typingAllRef = ref(db, "typing");
+  onValue(typingAllRef, snapshot => {
+    let typingUsers = [];
+    snapshot.forEach(child => {
+      if(child.key !== clientId) typingUsers.push(child.key);
+    });
+    typingIndicator.textContent = typingUsers.length ? "Someone is typing..." : "";
+  });
+
+  // 🔹 Add message to chat window
+  function addMessage(id, msg) {
     const li = document.createElement("li");
-    li.className = "px-4 py-2 rounded-lg max-w-xs break-words " +
-      (msg.clientId === clientId ? 
-        "bg-green-500 text-white ml-auto rounded-br-none" : 
-        "bg-gray-200 text-black rounded-bl-none");
+    li.className = "px-4 py-2 rounded-lg max-w-xs break-words relative " +
+      (msg.clientId === clientId
+        ? "bg-green-500 text-white ml-auto rounded-br-none"
+        : "bg-gray-200 text-black rounded-bl-none");
+    li.dataset.id = id;
     li.innerHTML = `<strong>${msg.sender}</strong><br>${msg.text}<br><span class="text-xs text-gray-600">${msg.time}</span>`;
+
+    // 🔹 Delete own message on click
+    if(msg.clientId === clientId) {
+      li.classList.add("cursor-pointer");
+      li.title = "Click to delete";
+      li.addEventListener("click", () => {
+        remove(ref(db, "messages/" + id));
+      });
+    }
+
     chatList.appendChild(li);
     chatList.scrollTop = chatList.scrollHeight;
   }
 
+  // 🔹 Send message
   function sendMessage() {
     const text = msgInput.value.trim();
     const sender = nameInput.value.trim() || "Anonymous";
-    if(!text) return;
+    if (!text) return;
 
-    push(ref(db, "messages"), {
-      text: text,
-      sender: sender,
-      clientId: clientId,
+    const newMsgRef = push(ref(db, "messages"));
+    newMsgRef.set({
+      text,
+      sender,
+      clientId,
       timestamp: serverTimestamp()
     });
 
     msgInput.value = "";
+    remove(typingRef); // clear typing on send
   }
 
   sendBtn.addEventListener("click", sendMessage);
-  msgInput.addEventListener("keydown", e => { if(e.key === "Enter") sendMessage(); });
+  msgInput.addEventListener("keydown", e => { if (e.key === "Enter") sendMessage(); });
 
-  // Listen for all messages (existing + new)
+  // 🔹 Listen for messages in real-time
   onChildAdded(ref(db, "messages"), snapshot => {
     const data = snapshot.val();
     const time = data.timestamp ? new Date(data.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-    addMessage({ ...data, time });
+    addMessage(snapshot.key, { ...data, time });
+  });
+
+  // 🔹 Listen for removed messages (to remove from DOM)
+  const messagesRef = ref(db, "messages");
+  messagesRef.on('child_removed', snapshot => {
+    const el = chatList.querySelector(`li[data-id="${snapshot.key}"]`);
+    if(el) el.remove();
   });
 });
 </script>
 
-<script src="https://cdn.tailwindcss.com"></script>
 <style>
 body { background:#f5f5f5; }
-.chat-window { height:70vh; overflow-y:auto; padding:10px; display:flex; flex-direction:column; }
+.chat-window { height:65vh; overflow-y:auto; padding:10px; display:flex; flex-direction:column; }
 </style>
 </head>
 
 <body class="flex justify-center items-center h-screen p-4">
   <div class="flex flex-col w-full max-w-md bg-white border rounded-lg shadow-lg h-full">
-    <div class="p-4 bg-green-500 text-white font-semibold rounded-t-lg text-center">Global Chat</div>
-
-    <div class="chat-window" id="chat-list">
-      <ul class="space-y-2"></ul>
+    <!-- Header -->
+    <div class="p-4 bg-green-500 text-white font-semibold rounded-t-lg text-center">
+      Global Chat
     </div>
 
+    <!-- Chat messages -->
+    <div class="chat-window relative">
+      <ul id="chat-list" class="space-y-2"></ul>
+      <div id="typing" class="absolute bottom-2 left-4 text-sm text-gray-500"></div>
+    </div>
+
+    <!-- Input area -->
     <div class="flex flex-col p-4 border-t space-y-2">
-      <input type="text" id="username" placeholder="Enter your name" class="border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+      <input type="text" id="username" placeholder="Enter your name"
+             class="border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
       <div class="flex space-x-2">
-        <input type="text" id="msg" placeholder="Type your message..." class="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-        <button id="sendBtn" class="bg-green-500 text-white px-4 py-2 rounded-full">Send</button>
+        <input type="text" id="msg" placeholder="Type your message..."
+               class="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+        <button id="sendBtn" class="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition">
+          Send
+        </button>
       </div>
     </div>
   </div>
