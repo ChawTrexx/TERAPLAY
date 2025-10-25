@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Log Example</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+</head>
+<body>
+
+  <h1>Firebase Logging Demo</h1>
+  <button id="logButton">Log Messages</button>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyALvB7xgYjhBZi5y2JSBamDysNdgIm2mEo",
+      authDomain: "wechat-54b07.firebaseapp.com",
+      projectId: "wechat-54b07",
+      storageBucket: "wechat-54b07.firebasestorage.app",
+      messagingSenderId: "221397223557",
+      appId: "1:221397223557:web:40703bc5c13dc1b2ab81ec",
+      measurementId: "G-XJRYS6DHLR"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const analytics = firebase.analytics();
+
+    // Button click event to log messages
+    document.getElementById('logButton').addEventListener('click', () => {
+      console.log("✅ First log message");
+      console.log("✅ Second log message");
+
+      // Optional: Firebase analytics event
+      analytics.logEvent('button_clicked', { info: 'Two logs printed!' });
+      alert("Messages logged to console and analytics event sent!");
+    });
+  </script>
+
+</body>
+</html>
