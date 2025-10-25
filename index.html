@@ -10,7 +10,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, serverTimestamp, onValue, remove } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
 // 🔹 Firebase config
 const firebaseConfig = {
@@ -32,51 +32,21 @@ window.addEventListener("DOMContentLoaded", () => {
   const nameInput = document.getElementById("username");
   const msgInput = document.getElementById("msg");
   const sendBtn = document.getElementById("sendBtn");
-  const typingIndicator = document.getElementById("typing");
 
-  // 🔹 Unique client ID per device
+  // 🔹 Assign unique client ID per device
   if (!localStorage.getItem("clientId")) {
     localStorage.setItem("clientId", Date.now() + "-" + Math.random().toString(36).substring(2));
   }
   const clientId = localStorage.getItem("clientId");
 
-  // 🔹 Typing status
-  const typingRef = ref(db, "typing/" + clientId);
-  msgInput.addEventListener("input", () => {
-    const val = msgInput.value.trim();
-    if(val) push(typingRef, true);
-    else remove(typingRef);
-  });
-
-  // 🔹 Listen for typing from others
-  const typingAllRef = ref(db, "typing");
-  onValue(typingAllRef, snapshot => {
-    let typingUsers = [];
-    snapshot.forEach(child => {
-      if(child.key !== clientId) typingUsers.push(child.key);
-    });
-    typingIndicator.textContent = typingUsers.length ? "Someone is typing..." : "";
-  });
-
   // 🔹 Add message to chat window
-  function addMessage(id, msg) {
+  function addMessage(msg) {
     const li = document.createElement("li");
-    li.className = "px-4 py-2 rounded-lg max-w-xs break-words relative " +
+    li.className = "px-4 py-2 rounded-lg max-w-xs break-words " +
       (msg.clientId === clientId
         ? "bg-green-500 text-white ml-auto rounded-br-none"
         : "bg-gray-200 text-black rounded-bl-none");
-    li.dataset.id = id;
     li.innerHTML = `<strong>${msg.sender}</strong><br>${msg.text}<br><span class="text-xs text-gray-600">${msg.time}</span>`;
-
-    // 🔹 Delete own message on click
-    if(msg.clientId === clientId) {
-      li.classList.add("cursor-pointer");
-      li.title = "Click to delete";
-      li.addEventListener("click", () => {
-        remove(ref(db, "messages/" + id));
-      });
-    }
-
     chatList.appendChild(li);
     chatList.scrollTop = chatList.scrollHeight;
   }
@@ -87,8 +57,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const sender = nameInput.value.trim() || "Anonymous";
     if (!text) return;
 
-    const newMsgRef = push(ref(db, "messages"));
-    newMsgRef.set({
+    push(ref(db, "messages"), {
       text,
       sender,
       clientId,
@@ -96,31 +65,31 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 
     msgInput.value = "";
-    remove(typingRef); // clear typing on send
   }
 
   sendBtn.addEventListener("click", sendMessage);
   msgInput.addEventListener("keydown", e => { if (e.key === "Enter") sendMessage(); });
 
-  // 🔹 Listen for messages in real-time
+  // 🔹 Listen for all messages in real-time
   onChildAdded(ref(db, "messages"), snapshot => {
     const data = snapshot.val();
     const time = data.timestamp ? new Date(data.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-    addMessage(snapshot.key, { ...data, time });
-  });
-
-  // 🔹 Listen for removed messages (to remove from DOM)
-  const messagesRef = ref(db, "messages");
-  messagesRef.on('child_removed', snapshot => {
-    const el = chatList.querySelector(`li[data-id="${snapshot.key}"]`);
-    if(el) el.remove();
+    addMessage({ ...data, time });
   });
 });
 </script>
 
 <style>
-body { background:#f5f5f5; }
-.chat-window { height:65vh; overflow-y:auto; padding:10px; display:flex; flex-direction:column; }
+body {
+  background: #f5f5f5;
+}
+.chat-window {
+  height: 70vh;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
 </style>
 </head>
 
@@ -132,9 +101,8 @@ body { background:#f5f5f5; }
     </div>
 
     <!-- Chat messages -->
-    <div class="chat-window relative">
-      <ul id="chat-list" class="space-y-2"></ul>
-      <div id="typing" class="absolute bottom-2 left-4 text-sm text-gray-500"></div>
+    <div class="chat-window" id="chat-list">
+      <ul class="space-y-2"></ul>
     </div>
 
     <!-- Input area -->
