@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Global Chat</title>
+<title>Simple Global Chat</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -28,12 +28,12 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 window.addEventListener("DOMContentLoaded", () => {
-  const chatList = document.querySelector("#chat-list");
+  const chatList = document.getElementById("chat-list");
   const nameInput = document.getElementById("username");
   const msgInput = document.getElementById("msg");
   const sendBtn = document.getElementById("sendBtn");
 
-  // 🔹 Assign unique client ID per device
+  // 🔹 Unique client ID per device
   if (!localStorage.getItem("clientId")) {
     localStorage.setItem("clientId", Date.now() + "-" + Math.random().toString(36).substring(2));
   }
@@ -42,11 +42,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // 🔹 Add message to chat window
   function addMessage(msg) {
     const li = document.createElement("li");
-    li.className = "px-4 py-2 rounded-lg max-w-xs break-words " +
-      (msg.clientId === clientId
-        ? "bg-green-500 text-white ml-auto rounded-br-none"
-        : "bg-gray-200 text-black rounded-bl-none");
-    li.innerHTML = `<strong>${msg.sender}</strong><br>${msg.text}<br><span class="text-xs text-gray-600">${msg.time}</span>`;
+    li.className = "px-3 py-2 rounded max-w-xs break-words mb-2 " +
+      (msg.clientId === clientId ? "bg-green-400 text-white ml-auto" : "bg-gray-200 text-black");
+    li.innerHTML = `<strong>${msg.sender}</strong><br>${msg.text}`;
     chatList.appendChild(li);
     chatList.scrollTop = chatList.scrollHeight;
   }
@@ -70,18 +68,17 @@ window.addEventListener("DOMContentLoaded", () => {
   sendBtn.addEventListener("click", sendMessage);
   msgInput.addEventListener("keydown", e => { if (e.key === "Enter") sendMessage(); });
 
-  // 🔹 Listen for all messages in real-time
+  // 🔹 Listen for messages in real-time
   onChildAdded(ref(db, "messages"), snapshot => {
     const data = snapshot.val();
-    const time = data.timestamp ? new Date(data.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-    addMessage({ ...data, time });
+    addMessage(data);
   });
 });
 </script>
 
 <style>
 body {
-  background: #f5f5f5;
+  background: #f0f0f0;
 }
 .chat-window {
   height: 70vh;
@@ -94,25 +91,21 @@ body {
 </head>
 
 <body class="flex justify-center items-center h-screen p-4">
-  <div class="flex flex-col w-full max-w-md bg-white border rounded-lg shadow-lg h-full">
-    <!-- Header -->
-    <div class="p-4 bg-green-500 text-white font-semibold rounded-t-lg text-center">
-      Global Chat
-    </div>
+  <div class="flex flex-col w-full max-w-md bg-white border rounded shadow h-full">
+    <div class="p-4 bg-blue-500 text-white font-semibold rounded-t text-center">Global Chat</div>
 
-    <!-- Chat messages -->
-    <div class="chat-window" id="chat-list">
-      <ul class="space-y-2"></ul>
-    </div>
+    <div class="chat-window" id="chat-list"></div>
 
-    <!-- Input area -->
     <div class="flex flex-col p-4 border-t space-y-2">
-      <input type="text" id="username" placeholder="Enter your name"
-             class="border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+      <input type="text" id="username" placeholder="Enter your name" class="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
       <div class="flex space-x-2">
-        <input type="text" id="msg" placeholder="Type your message..."
-               class="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-        <button id="sendBtn" class="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition">
+        <input type="text" id="msg" placeholder="Type a message..." class="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button id="sendBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Send</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>        <button id="sendBtn" class="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition">
           Send
         </button>
       </div>
