@@ -39,16 +39,16 @@ window.addEventListener("DOMContentLoaded", () => {
   function addMessage(msg) {
     const li = document.createElement("li");
     li.textContent = msg.text;
-    li.style.padding = "5px 10px";
-    li.style.margin = "5px";
-    li.style.maxWidth = "60%";
-    li.style.borderRadius = "10px";
+    li.style.padding = "8px 12px";
+    li.style.margin = "5px 0";
+    li.style.maxWidth = "70%";
+    li.style.borderRadius = "15px";
     li.style.wordBreak = "break-word";
     li.style.backgroundColor = msg.clientId === clientId ? "#6fbced" : "#ccc";
-    li.style.color = msg.clientId === clientId ? "white" : "black";
+    li.style.color = msg.clientId === clientId ? "#fff" : "#000";
     li.style.alignSelf = msg.clientId === clientId ? "flex-end" : "flex-start";
     chatList.appendChild(li);
-    chatList.scrollTop = chatList.scrollHeight;
+    chatList.scrollTop = chatList.scrollHeight; // Scroll to bottom
   }
 
   // Send message
@@ -68,7 +68,7 @@ window.addEventListener("DOMContentLoaded", () => {
   sendBtn.addEventListener("click", sendMessage);
   msgInput.addEventListener("keydown", e => { if (e.key === "Enter") sendMessage(); });
 
-  // Listen for messages in real-time
+  // Listen for all messages
   onChildAdded(ref(db, "messages"), snapshot => {
     const data = snapshot.val();
     addMessage(data);
@@ -77,14 +77,14 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 
 </head>
-<body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;">
+<body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;background:#f0f0f0;">
 
 <h2>Global Chat</h2>
 <ul id="chat-list" style="list-style:none;padding:10px;width:90%;max-width:500px;height:60vh;overflow-y:auto;display:flex;flex-direction:column;"></ul>
-<div style="display:flex;width:90%;max-width:500px;">
+<div style="display:flex;width:90%;max-width:500px;margin-top:10px;">
   <input type="text" id="msg" placeholder="Type a message..." style="flex:1;padding:10px;font-size:16px;">
-  <button id="sendBtn" style="padding:10px;font-size:16px;">Send</button>
+  <button id="sendBtn" style="padding:10px 15px;font-size:16px;margin-left:5px;">Send</button>
 </div>
 
 </body>
-</html></html>
+</html>
