@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WeChat Global Realtime Chat</title>
+<title>WeChat Realtime Chat (Persistent)</title>
 <style>
   body {
     background:#0d0d0d;
@@ -45,17 +45,18 @@
 </style>
 </head>
 <body>
-  <h2>💬 WeChat Global Chat (Realtime)</h2>
+  <h2>💬 WeChat Realtime Global Chat</h2>
   <div id="messages"></div>
 
   <input id="msgInput" type="text" placeholder="Type message...">
   <button id="sendBtn">Send</button>
 
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-    // ✅ Your Firebase Config (correct & tested)
+    // ✅ Firebase Config (Persistent setup)
     const firebaseConfig = {
       apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
       authDomain: "wechat-eee4d.firebaseapp.com",
@@ -67,7 +68,7 @@
       measurementId: "G-TG6TXQ0P8Y"
     };
 
-    // ✅ Initialize Firebase App + DB
+    // ✅ Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const messagesRef = ref(db, "messages");
@@ -76,26 +77,26 @@
     const sendBtn = document.getElementById("sendBtn");
     const messagesDiv = document.getElementById("messages");
 
-    // ✅ Send message
-    sendBtn.addEventListener("click", () => {
+    // ✅ Send new message
+    sendBtn.onclick = () => {
       const text = input.value.trim();
-      if (!text) return;
+      if (text === "") return;
       const msgData = {
-        text,
+        text: text,
         time: new Date().toLocaleTimeString(),
       };
-      push(messagesRef, msgData); // write to Firebase
+      push(messagesRef, msgData);
       input.value = "";
-    });
+    };
 
-    // ✅ Realtime listener (works for all users)
+    // ✅ Load existing + realtime new messages
     onChildAdded(messagesRef, (snapshot) => {
       const data = snapshot.val();
       if (!data) return;
-      const msg = document.createElement("div");
-      msg.className = "msg";
-      msg.textContent = `🕓 ${data.time} → ${data.text}`;
-      messagesDiv.appendChild(msg);
+      const div = document.createElement("div");
+      div.className = "msg";
+      div.textContent = `🕓 ${data.time} → ${data.text}`;
+      messagesDiv.appendChild(div);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
   </script>
