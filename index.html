@@ -1,83 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Supabase Chat</title>
-<style>
-  body { font-family: Arial; background: #0b0b0b; color: #fff; display: flex; flex-direction: column; align-items: center; }
-  #messages { width: 90%; max-width: 500px; background: #111; border-radius: 10px; padding: 10px; margin-top: 20px; height: 60vh; overflow-y: auto; }
-  .msg { background: #222; margin: 5px 0; padding: 8px 12px; border-radius: 8px; }
-  #inputBox { display: flex; gap: 10px; margin-top: 10px; }
-  input { flex: 1; padding: 10px; border-radius: 8px; border: none; outline: none; }
-  button { padding: 10px 20px; background: #ff0077; border: none; color: white; border-radius: 8px; cursor: pointer; }
-  button:hover { background: #ff3399; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple Voice Call</title>
 </head>
 <body>
+  <h2>🎙️ Online Voice Call</h2>
+  <button id="create">Create Call</button>
+  <input id="callId" placeholder="Enter Call ID" />
+  <button id="join">Join Call</button>
+  <audio id="remoteAudio" autoplay></audio>
 
-<h2>💬 Global Chat (Supabase)</h2>
-
-<div id="messages"></div>
-
-<div id="inputBox">
-  <input type="text" id="msgInput" placeholder="Type message..." />
-  <button onclick="sendMessage()">Send</button>
-</div>
-
-<script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js";
-
-  const supabaseUrl = "https://ezrzgeumucvyzsukzpsy.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6cnpnZXVtdWN2eXpzdWt6cHN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MDkxNzAsImV4cCI6MjA3Njk4NTE3MH0.uF1oUunCF8sBwC_tPxGLgNeU5v4Qp030eMQvPh-UEOY";
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  const msgBox = document.getElementById("messages");
-  const msgInput = document.getElementById("msgInput");
-
-  // Load all messages from database
-  async function loadMessages() {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .order("id", { ascending: true });
-    if (error) { console.error(error); return; }
-    msgBox.innerHTML = "";
-    data.forEach(m => addMessage(m.text));
-  }
-
-  // Append message to chat box
-  function addMessage(text) {
-    const div = document.createElement("div");
-    div.className = "msg";
-    div.textContent = text;
-    msgBox.appendChild(div);
-    msgBox.scrollTop = msgBox.scrollHeight;
-  }
-
-  // Send message to Supabase
-  async function sendMessage() {
-    const text = msgInput.value.trim();
-    if (!text) return;
-    const { error } = await supabase.from("messages").insert([{ text }]);
-    if (error) {
-      alert("Error sending message: " + error.message);
-      console.error(error);
-    } else {
-      msgInput.value = "";
-    }
-  }
-
-  // Real-time subscription
-  supabase.channel("messages")
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, payload => {
-      addMessage(payload.new.text);
-    })
-    .subscribe();
-
-  // Initial load
-  loadMessages();
-</script>
-
+  <script type="module" src="script.js"></script>
 </body>
 </html>
