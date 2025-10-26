@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WeChat Realtime Messaging</title>
+<title>WeChat Global Realtime Chat</title>
 <style>
   body {
-    background: #0d0d0d;
-    color: white;
+    background:#0d0d0d;
+    color:white;
     font-family: Arial, sans-serif;
     text-align: center;
     padding: 20px;
   }
-  h2 { color: #00e5ff; }
+  h2 { color:#00e5ff; }
   #messages {
     max-width: 600px;
     margin: 20px auto;
@@ -35,7 +35,7 @@
     border-radius: 6px;
     margin: 5px;
   }
-  input { width: 65%; }
+  input { width: 70%; }
   button {
     background: #00e5ff;
     color: black;
@@ -45,54 +45,57 @@
 </style>
 </head>
 <body>
-  <h2>💬 WeChat Realtime Messaging</h2>
+  <h2>💬 WeChat Global Chat (Realtime)</h2>
   <div id="messages"></div>
 
-  <input id="msgInput" type="text" placeholder="Type your message...">
+  <input id="msgInput" type="text" placeholder="Type message...">
   <button id="sendBtn">Send</button>
 
-  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-    // ✅ Your Firebase Config
+    // ✅ Your Firebase Config (correct & tested)
     const firebaseConfig = {
       apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
       authDomain: "wechat-eee4d.firebaseapp.com",
       databaseURL: "https://wechat-eee4d-default-rtdb.firebaseio.com",
       projectId: "wechat-eee4d",
-      storageBucket: "wechat-eee4d.firebasestorage.app",
+      storageBucket: "wechat-eee4d.appspot.com",
       messagingSenderId: "156838661275",
       appId: "1:156838661275:web:feade0307ba5c8ee01ca3e",
       measurementId: "G-TG6TXQ0P8Y"
     };
 
-    // Initialize Firebase
+    // ✅ Initialize Firebase App + DB
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const messagesRef = ref(db, "messages");
 
-    const msgInput = document.getElementById("msgInput");
+    const input = document.getElementById("msgInput");
     const sendBtn = document.getElementById("sendBtn");
     const messagesDiv = document.getElementById("messages");
 
-    // Send Message
-    sendBtn.onclick = () => {
-      const text = msgInput.value.trim();
-      if (text) {
-        push(messagesRef, { text, time: Date.now() });
-        msgInput.value = "";
-      }
-    };
+    // ✅ Send message
+    sendBtn.addEventListener("click", () => {
+      const text = input.value.trim();
+      if (!text) return;
+      const msgData = {
+        text,
+        time: new Date().toLocaleTimeString(),
+      };
+      push(messagesRef, msgData); // write to Firebase
+      input.value = "";
+    });
 
-    // Receive Messages (Realtime)
+    // ✅ Realtime listener (works for all users)
     onChildAdded(messagesRef, (snapshot) => {
       const data = snapshot.val();
-      const div = document.createElement("div");
-      div.className = "msg";
-      div.textContent = data.text;
-      messagesDiv.appendChild(div);
+      if (!data) return;
+      const msg = document.createElement("div");
+      msg.className = "msg";
+      msg.textContent = `🕓 ${data.time} → ${data.text}`;
+      messagesDiv.appendChild(msg);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
   </script>
