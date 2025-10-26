@@ -1,17 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simple Voice Call</title>
+  <style>
+    body {
+      background: #0b0c10;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    button {
+      background: #1f2833;
+      color: #66fcf1;
+      border: 2px solid #45a29e;
+      border-radius: 10px;
+      padding: 15px 25px;
+      font-size: 18px;
+      margin: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a29e;
+      color: #0b0c10;
+    }
+  </style>
 </head>
 <body>
-  <h2>🎙️ Online Voice Call</h2>
-  <button id="create">Create Call</button>
-  <input id="callId" placeholder="Enter Call ID" />
-  <button id="join">Join Call</button>
+  <h2>🎙 Simple Voice Call</h2>
+  <button id="startCall">Start Call</button>
+  <button id="joinCall">Join Call</button>
   <audio id="remoteAudio" autoplay></audio>
 
-  <script type="module" src="script.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
+      authDomain: "wechat-eee4d.firebaseapp.com",
+      databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "wechat-eee4d",
+      storageBucket: "wechat-eee4d.firebasestorage.app",
+      messagingSenderId: "156838661275",
+      appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const callRef = ref(db, "voicecall");
+
+    let pc = new RTCPeerConnection();
+    let localStream;
+    let remoteAudio = document.getElementById("remoteAudio");
+
+    pc.ontrack = (event) => {
+      remoteAudio.srcObject = event.streams[0];
+    };
+
+    async function startCall() {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await set(callRef, { offer: offer.sdp });
+
+      onValue(callRef, async (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.answer && !pc.currentRemoteDescription) {
+          await pc.setRemoteDescription({ type: "answer", sdp: data.answer });
+        }
+      });
+    }
+
+    async function joinCall() {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+      onValue(callRef, async (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.offer && !data.answer) {
+          await pc.setRemoteDescription({ type: "offer", sdp: data.offer });
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await set(callRef, { offer: data.offer, answer: answer.sdp });
+        }
+      });
+    }
+
+    document.getElementById("startCall").addEventListener("click", async () => {
+      await startCall();
+      alert("Call started. Waiting for other user to join...");
+    });
+
+    document.getElementById("joinCall").addEventListener("click", async () => {
+      await joinCall();
+      alert("Joined the call!");
+    });
+
+    window.addEventListener("beforeunload", () => remove(callRef));
+  </script>
 </body>
 </html>
