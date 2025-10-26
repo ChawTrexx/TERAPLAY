@@ -3,102 +3,68 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WeChat Realtime Chat (Persistent)</title>
+<title>Supabase Chat</title>
 <style>
-  body {
-    background:#0d0d0d;
-    color:white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 20px;
-  }
-  h2 { color:#00e5ff; }
-  #messages {
-    max-width: 600px;
-    margin: 20px auto;
-    background: #1c1c1c;
-    padding: 10px;
-    border-radius: 10px;
-    overflow-y: auto;
-    max-height: 400px;
-  }
-  .msg {
-    background: #2a2a2a;
-    margin: 8px;
-    padding: 8px;
-    border-radius: 8px;
-    text-align: left;
-  }
-  input, button {
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    margin: 5px;
-  }
-  input { width: 70%; }
-  button {
-    background: #00e5ff;
-    color: black;
-    cursor: pointer;
-    font-weight: bold;
-  }
+  body { font-family: Arial; background: #0b0b0b; color: #fff; display: flex; flex-direction: column; align-items: center; }
+  #messages { width: 90%; max-width: 500px; background: #111; border-radius: 10px; padding: 10px; margin-top: 20px; height: 60vh; overflow-y: auto; }
+  .msg { background: #222; margin: 5px 0; padding: 8px 12px; border-radius: 8px; }
+  #inputBox { display: flex; gap: 10px; margin-top: 10px; }
+  input { flex: 1; padding: 10px; border-radius: 8px; border: none; outline: none; }
+  button { padding: 10px 20px; background: #ff0077; border: none; color: white; border-radius: 8px; cursor: pointer; }
+  button:hover { background: #ff3399; }
 </style>
 </head>
 <body>
-  <h2>💬 WeChat Realtime Global Chat</h2>
-  <div id="messages"></div>
 
-  <input id="msgInput" type="text" placeholder="Type message...">
-  <button id="sendBtn">Send</button>
+<h2>💬 Global Chat (Supabase)</h2>
 
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+<div id="messages"></div>
 
-    // ✅ Firebase Config (Persistent setup)
-    const firebaseConfig = {
-      apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
-      authDomain: "wechat-eee4d.firebaseapp.com",
-      databaseURL: "https://wechat-eee4d-default-rtdb.firebaseio.com",
-      projectId: "wechat-eee4d",
-      storageBucket: "wechat-eee4d.appspot.com",
-      messagingSenderId: "156838661275",
-      appId: "1:156838661275:web:feade0307ba5c8ee01ca3e",
-      measurementId: "G-TG6TXQ0P8Y"
-    };
+<div id="inputBox">
+  <input type="text" id="msgInput" placeholder="Type message..." />
+  <button onclick="sendMessage()">Send</button>
+</div>
 
-    // ✅ Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const messagesRef = ref(db, "messages");
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js";
 
-    const input = document.getElementById("msgInput");
-    const sendBtn = document.getElementById("sendBtn");
-    const messagesDiv = document.getElementById("messages");
+  const supabaseUrl = "https://ezrzgeumucvyzsukzpsy.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6cnpnZXVtdWN2eXpzdWt6cHN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MDkxNzAsImV4cCI6MjA3Njk4NTE3MH0.uF1oUunCF8sBwC_tPxGLgNeU5v4Qp030eMQvPh-UEOY";
 
-    // ✅ Send new message
-    sendBtn.onclick = () => {
-      const text = input.value.trim();
-      if (text === "") return;
-      const msgData = {
-        text: text,
-        time: new Date().toLocaleTimeString(),
-      };
-      push(messagesRef, msgData);
-      input.value = "";
-    };
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const msgBox = document.getElementById("messages");
+  const msgInput = document.getElementById("msgInput");
 
-    // ✅ Load existing + realtime new messages
-    onChildAdded(messagesRef, (snapshot) => {
-      const data = snapshot.val();
-      if (!data) return;
-      const div = document.createElement("div");
-      div.className = "msg";
-      div.textContent = `🕓 ${data.time} → ${data.text}`;
-      messagesDiv.appendChild(div);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-  </script>
+  async function loadMessages() {
+    const { data } = await supabase.from("messages").select("*").order("id", { ascending: true });
+    msgBox.innerHTML = "";
+    data.forEach(m => addMessage(m.text));
+  }
+
+  function addMessage(text) {
+    const div = document.createElement("div");
+    div.className = "msg";
+    div.textContent = text;
+    msgBox.appendChild(div);
+    msgBox.scrollTop = msgBox.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const text = msgInput.value.trim();
+    if (!text) return;
+    await supabase.from("messages").insert([{ text }]);
+    msgInput.value = "";
+  }
+
+  // Listen to new messages in real-time
+  supabase.channel("messages")
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, payload => {
+      addMessage(payload.new.text);
+    })
+    .subscribe();
+
+  loadMessages();
+</script>
+
 </body>
 </html>
