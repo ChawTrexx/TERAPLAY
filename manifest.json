@@ -8,12 +8,12 @@
   "description": "Simple realtime Firebase chat app",
   "icons": [
     {
-      "src": "logo192.png",
+      "src": "resized-image.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "logo512.png",
+      "src": "resized-image (1).png",
       "sizes": "512x512",
       "type": "image/png"
     }
