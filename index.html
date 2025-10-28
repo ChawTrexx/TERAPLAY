@@ -14,6 +14,27 @@
     height: 100vh;
     margin: 0;
   }
+
+  /* ✅ Header */
+  header {
+    background: #111;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-bottom: 1px solid #222;
+  }
+  header img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
+  header h2 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #1e90ff;
+  }
+
   #messages {
     flex: 1;
     overflow-y: auto;
@@ -48,7 +69,7 @@
     padding: 10px;
     background: #111;
   }
-  input {
+  input[type="text"] {
     flex: 1;
     padding: 10px;
     border: none;
@@ -56,6 +77,9 @@
     background: #222;
     color: #fff;
     outline: none;
+  }
+  input[type="file"] {
+    display: none;
   }
   button {
     background: #1e90ff;
@@ -90,16 +114,31 @@
     text-decoration: underline;
     word-break: break-all;
   }
+  img.chatImage {
+    max-width: 200px;
+    border-radius: 10px;
+    margin-top: 5px;
+  }
 </style>
 </head>
 <body>
 
+<!-- ✅ HEADER -->
+<header>
+  <img src="https://i.ibb.co/m8zqG1h/logo.png" alt="Logo">
+  <h2>Realtime Chat 💬</h2>
+</header>
+
+<!-- ✅ MESSAGES -->
 <div id="messages"></div>
 <div id="typing"></div>
 
+<!-- ✅ INPUT AREA -->
 <div id="inputArea">
+  <input type="file" id="imageInput" accept="image/*">
   <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off">
   <button id="sendBtn">Send</button>
+  <button id="imgBtn">📷</button>
 </div>
 
 <script type="module">
@@ -129,27 +168,60 @@
   const username = "User_" + Math.floor(Math.random() * 9999);
   const msgInput = document.getElementById("msgInput");
   const sendBtn = document.getElementById("sendBtn");
+  const imgBtn = document.getElementById("imgBtn");
+  const imageInput = document.getElementById("imageInput");
   const messagesDiv = document.getElementById("messages");
   const typingDiv = document.getElementById("typing");
 
-  // ✅ Send Message (Links Allowed)
+  // ✅ Send Text Message
   sendBtn.onclick = () => {
     const text = msgInput.value.trim();
     if (text === "") return;
 
     const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
     const newMsg = push(chatRef);
     set(newMsg, {
       id: newMsg.key,
       user: username,
       text: text,
-      time: time
+      time: time,
+      type: "text"
     });
 
     msgInput.value = "";
     set(typingRef, { user: username, typing: false });
   };
+
+  // ✅ Send Image
+  imgBtn.onclick = () => imageInput.click();
+
+  imageInput.addEventListener("change", async () => {
+    const file = imageInput.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    // 🖼 Upload to ImgBB
+    const res = await fetch("https://api.imgbb.com/1/upload?key=28303bb2f8b9d2907349e5567b265f2d", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    if (data && data.data && data.data.url) {
+      const imageUrl = data.data.url;
+      const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const newMsg = push(chatRef);
+      set(newMsg, {
+        id: newMsg.key,
+        user: username,
+        image: imageUrl,
+        time: time,
+        type: "image"
+      });
+    }
+  });
 
   // ✅ Display Messages
   onChildAdded(chatRef, (snapshot) => {
@@ -169,15 +241,19 @@
     div.classList.add("msg", data.user === username ? "me" : "other");
     div.id = data.id;
 
-    // Auto-link URLs
-    const messageWithLinks = data.text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+    let content = "";
+    if (data.type === "image") {
+      content = `<img src="${data.image}" class="chatImage" alt="image">`;
+    } else {
+      const messageWithLinks = data.text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+      content = `<div>${messageWithLinks}</div>`;
+    }
 
     div.innerHTML = `
-      <div>${messageWithLinks}</div>
+      ${content}
       <div class="time">${data.user} • ${data.time}</div>
     `;
 
-    // Add delete button for own messages
     if (data.user === username) {
       const delBtn = document.createElement("button");
       delBtn.classList.add("deleteBtn");
