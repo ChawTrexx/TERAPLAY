@@ -1,6 +1,6 @@
 {
   "name": "weChat",
-  "short_name": "Chat",
+  "short_name": "weChat",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0a0a0a",
