@@ -29,7 +29,7 @@ button {
 }
 button:hover { background: #00d48a; }
 #onlineCount { margin-bottom: 20px; font-size: 18px; color: #ccc; }
-#callPopup {
+#callPopup, #rejectedPopup {
   display: none;
   position: fixed;
   top: 40%;
@@ -57,6 +57,11 @@ button:hover { background: #00d48a; }
   <button id="rejectBtn">❌ Reject</button>
 </div>
 
+<div id="rejectedPopup">
+  <h2>❌ Your call was rejected!</h2>
+  <button onclick="document.getElementById('rejectedPopup').style.display='none'">OK</button>
+</div>
+
 <audio id="remoteAudio" autoplay></audio>
 <div id="audioSwitch">
   <button id="toggleOutput">🔊 Speaker</button>
@@ -65,7 +70,7 @@ button:hover { background: #00d48a; }
 <!-- Firebase + WebRTC -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+import { getDatabase, ref, push, set, onValue, remove, onDisconnect, update } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
@@ -74,8 +79,7 @@ const firebaseConfig = {
   projectId: "wechat-eee4d",
   storageBucket: "wechat-eee4d.firebasestorage.app",
   messagingSenderId: "156838661275",
-  appId: "1:156838661275:web:3d0cf4f3b402391801ca3e",
-  measurementId: "G-0X6QKPRZJ3"
+  appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -94,6 +98,7 @@ const onlineCount = document.getElementById("onlineCount");
 const remoteAudio = document.getElementById("remoteAudio");
 const audioSwitch = document.getElementById("audioSwitch");
 const toggleOutput = document.getElementById("toggleOutput");
+const rejectedPopup = document.getElementById("rejectedPopup");
 
 let localStream;
 let peerConnection;
@@ -106,10 +111,11 @@ const me = push(onlineRef);
 set(me, { id: myId });
 onDisconnect(me).remove();
 onValue(onlineRef, (snap) => {
-  onlineCount.innerText = "Online: " + snap.size;
+  const users = snap.val() || {};
+  onlineCount.innerText = "Online: " + Object.keys(users).length;
 });
 
-// --- CALL LOGIC ---
+// --- CALL BUTTON ---
 callBtn.onclick = async () => {
   const snapshot = await (await fetch(db._delegate._repoInfo_.url + "/onlineUsers.json")).json();
   const users = Object.values(snapshot || {});
@@ -123,18 +129,20 @@ callBtn.onclick = async () => {
   alert("📞 Calling user " + target.id + "...");
 };
 
-// --- INCOMING CALL ---
+// --- INCOMING / STATUS HANDLER ---
 onValue(callRef, async (snap) => {
   const calls = snap.val();
   if (!calls) return;
+
   for (const key in calls) {
     const call = calls[key];
     if (call.to === myId && call.status === "calling") {
       currentCallKey = key;
       incomingText.innerText = `📲 Incoming call from user ${call.from}`;
       callPopup.style.display = "block";
-    } else if (call.status === "rejected" && call.from === myId) {
-      alert(`❌ User ${call.to} rejected your call`);
+    }
+    else if (call.from === myId && call.status === "rejected") {
+      rejectedPopup.style.display = "block";
       remove(ref(db, "calls/" + key));
     }
   }
@@ -143,17 +151,17 @@ onValue(callRef, async (snap) => {
 // --- ACCEPT CALL ---
 acceptBtn.onclick = async () => {
   callPopup.style.display = "none";
-  set(ref(db, "calls/" + currentCallKey + "/status"), "accepted");
+  update(ref(db, "calls/" + currentCallKey), { status: "accepted" });
   startCall(true);
 };
 
 // --- REJECT CALL ---
 rejectBtn.onclick = () => {
   callPopup.style.display = "none";
-  set(ref(db, "calls/" + currentCallKey + "/status"), "rejected");
+  update(ref(db, "calls/" + currentCallKey), { status: "rejected" });
 };
 
-// --- WEBRTC CONNECTION ---
+// --- WEBRTC SETUP ---
 async function startCall(isReceiver) {
   localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
   peerConnection = new RTCPeerConnection();
@@ -164,7 +172,7 @@ async function startCall(isReceiver) {
     showAudioSwitch();
   };
 
-  peerConnection.onicecandidate = async (event) => {
+  peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
       set(ref(db, "calls/" + currentCallKey + "/candidate_" + myId), event.candidate.toJSON());
     }
@@ -173,14 +181,15 @@ async function startCall(isReceiver) {
   const callDataRef = ref(db, "calls/" + currentCallKey);
   onValue(callDataRef, async (snap) => {
     const data = snap.val();
-    if (data?.offer && !isReceiver) {
+    if (!data) return;
+    if (data.offer && isReceiver) {
       await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
       set(ref(db, "calls/" + currentCallKey + "/answer"), answer);
-    } else if (data?.answer && isReceiver) {
+    } else if (data.answer && !isReceiver) {
       await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-    } else if (data?.["candidate_" + (isReceiver ? data.from : data.to)]) {
+    } else if (data["candidate_" + (isReceiver ? data.from : data.to)]) {
       try {
         await peerConnection.addIceCandidate(new RTCIceCandidate(data["candidate_" + (isReceiver ? data.from : data.to)]));
       } catch (err) {
@@ -201,8 +210,7 @@ async function startCall(isReceiver) {
 
 // --- HANGUP ---
 hangupBtn.onclick = () => {
-  peerConnection.close();
-  peerConnection = null;
+  if (peerConnection) peerConnection.close();
   remove(ref(db, "calls/" + currentCallKey));
   callBtn.style.display = "block";
   hangupBtn.style.display = "none";
@@ -215,26 +223,24 @@ function showAudioSwitch() {
 }
 
 toggleOutput.onclick = async () => {
-  if (!remoteAudio.sinkId) {
-    alert("Your browser doesn't support manual output switching.");
+  if (!remoteAudio.setSinkId) {
+    alert("Your browser doesn't support output device switching.");
     return;
   }
-
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
     const audioOutputs = devices.filter(d => d.kind === "audiooutput");
     if (audioOutputs.length < 2) {
-      alert("No alternate audio output found.");
+      alert("No alternate output device found.");
       return;
     }
-
     isSpeaker = !isSpeaker;
-    const targetDevice = audioOutputs[isSpeaker ? 1 : 0];
-    await remoteAudio.setSinkId(targetDevice.deviceId);
+    const target = audioOutputs[isSpeaker ? 1 : 0];
+    await remoteAudio.setSinkId(target.deviceId);
     toggleOutput.textContent = isSpeaker ? "🎧 Earpiece" : "🔊 Speaker";
   } catch (err) {
     console.error(err);
-    alert("Switching audio output failed.");
+    alert("Switching failed.");
   }
 };
 </script>
