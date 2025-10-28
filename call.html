@@ -26,9 +26,7 @@
       cursor: pointer;
       transition: 0.3s;
     }
-    button:hover {
-      transform: scale(1.05);
-    }
+    button:hover { transform: scale(1.05); }
     #onlineCount {
       position: fixed;
       top: 15px;
@@ -40,7 +38,7 @@
       font-weight: bold;
       box-shadow: 0 0 15px rgba(59,130,246,0.7);
     }
-    #incomingPopup {
+    #incomingPopup, #rejectedPopup {
       display: none;
       position: fixed;
       top: 0; left: 0;
@@ -53,19 +51,13 @@
       flex-direction: column;
       z-index: 10;
     }
-    #incomingPopup button {
+    #incomingPopup button, #rejectedPopup button {
       margin: 10px;
       font-size: 18px;
       padding: 12px 25px;
     }
-    #acceptBtn {
-      background: #10b981;
-      color: #fff;
-    }
-    #rejectBtn {
-      background: #ef4444;
-      color: #fff;
-    }
+    #acceptBtn { background: #10b981; color: #fff; }
+    #rejectBtn { background: #ef4444; color: #fff; }
   </style>
 </head>
 <body>
@@ -89,9 +81,14 @@
     </div>
   </div>
 
+  <div id="rejectedPopup">
+    <h2>❌ Your call was rejected!</h2>
+    <button onclick="document.getElementById('rejectedPopup').style.display='none'">OK</button>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, push, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, push, remove, onDisconnect, serverTimestamp, update } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
@@ -111,6 +108,7 @@
     const hangupBtn = document.getElementById('hangupBtn');
     const onlineCount = document.getElementById('onlineCount');
     const incomingPopup = document.getElementById('incomingPopup');
+    const rejectedPopup = document.getElementById('rejectedPopup');
     const acceptBtn = document.getElementById('acceptBtn');
     const rejectBtn = document.getElementById('rejectBtn');
     const remoteAudio = document.getElementById('remoteAudio');
@@ -118,9 +116,9 @@
 
     let pc, localStream;
     const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-    // ---- Online Presence ----
     const uid = Math.random().toString(36).slice(2);
+
+    // ---- Presence ----
     const presenceRef = ref(db, 'presence/' + uid);
     set(presenceRef, { online: true, time: serverTimestamp() });
     onDisconnect(presenceRef).remove();
@@ -129,7 +127,7 @@
       onlineCount.textContent = `💫 ${Object.keys(data).length} Online`;
     });
 
-    // ---- Functions ----
+    // ---- Start Mic ----
     startBtn.onclick = async () => {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       localAudio.srcObject = localStream;
@@ -137,6 +135,7 @@
       callBtn.disabled = false;
     };
 
+    // ---- Call Start ----
     callBtn.onclick = async () => {
       pc = new RTCPeerConnection(servers);
       localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
@@ -149,22 +148,14 @@
       hangupBtn.disabled = false;
     };
 
-    // Listen for active call changes
+    // ---- Listen for Call Updates ----
     onValue(ref(db, 'activeCall'), async (snap) => {
       const data = snap.val();
-      if (!data) {
-        // 🔕 Call ended or rejected
-        if (pc) pc.close();
-        hangupBtn.disabled = true;
-        callBtn.disabled = false;
-        incomingPopup.style.display = 'none';
-        return;
-      }
+      if (!data) return;
 
-      // Incoming call for receiver
+      // Incoming call
       if (data.from !== uid && data.offer && data.status === "ringing") {
         incomingPopup.style.display = 'flex';
-
         acceptBtn.onclick = async () => {
           incomingPopup.style.display = 'none';
           pc = new RTCPeerConnection(servers);
@@ -173,26 +164,32 @@
           await pc.setRemoteDescription(data.offer);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          await set(ref(db, 'activeCall'), {
-            ...data,
-            answer,
-            status: "connected"
-          });
+          await update(ref(db, 'activeCall'), { answer, status: "connected" });
           hangupBtn.disabled = false;
         };
-
         rejectBtn.onclick = async () => {
           incomingPopup.style.display = 'none';
-          await remove(ref(db, 'activeCall')); // Auto end on both sides
+          await update(ref(db, 'activeCall'), { status: "rejected" });
+          setTimeout(() => remove(ref(db, 'activeCall')), 3000);
         };
       }
 
-      // Caller side receives answer
-      else if (data.answer && pc && !pc.currentRemoteDescription) {
+      // Caller sees rejection
+      if (data.from === uid && data.status === "rejected") {
+        document.getElementById('rejectedPopup').style.display = 'flex';
+        if (pc) pc.close();
+        callBtn.disabled = false;
+        hangupBtn.disabled = true;
+        remove(ref(db, 'activeCall'));
+      }
+
+      // Answer received
+      if (data.answer && data.from === uid && !pc.currentRemoteDescription) {
         await pc.setRemoteDescription(data.answer);
       }
     });
 
+    // ---- Hangup ----
     hangupBtn.onclick = async () => {
       if (pc) pc.close();
       await remove(ref(db, 'activeCall'));
