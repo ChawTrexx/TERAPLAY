@@ -1,325 +1,323 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>weChat 💬</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e90ff">
-<link rel="icon" href="logo192.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Realtime Chat</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
 
-<style>
-  body {
-    background: #0a0a0a;
-    color: #fff;
-    font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    margin: 0;
-  }
+    header {
+      background: #111;
+      color: #fff;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 10;
+      border-bottom: 1px solid #333;
+    }
 
-  header {
-    background: #111;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border-bottom: 1px solid #222;
-  }
-  header img {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-  }
-  header h2 {
-    margin: 0;
-    font-size: 1.2em;
-    color: #1e90ff;
-  }
+    #online {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
 
-  #messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
+    #dot {
+      width: 10px;
+      height: 10px;
+      background: red;
+      border-radius: 50%;
+    }
 
-  .msg {
-    max-width: 80%;
-    padding: 10px;
-    border-radius: 10px;
-    word-wrap: break-word;
-    position: relative;
-  }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 70px 15px 90px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-  .me {
-    background: #1e90ff;
-    align-self: flex-end;
-  }
+    .msg {
+      background: #222;
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
 
-  .other {
-    background: #333;
-    align-self: flex-start;
-  }
+    .me {
+      background: #1e90ff;
+      align-self: flex-end;
+    }
 
-  .time {
-    font-size: 0.7em;
-    color: #ccc;
-    margin-top: 5px;
-    text-align: right;
-  }
+    footer {
+      background: #111;
+      padding: 10px;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      border-top: 1px solid #333;
+      align-items: center;
+    }
 
-  .user {
-    font-size: 0.8em;
-    font-weight: bold;
-    color: #ffcc00;
-    margin-bottom: 5px;
-  }
+    input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      outline: none;
+      background: #222;
+      color: #fff;
+    }
 
-  #inputArea {
-    display: flex;
-    padding: 10px;
-    background: #111;
-  }
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      background: #1e90ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      position: relative;
+    }
 
-  input[type="text"] {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    background: #222;
-    color: #fff;
-    outline: none;
-  }
+    #usernameLabel {
+      font-size: 10px;
+      color: #fff;
+      opacity: 0.7;
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
 
-  input[type="file"] {
-    display: none;
-  }
+    .chatImage {
+      max-width: 200px;
+      border-radius: 8px;
+      display: block;
+    }
 
-  button {
-    background: #1e90ff;
-    color: #fff;
-    border: none;
-    padding: 10px 15px;
-    margin-left: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-  }
+    .deleteBtn {
+      background: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 8px;
+    }
 
-  .deleteBtn {
-    position: absolute;
-    top: 5px;
-    right: 8px;
-    font-size: 12px;
-    background: rgba(0,0,0,0.3);
-    border: none;
-    color: #fff;
-    border-radius: 5px;
-    padding: 2px 6px;
-    cursor: pointer;
-  }
+    #typing {
+      text-align: center;
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
 
-  #typing {
-    padding: 5px 10px;
-    font-size: 0.9em;
-    color: #aaa;
-    font-style: italic;
-  }
+    #imgBtn {
+      background: #333;
+    }
 
-  a {
-    color: #66aaff;
-    text-decoration: underline;
-    word-break: break-all;
-  }
-
-  img.chatImage {
-    max-width: 200px;
-    border-radius: 10px;
-    margin-top: 5px;
-  }
-</style>
+  </style>
 </head>
 <body>
+  <header>
+    <h3>🔥 Chat Room</h3>
+    <div id="online"><div id="dot"></div> <span id="count">0</span> Online</div>
+  </header>
 
-<header>
-  <img src="chat.png" alt="Logo">
-  <h2>weChat</h2>
-</header>
+  <div id="messages"></div>
+  <div id="typing"></div>
 
-<div id="messages"></div>
-<div id="typing"></div>
+  <footer>
+    <button id="imgBtn">📷</button>
+    <input id="msgInput" placeholder="Type message..." />
+    <input type="file" id="imageInput" accept="image/*" hidden>
+    <button id="sendBtn">Send<div id="usernameLabel"></div></button>
+  </footer>
 
-<div id="inputArea">
-  <input type="file" id="imageInput" accept="image/*">
-  <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off">
-  <button id="sendBtn">Send</button>
-  <button id="imgBtn">📷</button>
-</div>
+  <!-- ✅ Firebase Chat Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import {
+      getDatabase, ref, push, onChildAdded, remove, onChildRemoved, onValue, set, onDisconnect
+    } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-  import {
-    getDatabase, ref, push, onChildAdded, remove, onChildRemoved, onValue, set
-  } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+    // ✅ Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
+      authDomain: "wechat-eee4d.firebaseapp.com",
+      databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "wechat-eee4d",
+      storageBucket: "wechat-eee4d.firebasestorage.app",
+      messagingSenderId: "156838661275",
+      appId: "1:156838661275:web:3d0cf4f3b402391801ca3e",
+      measurementId: "G-0X6QKPRZJ3"
+    };
 
-  // ✅ Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
-    authDomain: "wechat-eee4d.firebaseapp.com",
-    databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "wechat-eee4d",
-    storageBucket: "wechat-eee4d.firebasestorage.app",
-    messagingSenderId: "156838661275",
-    appId: "1:156838661275:web:3d0cf4f3b402391801ca3e",
-    measurementId: "G-0X6QKPRZJ3"
-  };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const chatRef = ref(db, "messages");
+    const typingRef = ref(db, "typing");
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const chatRef = ref(db, "messages");
-  const typingRef = ref(db, "typing");
-
-  // ✅ Username auto-save
-  let username = localStorage.getItem("username");
-  if (!username) {
-    username = prompt("Enter your name:");
-    if (!username || username.trim() === "") {
-      username = "User_" + Math.floor(Math.random() * 9999);
+    // ✅ Username Auto-save
+    let username = localStorage.getItem("username");
+    if (!username) {
+      username = prompt("Enter your name:");
+      if (!username || username.trim() === "") {
+        username = "User_" + Math.floor(Math.random() * 9999);
+      }
+      localStorage.setItem("username", username);
     }
-    localStorage.setItem("username", username);
-  }
 
-  const msgInput = document.getElementById("msgInput");
-  const sendBtn = document.getElementById("sendBtn");
-  const imgBtn = document.getElementById("imgBtn");
-  const imageInput = document.getElementById("imageInput");
-  const messagesDiv = document.getElementById("messages");
-  const typingDiv = document.getElementById("typing");
+    document.getElementById("usernameLabel").textContent = username;
 
-  // ✅ Send Text Message
-  sendBtn.onclick = () => {
-    const text = msgInput.value.trim();
-    if (text === "") return;
+    const msgInput = document.getElementById("msgInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const imgBtn = document.getElementById("imgBtn");
+    const imageInput = document.getElementById("imageInput");
+    const messagesDiv = document.getElementById("messages");
+    const typingDiv = document.getElementById("typing");
 
-    const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    const newMsg = push(chatRef);
-    set(newMsg, {
-      id: newMsg.key,
-      user: username,
-      text: text,
-      time: time,
-      type: "text"
-    });
+    // ✅ Send Text Message
+    sendBtn.onclick = () => {
+      const text = msgInput.value.trim();
+      if (text === "") return;
 
-    msgInput.value = "";
-    set(typingRef, { user: username, typing: false });
-  };
-
-  // ✅ Send Image
-  imgBtn.onclick = () => imageInput.click();
-
-  imageInput.addEventListener("change", async () => {
-    const file = imageInput.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("image", file);
-
-    const res = await fetch("https://api.imgbb.com/1/upload?key=28303bb2f8b9d2907349e5567b265f2d", {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-    if (data && data.data && data.data.url) {
-      const imageUrl = data.data.url;
       const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       const newMsg = push(chatRef);
       set(newMsg, {
         id: newMsg.key,
         user: username,
-        image: imageUrl,
+        text: text,
         time: time,
-        type: "image"
+        type: "text"
+      });
+
+      msgInput.value = "";
+      set(typingRef, { user: username, typing: false });
+    };
+
+    // ✅ Send Image
+    imgBtn.onclick = () => imageInput.click();
+    imageInput.addEventListener("change", async () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch("https://api.imgbb.com/1/upload?key=28303bb2f8b9d2907349e5567b265f2d", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data && data.data && data.data.url) {
+        const imageUrl = data.data.url;
+        const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const newMsg = push(chatRef);
+        set(newMsg, {
+          id: newMsg.key,
+          user: username,
+          image: imageUrl,
+          time: time,
+          type: "image"
+        });
+      }
+    });
+
+    // ✅ Display Messages
+    onChildAdded(chatRef, (snapshot) => {
+      const data = snapshot.val();
+      const div = document.createElement("div");
+      div.classList.add("msg", data.user === username ? "me" : "other");
+      div.id = data.id;
+
+      let content = "";
+      if (data.type === "image") {
+        content = `<img src="${data.image}" class="chatImage" alt="image">`;
+      } else {
+        const messageWithLinks = data.text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+        content = `<div>${messageWithLinks}</div>`;
+      }
+
+      div.innerHTML = `
+        ${content}
+        <div class="time">${data.time}</div>
+      `;
+
+      if (data.user === username) {
+        const delBtn = document.createElement("button");
+        delBtn.classList.add("deleteBtn");
+        delBtn.textContent = "🗑";
+        delBtn.onclick = () => remove(ref(db, "messages/" + data.id));
+        div.appendChild(delBtn);
+      }
+
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+    // ✅ Remove Deleted Messages
+    onChildRemoved(chatRef, (snapshot) => {
+      const msgDiv = document.getElementById(snapshot.key);
+      if (msgDiv) msgDiv.remove();
+    });
+
+    // ✅ Typing Indicator
+    msgInput.addEventListener("input", () => {
+      set(typingRef, { user: username, typing: msgInput.value.trim() !== "" });
+    });
+    onValue(typingRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data && data.typing && data.user !== username) {
+        typingDiv.textContent = `${data.user} is typing...`;
+      } else {
+        typingDiv.textContent = "";
+      }
+    });
+
+    // ✅ Online Users Counter
+    const userRef = ref(db, "online/" + username);
+    set(userRef, true);
+    onDisconnect(userRef).remove();
+
+    const onlineRef = ref(db, "online");
+    onValue(onlineRef, (snap) => {
+      const users = snap.val() || {};
+      const count = Object.keys(users).length;
+      document.getElementById("count").textContent = count;
+    });
+  </script>
+
+  <!-- ✅ PWA Support -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").then(() => {
+        console.log("✅ Service Worker registered");
       });
     }
-  });
 
-  // ✅ Display Messages
-  onChildAdded(chatRef, (snapshot) => {
-    const data = snapshot.val();
-    showMessage(data);
-  });
-
-  // ✅ Remove Deleted Messages
-  onChildRemoved(chatRef, (snapshot) => {
-    const msgDiv = document.getElementById(snapshot.key);
-    if (msgDiv) msgDiv.remove();
-  });
-
-  function showMessage(data) {
-    const div = document.createElement("div");
-    div.classList.add("msg", data.user === username ? "me" : "other");
-    div.id = data.id;
-
-    let content = "";
-    if (data.type === "image") {
-      content = `<img src="${data.image}" class="chatImage" alt="image">`;
-    } else {
-      const messageWithLinks = data.text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
-      content = `<div>${messageWithLinks}</div>`;
-    }
-
-    div.innerHTML = `
-      <div class="user">${data.user}</div>
-      ${content}
-      <div class="time">${data.time}</div>
-    `;
-
-    if (data.user === username) {
-      const delBtn = document.createElement("button");
-      delBtn.classList.add("deleteBtn");
-      delBtn.textContent = "🗑";
-      delBtn.onclick = () => remove(ref(db, "messages/" + data.id));
-      div.appendChild(delBtn);
-    }
-
-    messagesDiv.appendChild(div);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
-
-  // ✅ Typing Indicator
-  msgInput.addEventListener("input", () => {
-    set(typingRef, { user: username, typing: msgInput.value.trim() !== "" });
-  });
-
-  onValue(typingRef, (snapshot) => {
-    const data = snapshot.val();
-    if (data && data.typing && data.user !== username) {
-      typingDiv.textContent = `${data.user} is typing...`;
-    } else {
-      typingDiv.textContent = "";
-    }
-  });
-</script>
-
-<script>
-  // ✅ Register Service Worker (for PWA install)
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").then(() => {
-      console.log("✅ Service Worker registered");
+    window.addEventListener("beforeinstallprompt", (e) => {
+      console.log("📱 Install prompt available");
     });
-  }
-
-  // ✅ Allow natural browser install prompt
-  window.addEventListener("beforeinstallprompt", (e) => {
-    console.log("📱 Install prompt available");
-  });
-</script>
-
+  </script>
 </body>
 </html>
