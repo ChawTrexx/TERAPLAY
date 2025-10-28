@@ -1,202 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎧 Voice Call - Auto Connect</title>
-  <style>
-    body {
-      background: #0a0f1e;
-      color: #e6eef8;
-      font-family: "Poppins", sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
-    }
-    button {
-      padding: 10px 18px;
-      margin: 8px;
-      border-radius: 10px;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover { transform: scale(1.05); }
-    #onlineCount {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      padding: 8px 14px;
-      border-radius: 20px;
-      background: linear-gradient(90deg,#06b6d4,#3b82f6,#9333ea);
-      color: #fff;
-      font-weight: bold;
-      box-shadow: 0 0 15px rgba(59,130,246,0.7);
-    }
-    #incomingPopup, #rejectedPopup {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(6px);
-      color: white;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 10;
-    }
-    #incomingPopup button, #rejectedPopup button {
-      margin: 10px;
-      font-size: 18px;
-      padding: 12px 25px;
-    }
-    #acceptBtn { background: #10b981; color: #fff; }
-    #rejectBtn { background: #ef4444; color: #fff; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🔥 Voice Call</title>
+<style>
+body {
+  font-family: Poppins, sans-serif;
+  background: #0a0a0a;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+}
+h1 { color: #00ffae; margin-bottom: 10px; }
+button {
+  background: #00ffae;
+  color: black;
+  border: none;
+  padding: 10px 25px;
+  font-size: 17px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin: 10px;
+}
+button:hover { background: #00d48a; }
+#onlineCount { margin-bottom: 20px; font-size: 18px; color: #ccc; }
+#callPopup {
+  display: none;
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #111;
+  border: 2px solid #00ffae;
+  padding: 25px;
+  border-radius: 15px;
+  text-align: center;
+}
+#audioSwitch { display: none; margin-top: 15px; }
+</style>
 </head>
 <body>
-  <h2>🎙️ Firebase Auto Voice Call</h2>
-  <div>
-    <button id="startBtn">🎤 Start Mic</button>
-    <button id="callBtn" disabled>📞 Start Call</button>
-    <button id="hangupBtn" disabled>❌ End Call</button>
-  </div>
+<h1>🔥 Voice Call</h1>
+<div id="onlineCount">Online: 0</div>
 
-  <div id="onlineCount">💫 0 Online</div>
+<button id="callBtn">📞 Start Call</button>
+<button id="hangupBtn" style="display:none;">❌ Hang Up</button>
 
-  <audio id="remoteAudio" autoplay playsinline></audio>
-  <audio id="localAudio" autoplay muted playsinline style="display:none;"></audio>
+<div id="callPopup">
+  <h2 id="incomingText"></h2>
+  <button id="acceptBtn">✅ Accept</button>
+  <button id="rejectBtn">❌ Reject</button>
+</div>
 
-  <div id="incomingPopup">
-    <h2>📞 Incoming Call...</h2>
-    <div>
-      <button id="acceptBtn">✅ Receive</button>
-      <button id="rejectBtn">❌ Reject</button>
-    </div>
-  </div>
+<audio id="remoteAudio" autoplay></audio>
+<div id="audioSwitch">
+  <button id="toggleOutput">🔊 Speaker</button>
+</div>
 
-  <div id="rejectedPopup">
-    <h2>❌ Your call was rejected!</h2>
-    <button onclick="document.getElementById('rejectedPopup').style.display='none'">OK</button>
-  </div>
+<!-- Firebase + WebRTC -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { getDatabase, ref, push, set, onValue, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, push, remove, onDisconnect, serverTimestamp, update } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
+  authDomain: "wechat-eee4d.firebaseapp.com",
+  databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wechat-eee4d",
+  storageBucket: "wechat-eee4d.firebasestorage.app",
+  messagingSenderId: "156838661275",
+  appId: "1:156838661275:web:3d0cf4f3b402391801ca3e",
+  measurementId: "G-0X6QKPRZJ3"
+};
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
-      authDomain: "wechat-eee4d.firebaseapp.com",
-      databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "wechat-eee4d",
-      storageBucket: "wechat-eee4d.firebasestorage.app",
-      messagingSenderId: "156838661275",
-      appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
-    };
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+const onlineRef = ref(db, "onlineUsers");
+const callRef = ref(db, "calls");
 
-    const startBtn = document.getElementById('startBtn');
-    const callBtn = document.getElementById('callBtn');
-    const hangupBtn = document.getElementById('hangupBtn');
-    const onlineCount = document.getElementById('onlineCount');
-    const incomingPopup = document.getElementById('incomingPopup');
-    const rejectedPopup = document.getElementById('rejectedPopup');
-    const acceptBtn = document.getElementById('acceptBtn');
-    const rejectBtn = document.getElementById('rejectBtn');
-    const remoteAudio = document.getElementById('remoteAudio');
-    const localAudio = document.getElementById('localAudio');
+const callBtn = document.getElementById("callBtn");
+const hangupBtn = document.getElementById("hangupBtn");
+const callPopup = document.getElementById("callPopup");
+const incomingText = document.getElementById("incomingText");
+const acceptBtn = document.getElementById("acceptBtn");
+const rejectBtn = document.getElementById("rejectBtn");
+const onlineCount = document.getElementById("onlineCount");
+const remoteAudio = document.getElementById("remoteAudio");
+const audioSwitch = document.getElementById("audioSwitch");
+const toggleOutput = document.getElementById("toggleOutput");
 
-    let pc, localStream;
-    const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-    const uid = Math.random().toString(36).slice(2);
+let localStream;
+let peerConnection;
+let myId = Math.floor(Math.random() * 1000);
+let currentCallKey = null;
+let isSpeaker = false;
 
-    // ---- Presence ----
-    const presenceRef = ref(db, 'presence/' + uid);
-    set(presenceRef, { online: true, time: serverTimestamp() });
-    onDisconnect(presenceRef).remove();
-    onValue(ref(db, 'presence'), s => {
-      const data = s.val() || {};
-      onlineCount.textContent = `💫 ${Object.keys(data).length} Online`;
-    });
+// --- ONLINE USERS TRACK ---
+const me = push(onlineRef);
+set(me, { id: myId });
+onDisconnect(me).remove();
+onValue(onlineRef, (snap) => {
+  onlineCount.innerText = "Online: " + snap.size;
+});
 
-    // ---- Start Mic ----
-    startBtn.onclick = async () => {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      localAudio.srcObject = localStream;
-      startBtn.disabled = true;
-      callBtn.disabled = false;
-    };
+// --- CALL LOGIC ---
+callBtn.onclick = async () => {
+  const snapshot = await (await fetch(db._delegate._repoInfo_.url + "/onlineUsers.json")).json();
+  const users = Object.values(snapshot || {});
+  const others = users.filter(u => u.id !== myId);
+  if (!others.length) return alert("No other users online!");
 
-    // ---- Call Start ----
-    callBtn.onclick = async () => {
-      pc = new RTCPeerConnection(servers);
-      localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-      pc.ontrack = e => remoteAudio.srcObject = e.streams[0];
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      const callRef = ref(db, 'activeCall');
-      await set(callRef, { offer, from: uid, status: "ringing" });
-      callBtn.disabled = true;
-      hangupBtn.disabled = false;
-    };
+  const target = others[0];
+  const newCall = push(callRef);
+  currentCallKey = newCall.key;
+  set(newCall, { from: myId, to: target.id, status: "calling" });
+  alert("📞 Calling user " + target.id + "...");
+};
 
-    // ---- Listen for Call Updates ----
-    onValue(ref(db, 'activeCall'), async (snap) => {
-      const data = snap.val();
-      if (!data) return;
+// --- INCOMING CALL ---
+onValue(callRef, async (snap) => {
+  const calls = snap.val();
+  if (!calls) return;
+  for (const key in calls) {
+    const call = calls[key];
+    if (call.to === myId && call.status === "calling") {
+      currentCallKey = key;
+      incomingText.innerText = `📲 Incoming call from user ${call.from}`;
+      callPopup.style.display = "block";
+    } else if (call.status === "rejected" && call.from === myId) {
+      alert(`❌ User ${call.to} rejected your call`);
+      remove(ref(db, "calls/" + key));
+    }
+  }
+});
 
-      // Incoming call
-      if (data.from !== uid && data.offer && data.status === "ringing") {
-        incomingPopup.style.display = 'flex';
-        acceptBtn.onclick = async () => {
-          incomingPopup.style.display = 'none';
-          pc = new RTCPeerConnection(servers);
-          localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-          pc.ontrack = e => remoteAudio.srcObject = e.streams[0];
-          await pc.setRemoteDescription(data.offer);
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          await update(ref(db, 'activeCall'), { answer, status: "connected" });
-          hangupBtn.disabled = false;
-        };
-        rejectBtn.onclick = async () => {
-          incomingPopup.style.display = 'none';
-          await update(ref(db, 'activeCall'), { status: "rejected" });
-          setTimeout(() => remove(ref(db, 'activeCall')), 3000);
-        };
+// --- ACCEPT CALL ---
+acceptBtn.onclick = async () => {
+  callPopup.style.display = "none";
+  set(ref(db, "calls/" + currentCallKey + "/status"), "accepted");
+  startCall(true);
+};
+
+// --- REJECT CALL ---
+rejectBtn.onclick = () => {
+  callPopup.style.display = "none";
+  set(ref(db, "calls/" + currentCallKey + "/status"), "rejected");
+};
+
+// --- WEBRTC CONNECTION ---
+async function startCall(isReceiver) {
+  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  peerConnection = new RTCPeerConnection();
+  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+  peerConnection.ontrack = (event) => {
+    remoteAudio.srcObject = event.streams[0];
+    showAudioSwitch();
+  };
+
+  peerConnection.onicecandidate = async (event) => {
+    if (event.candidate) {
+      set(ref(db, "calls/" + currentCallKey + "/candidate_" + myId), event.candidate.toJSON());
+    }
+  };
+
+  const callDataRef = ref(db, "calls/" + currentCallKey);
+  onValue(callDataRef, async (snap) => {
+    const data = snap.val();
+    if (data?.offer && !isReceiver) {
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      set(ref(db, "calls/" + currentCallKey + "/answer"), answer);
+    } else if (data?.answer && isReceiver) {
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+    } else if (data?.["candidate_" + (isReceiver ? data.from : data.to)]) {
+      try {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(data["candidate_" + (isReceiver ? data.from : data.to)]));
+      } catch (err) {
+        console.error(err);
       }
+    }
+  });
 
-      // Caller sees rejection
-      if (data.from === uid && data.status === "rejected") {
-        document.getElementById('rejectedPopup').style.display = 'flex';
-        if (pc) pc.close();
-        callBtn.disabled = false;
-        hangupBtn.disabled = true;
-        remove(ref(db, 'activeCall'));
-      }
+  if (!isReceiver) {
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    set(ref(db, "calls/" + currentCallKey + "/offer"), offer);
+  }
 
-      // Answer received
-      if (data.answer && data.from === uid && !pc.currentRemoteDescription) {
-        await pc.setRemoteDescription(data.answer);
-      }
-    });
+  callBtn.style.display = "none";
+  hangupBtn.style.display = "block";
+}
 
-    // ---- Hangup ----
-    hangupBtn.onclick = async () => {
-      if (pc) pc.close();
-      await remove(ref(db, 'activeCall'));
-      hangupBtn.disabled = true;
-      callBtn.disabled = false;
-      alert('Call ended');
-    };
-  </script>
+// --- HANGUP ---
+hangupBtn.onclick = () => {
+  peerConnection.close();
+  peerConnection = null;
+  remove(ref(db, "calls/" + currentCallKey));
+  callBtn.style.display = "block";
+  hangupBtn.style.display = "none";
+  audioSwitch.style.display = "none";
+};
+
+// --- AUDIO OUTPUT SWITCH ---
+function showAudioSwitch() {
+  audioSwitch.style.display = "block";
+}
+
+toggleOutput.onclick = async () => {
+  if (!remoteAudio.sinkId) {
+    alert("Your browser doesn't support manual output switching.");
+    return;
+  }
+
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const audioOutputs = devices.filter(d => d.kind === "audiooutput");
+    if (audioOutputs.length < 2) {
+      alert("No alternate audio output found.");
+      return;
+    }
+
+    isSpeaker = !isSpeaker;
+    const targetDevice = audioOutputs[isSpeaker ? 1 : 0];
+    await remoteAudio.setSinkId(targetDevice.deviceId);
+    toggleOutput.textContent = isSpeaker ? "🎧 Earpiece" : "🔊 Speaker";
+  } catch (err) {
+    console.error(err);
+    alert("Switching audio output failed.");
+  }
+};
+</script>
 </body>
 </html>
