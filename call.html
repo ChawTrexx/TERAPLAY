@@ -1,217 +1,186 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Voice Call — Auto Connect (Incoming Call UI)</title>
-<style>
-  :root{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
-  body{margin:0;background:#0b0f1a;color:#e8f5ff;display:flex;align-items:center;justify-content:center;height:100vh}
-  .app { width:940px; max-width:96%; background:linear-gradient(180deg,#061326,#03101a); padding:18px; border-radius:14px; box-shadow:0 12px 40px rgba(2,6,23,0.7); }
-  .top { display:flex; align-items:center; gap:12px; }
-  h1{margin:0;font-size:18px}
-  .controls{margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  button,input{padding:10px 12px;border-radius:10px;border:none;background:transparent;color:inherit;border:1px solid rgba(255,255,255,0.04)}
-  button.primary{background:#e11d48;color:white;border:none;box-shadow:0 6px 20px rgba(225,29,72,0.14)}
-  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
-  button:disabled{opacity:.45;cursor:not-allowed}
-  audio{width:100%;margin-top:16px;border-radius:8px}
-  .small{font-size:13px;color:#9fb0d4}
-  .status-row{display:flex;align-items:center;gap:12px;margin-top:12px}
-  .online-badge{margin-left:auto;padding:8px 14px;border-radius:999px;background:linear-gradient(90deg,#042431,#063246);box-shadow:0 10px 30px rgba(3,15,30,0.6);display:flex;align-items:center;gap:10px}
-  .online-num{font-weight:700;font-size:16px;background:linear-gradient(90deg,#8ef2ff,#6be37a);-webkit-background-clip:text;background-clip:text;color:transparent}
-  /* incoming overlay (phone style like screenshot) */
-  .incoming-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); visibility:hidden; opacity:0; transition:all .18s; z-index:50 }
-  .incoming-overlay.show{ visibility:visible; opacity:1 }
-  .call-screen{ width:380px; max-width:92%; background:linear-gradient(180deg,#0e1a2a,#051018); border-radius:18px; padding:18px; text-align:center; color:#eaf6ff; box-shadow:0 30px 80px rgba(2,8,20,0.7) }
-  .avatar{ width:96px; height:96px; border-radius:50%; margin:8px auto; background:linear-gradient(180deg,#2b6cb0,#0ea5a7); display:flex;align-items:center;justify-content:center; font-size:44px; color:white; box-shadow:0 12px 40px rgba(14,165,233,0.12) }
-  .caller-name{ font-size:20px; margin-top:8px; font-weight:700 }
-  .call-timer{ font-size:40px; margin:10px 0; font-weight:600 }
-  .call-actions{ display:flex; justify-content:space-around; margin-top:12px; gap:12px }
-  .accept{ width:68px; height:68px; border-radius:50%; background:#22c55e; display:flex;align-items:center;justify-content:center; color:white; border:none; box-shadow:0 14px 30px rgba(34,197,94,0.18); font-size:28px; }
-  .decline{ width:68px; height:68px; border-radius:50%; background:#ef4444; display:flex;align-items:center;justify-content:center; color:white; border:none; box-shadow:0 14px 30px rgba(239,68,68,0.16); font-size:28px; }
-  .call-tools{ display:flex; justify-content:center; gap:16px; margin-top:12px; color:#cfe9ff; opacity:.95 }
-  .tool{ display:flex; flex-direction:column; align-items:center; font-size:13px }
-  .tool i{ font-size:18px; margin-bottom:6px }
-  /* main small controls */
-  .mini { display:flex; gap:8px; align-items:center }
-  /* hide number example */
-  .no-number{ font-size:14px; color:#9fb0d4 }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎧 Voice Call - Auto Connect</title>
+  <style>
+    body {
+      background: #0a0f1e;
+      color: #e6eef8;
+      font-family: "Poppins", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    button {
+      padding: 10px 18px;
+      margin: 8px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    #onlineCount {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      background: linear-gradient(90deg,#06b6d4,#3b82f6,#9333ea);
+      color: #fff;
+      font-weight: bold;
+      box-shadow: 0 0 15px rgba(59,130,246,0.7);
+    }
+    #incomingPopup {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(6px);
+      color: white;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 10;
+    }
+    #incomingPopup button {
+      margin: 10px;
+      font-size: 18px;
+      padding: 12px 25px;
+    }
+    #acceptBtn {
+      background: #10b981;
+      color: #fff;
+    }
+    #rejectBtn {
+      background: #ef4444;
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
-  <div class="app">
-    <div class="top">
-      <h1>Simple Voice Call — Auto Connect</h1>
-      <div class="online-badge" title="Users currently online (site-wide)">
-        <div class="online-num" id="onlineNum">0</div>
-        <div class="online-text">Online Now</div>
-      </div>
-    </div>
-
-    <div class="small" style="margin-top:10px">Click <strong>Start Mic</strong>, then <strong>Start Call</strong> to ring everyone else on the site. Other users will see an incoming call screen and can Accept / Decline.</div>
-
-    <div class="controls">
-      <button id="startBtn" class="ghost">🎤 Start Mic</button>
-      <button id="startCallBtn" class="primary" disabled>📞 Start Call</button>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input id="roomDisplay" placeholder="(room auto handled)" style="min-width:220px" disabled />
-        <button id="hangupBtn" class="ghost" disabled>❌ Hang Up</button>
-      </div>
-    </div>
-
-    <div style="margin-top:12px" class="small">Local mic level</div>
-    <div style="height:8px;background:#031826;border-radius:8px;margin-top:8px;overflow:hidden">
-      <div id="levelBar" style="width:0%;height:100%;background:linear-gradient(90deg,#34d399,#06b6d4)"></div>
-    </div>
-
-    <audio id="localAudio" autoplay muted playsinline style="display:none"></audio>
-    <audio id="remoteAudio" autoplay playsinline style="margin-top:16px;width:100%"></audio>
+  <h2>🎙️ Firebase Auto Voice Call</h2>
+  <div>
+    <button id="startBtn">🎤 Start Mic</button>
+    <button id="callBtn" disabled>📞 Start Call</button>
+    <button id="hangupBtn" disabled>❌ End Call</button>
   </div>
 
-  <!-- Incoming call screen (phone-like) -->
-  <div id="incoming" class="incoming-overlay" aria-hidden="true">
-    <div class="call-screen" role="dialog" aria-modal="true">
-      <div class="avatar" id="incomingAvatar">👤</div>
-      <div class="caller-name" id="incomingCaller">Incoming Call</div>
-      <div class="no-number" id="incomingSub">Voice call</div>
-      <div class="call-timer" id="incomingTimer">00:00</div>
+  <div id="onlineCount">💫 0 Online</div>
 
-      <div class="call-actions">
-        <button id="declineBtn" class="decline" title="Decline">✕</button>
-        <button id="acceptBtn" class="accept" title="Accept">✓</button>
-      </div>
+  <audio id="remoteAudio" autoplay playsinline></audio>
+  <audio id="localAudio" autoplay muted playsinline style="display:none;"></audio>
 
-      <div class="call-tools">
-        <div class="tool"><i>🔇</i><div class="small">Mute</div></div>
-        <div class="tool"><i>⏸️</i><div class="small">Hold</div></div>
-        <div class="tool"><i>⏺️</i><div class="small">Record</div></div>
-      </div>
+  <div id="incomingPopup">
+    <h2>📞 Incoming Call...</h2>
+    <div>
+      <button id="acceptBtn">✅ Receive</button>
+      <button id="rejectBtn">❌ Reject</button>
     </div>
   </div>
 
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
-  import { getDatabase, ref, set, push, onValue, onChildAdded, remove, onDisconnect } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js';
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, push, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-  // --- Firebase config (your project) ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
-    authDomain: "wechat-eee4d.firebaseapp.com",
-    databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "wechat-eee4d",
-    storageBucket: "wechat-eee4d.firebasestorage.app",
-    messagingSenderId: "156838661275",
-    appId: "1:156838661275:web:3d0cf4f3b402391801ca3e",
-    measurementId: "G-0X6QKPRZJ3"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
+      authDomain: "wechat-eee4d.firebaseapp.com",
+      databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "wechat-eee4d",
+      storageBucket: "wechat-eee4d.firebasestorage.app",
+      messagingSenderId: "156838661275",
+      appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-  // UI refs
-  const startBtn = document.getElementById('startBtn');
-  const startCallBtn = document.getElementById('startCallBtn');
-  const hangupBtn = document.getElementById('hangupBtn');
-  const roomDisplay = document.getElementById('roomDisplay');
-  const localAudio = document.getElementById('localAudio');
-  const remoteAudio = document.getElementById('remoteAudio');
-  const levelBar = document.getElementById('levelBar');
+    const startBtn = document.getElementById('startBtn');
+    const callBtn = document.getElementById('callBtn');
+    const hangupBtn = document.getElementById('hangupBtn');
+    const onlineCount = document.getElementById('onlineCount');
+    const incomingPopup = document.getElementById('incomingPopup');
+    const acceptBtn = document.getElementById('acceptBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+    const remoteAudio = document.getElementById('remoteAudio');
+    const localAudio = document.getElementById('localAudio');
 
-  const incoming = document.getElementById('incoming');
-  const incomingCaller = document.getElementById('incomingCaller');
-  const incomingSub = document.getElementById('incomingSub');
-  const incomingTimer = document.getElementById('incomingTimer');
-  const acceptBtn = document.getElementById('acceptBtn');
-  const declineBtn = document.getElementById('declineBtn');
+    let pc, localStream;
+    const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-  const onlineNum = document.getElementById('onlineNum');
+    // ---- Online Presence ----
+    const uid = Math.random().toString(36).slice(2);
+    const presenceRef = ref(db, 'presence/' + uid);
+    set(presenceRef, { online: true, time: serverTimestamp() });
+    onDisconnect(presenceRef).remove();
+    onValue(ref(db, 'presence'), s => {
+      const data = s.val() || {};
+      onlineCount.textContent = `💫 ${Object.keys(data).length} Online`;
+    });
 
-  // state
-  let localStream = null;
-  let pc = null;
-  let myPresenceKey = null;
-  let waitingRoomKey = null; // the waiting room I created (if any)
-  let currentIncoming = null; // { roomId, callerPresence }
-  let acceptTimerInterval = null;
-  let connectingRoom = null; // roomId being connected to
-
-  const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-  // --- Presence: register this client as online ---
-  function startPresence() {
-    myPresenceKey = push(ref(db, 'presence')).key;
-    const myRef = ref(db, `presence/${myPresenceKey}`);
-    set(myRef, { online: true, ts: Date.now() });
-    onDisconnect(myRef).remove();
-  }
-  startPresence();
-
-  // update online count
-  onValue(ref(db, 'presence'), snap => {
-    const val = snap.val() || {};
-    const count = Object.keys(val).length;
-    onlineNum.textContent = count;
-  });
-
-  // --- microphone and meter ---
-  startBtn.onclick = async () => {
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:true, noiseSuppression:true } });
+    // ---- Functions ----
+    startBtn.onclick = async () => {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       localAudio.srcObject = localStream;
       startBtn.disabled = true;
-      startCallBtn.disabled = false;
-      // meter
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const src = ctx.createMediaStreamSource(localStream);
-        const analyser = ctx.createAnalyser(); analyser.fftSize = 256;
-        src.connect(analyser);
-        const data = new Uint8Array(analyser.frequencyBinCount);
-        function meterTick() {
-          analyser.getByteFrequencyData(data);
-          let sum = 0; for (let i=0;i<data.length;i++) sum += data[i];
-          const avg = sum / data.length; const pct = Math.min(100, (avg / 255)*100);
-          levelBar.style.width = pct + '%';
-          requestAnimationFrame(meterTick);
-        }
-        meterTick();
-      } catch(e){ console.warn('Meter error', e); }
-    } catch(e){
-      alert('Microphone permission denied or not available.');
-      console.error(e);
-    }
-  };
-
-  // --- helper: create PeerConnection and wire tracks/candidates ---
-  function createPeerConnection(role, roomIdForCandidates) {
-    pc = new RTCPeerConnection(configuration);
-    if (localStream) for (const t of localStream.getTracks()) pc.addTrack(t, localStream);
-    pc.ontrack = e => {
-      if (e.streams && e.streams[0]) remoteAudio.srcObject = e.streams[0];
-      else { const st = new MediaStream(); st.addTrack(e.track); remoteAudio.srcObject = st; }
+      callBtn.disabled = false;
     };
-    pc.onicecandidate = e => {
-      if (!e.candidate) return;
-      const candidate = e.candidate.toJSON();
-      const path = `rooms/${roomIdForCandidates}/${role}Candidates`;
-      push(ref(db, path), candidate);
+
+    callBtn.onclick = async () => {
+      pc = new RTCPeerConnection(servers);
+      localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+      pc.ontrack = e => remoteAudio.srcObject = e.streams[0];
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      const callRef = ref(db, 'activeCall');
+      await set(callRef, { offer, from: uid });
+      callBtn.disabled = true;
+      hangupBtn.disabled = false;
     };
-    return pc;
-  }
 
-  // --- Start Call (Caller) ---
-  startCallBtn.onclick = async () => {
-    if (!localStream) return alert('Start mic first.');
-    // create a unique room id
-    const roomId = Math.random().toString(36).substr(2,9);
-    roomDisplay.value = roomId;
-    connectingRoom = roomId;
+    onValue(ref(db, 'activeCall'), async (snap) => {
+      const data = snap.val();
+      if (!data) return;
+      if (data.from !== uid && data.offer) {
+        incomingPopup.style.display = 'flex';
+        acceptBtn.onclick = async () => {
+          incomingPopup.style.display = 'none';
+          pc = new RTCPeerConnection(servers);
+          localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+          pc.ontrack = e => remoteAudio.srcObject = e.streams[0];
+          await pc.setRemoteDescription(data.offer);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await set(ref(db, 'activeCall/answer'), answer);
+          hangupBtn.disabled = false;
+        };
+        rejectBtn.onclick = async () => {
+          incomingPopup.style.display = 'none';
+          await remove(ref(db, 'activeCall'));
+        };
+      } else if (data.answer && pc && !pc.currentRemoteDescription) {
+        await pc.setRemoteDescription(data.answer);
+      }
+    });
 
-    // create PC and offer
-    pc = createPeerConnection('caller', roomId);
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    await set(ref(db, `rooms/${roomId}/offer`), { type: offer.type, sdp: offer.sdp });
-
-    
+    hangupBtn.onclick = async () => {
+      if (pc) pc.close();
+      await remove(ref(db, 'activeCall'));
+      hangupBtn.disabled = true;
+      callBtn.disabled = false;
+      alert('Call ended');
+    };
+  </script>
+</body>
+</html>
