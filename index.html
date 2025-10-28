@@ -1,107 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simple Voice Call</title>
-  <style>
-    body {
-      background: #0b0c10;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 100px;
-    }
-    button {
-      background: #1f2833;
-      color: #66fcf1;
-      border: 2px solid #45a29e;
-      border-radius: 10px;
-      padding: 15px 25px;
-      font-size: 18px;
-      margin: 10px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #45a29e;
-      color: #0b0c10;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Realtime Chat 💬</title>
+<style>
+  body {
+    background: #0a0a0a;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+  }
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg {
+    max-width: 80%;
+    padding: 10px;
+    border-radius: 10px;
+    word-wrap: break-word;
+  }
+  .me {
+    background: #1e90ff;
+    align-self: flex-end;
+  }
+  .other {
+    background: #333;
+    align-self: flex-start;
+  }
+  .time {
+    font-size: 0.7em;
+    color: #ccc;
+    margin-top: 5px;
+    text-align: right;
+  }
+  #inputArea {
+    display: flex;
+    padding: 10px;
+    background: #111;
+  }
+  input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background: #222;
+    color: #fff;
+    outline: none;
+  }
+  button {
+    background: #1e90ff;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    margin-left: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+</style>
 </head>
 <body>
-  <h2>🎙 Simple Voice Call</h2>
-  <button id="startCall">Start Call</button>
-  <button id="joinCall">Join Call</button>
-  <audio id="remoteAudio" autoplay></audio>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+<div id="messages"></div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
-      authDomain: "wechat-eee4d.firebaseapp.com",
-      databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "wechat-eee4d",
-      storageBucket: "wechat-eee4d.firebasestorage.app",
-      messagingSenderId: "156838661275",
-      appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
-    };
+<div id="inputArea">
+  <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off">
+  <button id="sendBtn">Send</button>
+</div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const callRef = ref(db, "voicecall");
+<script type="module">
+  // Import Firebase SDKs
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-    let pc = new RTCPeerConnection();
-    let localStream;
-    let remoteAudio = document.getElementById("remoteAudio");
+  // ✅ Your Firebase Configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
+    authDomain: "wechat-eee4d.firebaseapp.com",
+    databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "wechat-eee4d",
+    storageBucket: "wechat-eee4d.firebasestorage.app",
+    messagingSenderId: "156838661275",
+    appId: "1:156838661275:web:3d0cf4f3b402391801ca3e",
+    measurementId: "G-0X6QKPRZJ3"
+  };
 
-    pc.ontrack = (event) => {
-      remoteAudio.srcObject = event.streams[0];
-    };
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const chatRef = ref(db, "messages");
 
-    async function startCall() {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  // Random username
+  const username = "User_" + Math.floor(Math.random() * 9999);
 
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      await set(callRef, { offer: offer.sdp });
+  // Elements
+  const msgInput = document.getElementById("msgInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const messagesDiv = document.getElementById("messages");
 
-      onValue(callRef, async (snapshot) => {
-        const data = snapshot.val();
-        if (data && data.answer && !pc.currentRemoteDescription) {
-          await pc.setRemoteDescription({ type: "answer", sdp: data.answer });
-        }
-      });
+  // Send message
+  sendBtn.onclick = () => {
+    const text = msgInput.value.trim();
+    if (text === "") return;
+
+    // 🚫 Block links
+    if (text.match(/https?:\/\/\S+/gi)) {
+      alert("Links not allowed ❌");
+      msgInput.value = "";
+      return;
     }
 
-    async function joinCall() {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-      onValue(callRef, async (snapshot) => {
-        const data = snapshot.val();
-        if (data && data.offer && !data.answer) {
-          await pc.setRemoteDescription({ type: "offer", sdp: data.offer });
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          await set(callRef, { offer: data.offer, answer: answer.sdp });
-        }
-      });
-    }
-
-    document.getElementById("startCall").addEventListener("click", async () => {
-      await startCall();
-      alert("Call started. Waiting for other user to join...");
+    push(chatRef, {
+      user: username,
+      text: text,
+      time: time
     });
 
-    document.getElementById("joinCall").addEventListener("click", async () => {
-      await joinCall();
-      alert("Joined the call!");
-    });
+    msgInput.value = "";
+  };
 
-    window.addEventListener("beforeunload", () => remove(callRef));
-  </script>
+  // Receive messages in real time
+  onChildAdded(chatRef, (snapshot) => {
+    const data = snapshot.val();
+    const div = document.createElement("div");
+    div.classList.add("msg", data.user === username ? "me" : "other");
+    div.innerHTML = `
+      <div>${data.text}</div>
+      <div class="time">${data.user} • ${data.time}</div>
+    `;
+    messagesDiv.appendChild(div);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+</script>
+
 </body>
 </html>
