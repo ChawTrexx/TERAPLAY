@@ -1,228 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎧 Voice Call</title>
-  <style>
-    body {
-      background: #0a0f1e;
-      color: #e6eef8;
-      font-family: "Poppins", sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 8px;
-      border-radius: 10px;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover { transform: scale(1.05); }
-    #onlineCount {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      padding: 8px 14px;
-      border-radius: 20px;
-      background: linear-gradient(90deg,#06b6d4,#3b82f6,#9333ea);
-      color: #fff;
-      font-weight: bold;
-      box-shadow: 0 0 15px rgba(59,130,246,0.7);
-    }
-    #incomingPopup {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(6px);
-      color: white;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 10;
-    }
-    #incomingPopup button {
-      margin: 10px;
-      font-size: 18px;
-      padding: 12px 25px;
-    }
-    #acceptBtn { background: #10b981; color: #fff; }
-    #rejectBtn { background: #ef4444; color: #fff; }
-    #callControls {
-      display: none;
-      margin-top: 15px;
-    }
-    #muteBtn, #speakerBtn, #hangupBtn {
-      background: #3b82f6;
-      color: #fff;
-    }
-    #timer {
-      margin-top: 10px;
-      font-size: 18px;
-      color: #0ff;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎧 Voice Call</title>
+<style>
+  body {background:#0a0f1e;color:#e6eef8;font-family:"Poppins",sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;margin:0}
+  button{padding:10px 20px;margin:8px;border-radius:10px;border:none;font-size:16px;cursor:pointer;transition:0.3s}
+  button:hover{transform:scale(1.05)}
+  #onlineCount{position:fixed;top:15px;right:15px;padding:8px 14px;border-radius:20px;background:linear-gradient(90deg,#06b6d4,#3b82f6,#9333ea);color:#fff;font-weight:bold;box-shadow:0 0 15px rgba(59,130,246,0.7)}
+  #incomingPopup{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);color:white;justify-content:center;align-items:center;flex-direction:column;z-index:10}
+  #incomingPopup button{margin:10px;font-size:18px;padding:12px 25px}
+  #acceptBtn{background:#10b981;color:#fff}
+  #rejectBtn{background:#ef4444;color:#fff}
+  #callControls{display:none;margin-top:15px}
+  #muteBtn,#speakerBtn,#hangupBtn{background:#3b82f6;color:#fff}
+  #timer{margin-top:10px;font-size:18px;color:#0ff;font-weight:bold}
+</style>
 </head>
 <body>
-  <h2>🎙️ Firebase Auto Voice Call</h2>
-  <button id="callBtn">📞 Start Call</button>
-  <div id="callControls">
-    <button id="muteBtn">🔇 Mute</button>
-    <button id="speakerBtn">🔊 Speaker</button>
-    <button id="hangupBtn">❌ End Call</button>
-    <div id="timer">00:00</div>
+<h2>🎙️ Firebase Auto Voice Call</h2>
+<button id="callBtn">📞 Start Call</button>
+<div id="callControls">
+  <button id="muteBtn">🔇 Mute</button>
+  <button id="speakerBtn">🔊 Speaker</button>
+  <button id="hangupBtn">❌ End Call</button>
+  <div id="timer">00:00</div>
+</div>
+<div id="onlineCount">💫 0 Online</div>
+
+<audio id="remoteAudio" autoplay playsinline></audio>
+<audio id="localAudio" autoplay muted playsinline style="display:none;"></audio>
+
+<div id="incomingPopup">
+  <h2>📞 Incoming Call...</h2>
+  <div>
+    <button id="acceptBtn">✅ Receive</button>
+    <button id="rejectBtn">❌ Reject</button>
   </div>
+</div>
 
-  <div id="onlineCount">💫 0 Online</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-  <audio id="remoteAudio" autoplay playsinline></audio>
-  <audio id="localAudio" autoplay muted playsinline style="display:none;"></audio>
+const firebaseConfig = {
+  apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
+  authDomain: "wechat-eee4d.firebaseapp.com",
+  databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wechat-eee4d",
+  storageBucket: "wechat-eee4d.firebasestorage.app",
+  messagingSenderId: "156838661275",
+  appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  <div id="incomingPopup">
-    <h2>📞 Incoming Call...</h2>
-    <div>
-      <button id="acceptBtn">✅ Receive</button>
-      <button id="rejectBtn">❌ Reject</button>
-    </div>
-  </div>
+const callBtn=document.getElementById('callBtn');
+const hangupBtn=document.getElementById('hangupBtn');
+const muteBtn=document.getElementById('muteBtn');
+const speakerBtn=document.getElementById('speakerBtn');
+const onlineCount=document.getElementById('onlineCount');
+const incomingPopup=document.getElementById('incomingPopup');
+const acceptBtn=document.getElementById('acceptBtn');
+const rejectBtn=document.getElementById('rejectBtn');
+const remoteAudio=document.getElementById('remoteAudio');
+const localAudio=document.getElementById('localAudio');
+const callControls=document.getElementById('callControls');
+const timerDisplay=document.getElementById('timer');
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+let pc,localStream,isMuted=false,useSpeaker=false,timerInterval,seconds=0;
+const servers={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+const uid=Math.random().toString(36).slice(2);
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
-      authDomain: "wechat-eee4d.firebaseapp.com",
-      databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "wechat-eee4d",
-      storageBucket: "wechat-eee4d.firebasestorage.app",
-      messagingSenderId: "156838661275",
-      appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
-    };
+const presenceRef=ref(db,'presence/'+uid);
+set(presenceRef,{online:true,time:serverTimestamp()});
+onDisconnect(presenceRef).remove();
+onValue(ref(db,'presence'),s=>{
+  const d=s.val()||{};
+  onlineCount.textContent=`💫 ${Object.keys(d).length} Online`;
+});
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+function startTimer(){
+  clearInterval(timerInterval);
+  seconds=0;
+  timerInterval=setInterval(()=>{
+    seconds++;
+    const m=String(Math.floor(seconds/60)).padStart(2,'0');
+    const s=String(seconds%60).padStart(2,'0');
+    timerDisplay.textContent=`${m}:${s}`;
+    if(seconds>=10800) endCall(); // auto end 3h
+  },1000);
+}
 
-    const callBtn = document.getElementById('callBtn');
-    const hangupBtn = document.getElementById('hangupBtn');
-    const muteBtn = document.getElementById('muteBtn');
-    const speakerBtn = document.getElementById('speakerBtn');
-    const onlineCount = document.getElementById('onlineCount');
-    const incomingPopup = document.getElementById('incomingPopup');
-    const acceptBtn = document.getElementById('acceptBtn');
-    const rejectBtn = document.getElementById('rejectBtn');
-    const remoteAudio = document.getElementById('remoteAudio');
-    const localAudio = document.getElementById('localAudio');
-    const callControls = document.getElementById('callControls');
-    const timerDisplay = document.getElementById('timer');
-
-    let pc, localStream, isMuted = false, useSpeaker = false, timerInterval, seconds = 0;
-    const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-    const uid = Math.random().toString(36).slice(2);
-    const presenceRef = ref(db, 'presence/' + uid);
-    set(presenceRef, { online: true, time: serverTimestamp() });
-    onDisconnect(presenceRef).remove();
-    onValue(ref(db, 'presence'), s => {
-      const data = s.val() || {};
-      onlineCount.textContent = `💫 ${Object.keys(data).length} Online`;
-    });
-
-    function startTimer() {
-      clearInterval(timerInterval);
-      seconds = 0;
-      timerInterval = setInterval(() => {
-        seconds++;
-        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-        const s = String(seconds % 60).padStart(2, '0');
-        timerDisplay.textContent = `${m}:${s}`;
-        if (seconds >= 10800) endCall(); // auto cut after 3 hours
-      }, 1000);
+async function initPeerConnection(){
+  pc=new RTCPeerConnection(servers);
+  pc.onicecandidate=e=>{
+    if(e.candidate){
+      set(ref(db,'ice/'+uid+'/'+Date.now()),e.candidate.toJSON());
     }
+  };
+  pc.ontrack=e=>{
+    remoteAudio.srcObject=e.streams[0];
+  };
+  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+}
 
-    async function startCallProcess() {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      localAudio.srcObject = localStream;
-      pc = new RTCPeerConnection(servers);
-      localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-      pc.ontrack = e => remoteAudio.srcObject = e.streams[0];
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      await set(ref(db, 'activeCall'), { offer, from: uid });
-      callBtn.disabled = true;
-      callControls.style.display = 'block';
-    }
+async function startCallProcess(){
+  localStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  localAudio.srcObject=localStream;
+  await initPeerConnection();
+  const offer=await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await set(ref(db,'activeCall'),{offer,from:uid});
+  callBtn.disabled=true;
+  callControls.style.display='block';
+}
 
-    callBtn.onclick = startCallProcess;
+callBtn.onclick=startCallProcess;
 
-    onValue(ref(db, 'activeCall'), async (snap) => {
-      const data = snap.val();
-      if (!data) return;
-      if (data.from !== uid && data.offer && !data.answer) {
-        incomingPopup.style.display = 'flex';
-        acceptBtn.onclick = async () => {
-          incomingPopup.style.display = 'none';
-          localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          localAudio.srcObject = localStream;
-          pc = new RTCPeerConnection(servers);
-          localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-          pc.ontrack = e => remoteAudio.srcObject = e.streams[0];
-          await pc.setRemoteDescription(data.offer);
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          await set(ref(db, 'activeCall/answer'), answer);
-          callControls.style.display = 'block';
-          startTimer();
-        };
-        rejectBtn.onclick = async () => {
-          incomingPopup.style.display = 'none';
-          await remove(ref(db, 'activeCall'));
-        };
-      } else if (data.answer && pc && !pc.currentRemoteDescription) {
-        await pc.setRemoteDescription(data.answer);
-        startTimer();
-      }
-    });
-
-    muteBtn.onclick = () => {
-      isMuted = !isMuted;
-      localStream.getTracks().forEach(t => t.enabled = !isMuted);
-      muteBtn.textContent = isMuted ? "🔈 Unmute" : "🔇 Mute";
+onValue(ref(db,'activeCall'),async snap=>{
+  const data=snap.val();
+  if(!data) return;
+  if(data.from!==uid && data.offer && !data.answer){
+    incomingPopup.style.display='flex';
+    acceptBtn.onclick=async()=>{
+      incomingPopup.style.display='none';
+      localStream=await navigator.mediaDevices.getUserMedia({audio:true});
+      localAudio.srcObject=localStream;
+      await initPeerConnection();
+      await pc.setRemoteDescription(data.offer);
+      const answer=await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await set(ref(db,'activeCall/answer'),answer);
+      callControls.style.display='block';
+      startTimer();
     };
-
-    speakerBtn.onclick = async () => {
-      useSpeaker = !useSpeaker;
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const speakers = devices.find(d => d.kind === 'audiooutput');
-      if (speakers && remoteAudio.setSinkId) {
-        await remoteAudio.setSinkId(useSpeaker ? speakers.deviceId : '');
-        speakerBtn.textContent = useSpeaker ? "🎧 Earpiece" : "🔊 Speaker";
-      } else {
-        alert("Speaker switch not supported on this browser.");
-      }
+    rejectBtn.onclick=async()=>{
+      incomingPopup.style.display='none';
+      await remove(ref(db,'activeCall'));
     };
+  } else if(data.answer && pc && !pc.currentRemoteDescription){
+    await pc.setRemoteDescription(data.answer);
+    startTimer();
+  }
+});
 
-    async function endCall() {
-      clearInterval(timerInterval);
-      if (pc) pc.close();
-      await remove(ref(db, 'activeCall'));
-      callBtn.disabled = false;
-      callControls.style.display = 'none';
-      alert('Call Ended');
+// ---- Mute ----
+muteBtn.onclick=()=>{
+  isMuted=!isMuted;
+  localStream.getTracks().forEach(t=>t.enabled=!isMuted);
+  muteBtn.textContent=isMuted?"🔈 Unmute":"🔇 Mute";
+};
+
+// ---- Speaker ----
+speakerBtn.onclick=async()=>{
+  useSpeaker=!useSpeaker;
+  const devices=await navigator.mediaDevices.enumerateDevices();
+  const output=devices.find(d=>d.kind==='audiooutput');
+  if(remoteAudio.setSinkId && output){
+    await remoteAudio.setSinkId(useSpeaker?output.deviceId:"");
+    speakerBtn.textContent=useSpeaker?"🎧 Earpiece":"🔊 Speaker";
+  }else{
+    alert("Speaker switch not supported.");
+  }
+};
+
+async function endCall(){
+  clearInterval(timerInterval);
+  if(pc) pc.close();
+  await remove(ref(db,'activeCall'));
+  await remove(ref(db,'ice'));
+  callBtn.disabled=false;
+  callControls.style.display='none';
+  alert('Call Ended');
+}
+hangupBtn.onclick=endCall;
+
+// ---- ICE exchange ----
+onValue(ref(db,'ice'),snap=>{
+  const data=snap.val();
+  if(!data) return;
+  Object.entries(data).forEach(([uid2,iceList])=>{
+    if(uid2!==uid && pc){
+      Object.values(iceList).forEach(c=>{
+        pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
+      });
     }
-
-    hangupBtn.onclick = endCall;
-  </script>
+  });
+});
+</script>
 </body>
 </html>
