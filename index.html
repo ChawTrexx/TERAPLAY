@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Realtime Chat 💬</title>
+<title>weChat 💬</title> 
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e90ff">
+<link rel="icon" href="logo192.png">
 <style>
   body {
     background: #0a0a0a;
@@ -126,7 +129,7 @@
 <!-- ✅ HEADER -->
 <header>
   <img src="https://i.ibb.co/m8zqG1h/logo.png" alt="Logo">
-  <h2>Realtime Chat 💬</h2>
+  <h2>weChat</h2>
 </header>
 
 <!-- ✅ MESSAGES -->
@@ -281,5 +284,36 @@
   });
 </script>
 
+
+  <script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").then(() => {
+      console.log("✅ Service Worker registered");
+    });
+  }
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    const installBtn = document.createElement("button");
+    installBtn.textContent = "📱 Install App";
+    installBtn.style.position = "fixed";
+    installBtn.style.bottom = "20px";
+    installBtn.style.right = "20px";
+    installBtn.style.padding = "10px 20px";
+    installBtn.style.background = "#1e90ff";
+    installBtn.style.color = "#fff";
+    installBtn.style.border = "none";
+    installBtn.style.borderRadius = "10px";
+    installBtn.style.cursor = "pointer";
+    document.body.appendChild(installBtn);
+
+    installBtn.addEventListener("click", () => {
+      e.prompt();
+      installBtn.remove();
+    });
+  });
+  </script>
+
+  
 </body>
 </html>
