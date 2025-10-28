@@ -351,7 +351,7 @@ footer {
       if (data.user === username) {
         const delBtn = document.createElement("button");
         delBtn.classList.add("deleteBtn");
-        delBtn.textContent = "🗑";
+        delBtn.textContent = "delete";
         delBtn.onclick = () => remove(ref(db, "messages/" + data.id));
         div.appendChild(delBtn);
       }
