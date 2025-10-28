@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Admin Panel</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #000;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    padding: 20px;
+  }
+
+  h2 {
+    margin-top: 40px;
+    color: #1e90ff;
+  }
+
+  #panel {
+    background: #111;
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0,0,0,0.6);
+  }
+
+  #deleteBtn {
+    background: red;
+    border: none;
+    color: white;
+    font-size: 16px;
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  #deleteBtn:hover {
+    background: #ff4444;
+  }
+
+  #status {
+    margin-top: 15px;
+    color: #ccc;
+    font-size: 14px;
+  }
+
+  #logoutBtn {
+    background: #333;
+    border: none;
+    color: #fff;
+    margin-top: 15px;
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+
+  #passwordBox {
+    margin-top: 100px;
+    text-align: center;
+  }
+
+  input[type=password] {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 10px;
+    color: #fff;
+    width: 80%;
+    font-size: 15px;
+  }
+
+  button {
+    margin-top: 10px;
+    background: #1e90ff;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+  }
+
+  #stats {
+    margin-bottom: 20px;
+    color: #ccc;
+  }
+
+</style>
+</head>
+<body>
+  <div id="passwordBox">
+    <h3>Admin Login</h3>
+    <input type="password" id="adminPass" placeholder="Enter admin password">
+    <button id="loginBtn">Login</button>
+  </div>
+
+  <div id="panel" style="display:none;">
+    <h2>💬 Chat Admin Panel</h2>
+    <div id="stats">Loading...</div>
+    <button id="deleteBtn">🗑 Delete All Messages</button>
+    <div id="status"></div>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import {
+      getDatabase, ref, remove, onValue
+    } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+    // 🔐 Change admin password here
+    const ADMIN_PASSWORD = "12345"; 
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
+      authDomain: "wechat-eee4d.firebaseapp.com",
+      databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "wechat-eee4d",
+      storageBucket: "wechat-eee4d.firebasestorage.app",
+      messagingSenderId: "156838661275",
+      appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const msgRef = ref(db, "messages");
+    const onlineRef = ref(db, "online");
+
+    const passwordBox = document.getElementById("passwordBox");
+    const panel = document.getElementById("panel");
+    const status = document.getElementById("status");
+    const stats = document.getElementById("stats");
+
+    // ✅ Admin Login
+    document.getElementById("loginBtn").onclick = () => {
+      const pass = document.getElementById("adminPass").value;
+      if (pass === ADMIN_PASSWORD) {
+        passwordBox.style.display = "none";
+        panel.style.display = "block";
+        localStorage.setItem("adminAuth", "true");
+      } else {
+        alert("❌ Wrong password!");
+      }
+    };
+
+    // ✅ Auto Login (if already logged in)
+    if (localStorage.getItem("adminAuth") === "true") {
+      passwordBox.style.display = "none";
+      panel.style.display = "block";
+    }
+
+    // ✅ Logout
+    document.getElementById("logoutBtn").onclick = () => {
+      localStorage.removeItem("adminAuth");
+      location.reload();
+    };
+
+    // ✅ Show Stats (Total Messages + Online Users)
+    onValue(msgRef, (snap) => {
+      const messages = snap.val() || {};
+      const msgCount = Object.keys(messages).length;
+      onValue(onlineRef, (s) => {
+        const onlineUsers = s.val() || {};
+        const onlineCount = Object.keys(onlineUsers).length;
+        stats.innerHTML = `📩 Messages: <b>${msgCount}</b> | 👥 Online: <b>${onlineCount}</b>`;
+      });
+    });
+
+    // ✅ Delete All Messages
+    document.getElementById("deleteBtn").onclick = async () => {
+      if (confirm("⚠️ Are you sure you want to delete ALL messages?")) {
+        await remove(msgRef);
+        status.textContent = "✅ All messages deleted!";
+        setTimeout(() => status.textContent = "", 3000);
+      }
+    };
+  </script>
+</body>
+</html>
