@@ -286,34 +286,20 @@
 
 
   <script>
+  // Register the service worker
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").then(() => {
       console.log("✅ Service Worker registered");
     });
   }
 
+  // Let the browser handle install prompt naturally
   window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    const installBtn = document.createElement("button");
-    installBtn.textContent = "📱 Install App";
-    installBtn.style.position = "fixed";
-    installBtn.style.bottom = "20px";
-    installBtn.style.right = "20px";
-    installBtn.style.padding = "10px 20px";
-    installBtn.style.background = "#1e90ff";
-    installBtn.style.color = "#fff";
-    installBtn.style.border = "none";
-    installBtn.style.borderRadius = "10px";
-    installBtn.style.cursor = "pointer";
-    document.body.appendChild(installBtn);
-
-    installBtn.addEventListener("click", () => {
-      e.prompt();
-      installBtn.remove();
-    });
+    // Allow the browser to show its default install prompt automatically
+    // Don’t prevent default
+    console.log("📱 Install prompt available");
   });
   </script>
-
   
 </body>
 </html>
