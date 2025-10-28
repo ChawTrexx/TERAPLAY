@@ -144,16 +144,27 @@
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       const callRef = ref(db, 'activeCall');
-      await set(callRef, { offer, from: uid });
+      await set(callRef, { offer, from: uid, status: "ringing" });
       callBtn.disabled = true;
       hangupBtn.disabled = false;
     };
 
+    // Listen for active call changes
     onValue(ref(db, 'activeCall'), async (snap) => {
       const data = snap.val();
-      if (!data) return;
-      if (data.from !== uid && data.offer) {
+      if (!data) {
+        // 🔕 Call ended or rejected
+        if (pc) pc.close();
+        hangupBtn.disabled = true;
+        callBtn.disabled = false;
+        incomingPopup.style.display = 'none';
+        return;
+      }
+
+      // Incoming call for receiver
+      if (data.from !== uid && data.offer && data.status === "ringing") {
         incomingPopup.style.display = 'flex';
+
         acceptBtn.onclick = async () => {
           incomingPopup.style.display = 'none';
           pc = new RTCPeerConnection(servers);
@@ -162,14 +173,22 @@
           await pc.setRemoteDescription(data.offer);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          await set(ref(db, 'activeCall/answer'), answer);
+          await set(ref(db, 'activeCall'), {
+            ...data,
+            answer,
+            status: "connected"
+          });
           hangupBtn.disabled = false;
         };
+
         rejectBtn.onclick = async () => {
           incomingPopup.style.display = 'none';
-          await remove(ref(db, 'activeCall'));
+          await remove(ref(db, 'activeCall')); // Auto end on both sides
         };
-      } else if (data.answer && pc && !pc.currentRemoteDescription) {
+      }
+
+      // Caller side receives answer
+      else if (data.answer && pc && !pc.currentRemoteDescription) {
         await pc.setRemoteDescription(data.answer);
       }
     });
