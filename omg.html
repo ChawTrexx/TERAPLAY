@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎥 Cyber Neon Random Video — Mobile Friendly (Auto-Reconnect)</title>
+<style>
+  :root{
+    --bg1:#070617;
+    --accent1:#00f2fe;
+    --accent2:#8a2be2;
+    --panel: rgba(0,0,0,0.5);
+    --glass: rgba(255,255,255,0.03);
+  }
+  html,body { height:100%; margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; background: linear-gradient(180deg,var(--bg1),#000); color:#cfeffb; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+  /* remote covers whole viewport */
+  #remoteVideo {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    background: #000;
+    transform: none; /* do not mirror remote */
+  }
+
+  /* small self view */
+  #localVideo {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: 30vw;
+    max-width: 140px;
+    min-width: 90px;
+    aspect-ratio: 3/4;
+    border-radius: 12px;
+    object-fit: cover;
+    -webkit-transform: scaleX(-1); transform: scaleX(-1); /* mirror self */
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 16px rgba(0,242,254,0.12);
+    border: 2px solid rgba(0,242,254,0.18);
+    z-index: 1200;
+    touch-action: none;
+    cursor: grab;
+    background:#000;
+  }
+
+  /* controls bar (bottom center) */
+  .controls {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 18px;
+    z-index: 1300;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    padding:6px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius: 999px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px) saturate(120%);
+  }
+
+  .btn {
+    --pad:12px 14px;
+    padding: var(--pad);
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: linear-gradient(90deg,var(--accent1),var(--accent2));
+    color:#021026;
+    font-weight:700;
+    font-size:14px;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    cursor:pointer;
+  }
+  .btn.ghost{ background:transparent;color:#cfeffb;border:1px solid rgba(255,255,255,0.06)}
+  .btn.warn{ background:linear-gradient(90deg,#ff416c,#ff4b2b); color:white }
+
+  /* chat panel */
+  #chatPanel {
+    position: fixed;
+    left: 12px;
+    bottom: 18px;
+    width: 270px;
+    max-height: 40vh;
+    z-index: 1250;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 8px;
+    border: 1px solid rgba(0,242,254,0.08);
+    backdrop-filter: blur(6px);
+    font-size:13px;
+  }
+  #chatMessages { overflow:auto; max-height: calc(40vh - 70px); padding:6px; display:flex; flex-direction:column; gap:6px; }
+  .msg { padding:8px 10px; border-radius:10px; max-width:90%; word-break:break-word; }
+  .msg.self { align-self:flex-end; background: linear-gradient(90deg,#ffde59,#ffd54a); color:#021026; }
+  .msg.other { align-self:flex-start; background:rgba(255,255,255,0.03); color:#cfeffb; border:1px solid rgba(0,242,254,0.04) }
+
+  #chatInput { display:flex; gap:8px; align-items:center; }
+  #textInput { flex:1; padding:8px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:inherit; outline:none }
+  #sendBtn { padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.04); background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#021026; font-weight:700; cursor:pointer }
+
+  /* top-left status */
+  #status {
+    position: fixed; left: 12px; top: 12px; z-index: 1300;
+    background: rgba(0,0,0,0.45); padding:8px 12px; border-radius:999px;
+    border:1px solid rgba(0,242,254,0.06); font-weight:700; color: #aaf7ff;
+    backdrop-filter: blur(6px);
+  }
+
+  /* responsive tweaks */
+  @media (max-width:600px){
+    #localVideo { width: 28vw; max-width:110px; min-width:80px; }
+    #chatPanel { width: 220px; left:10px; bottom: 80px; }
+    .controls { gap:8px; bottom:12px; }
+    .btn { font-size:13px; padding:10px 12px }
+  }
+</style>
+</head>
+<body>
+  <video id="remoteVideo" autoplay playsinline></video>
+  <video id="localVideo" autoplay muted playsinline></video>
+
+  <div id="status">Idle</div>
+
+  <div id="chatPanel">
+    <div style="font-weight:800">Chat</div>
+    <div id="chatMessages"></div>
+    <div id="chatInput">
+      <input id="textInput" placeholder="Say hi..." />
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
+
+  <div class="controls" role="toolbar">
+    <button id="startBtn" class="btn">▶ Start</button>
+    <button id="nextBtn" class="btn ghost" disabled>⤴ Next</button>
+    <button id="camBtn" class="btn ghost" disabled>📷 Off</button>
+    <button id="micBtn" class="btn ghost" disabled>🔇</button>
+    <button id="flipBtn" class="btn ghost" disabled>🔄</button>
+    <button id="endBtn" class="btn warn" disabled>❌ End</button>
+  </div>
+
+<script type="module">
+/*
+  Full working Firebase + WebRTC random video chat (Omegle-like)
+  - Keep UI/design intact
+  - DataChannel chat
+  - Auto-reconnect: when partner disconnects, automatically search for next partner
+  - Uses Firebase Realtime Database for signaling
+*/
+
+/* Imports */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import {
+  getDatabase, ref, set, get, remove, onValue, onDisconnect, push, child
+} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+/* ======= FIREBASE CONFIG (your project) ======= */
+const firebaseConfig = {
+  apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
+  authDomain: "wechat-eee4d.firebaseapp.com",
+  databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wechat-eee4d",
+  storageBucket: "wechat-eee4d.firebasestorage.app",
+  messagingSenderId: "156838661275",
+  appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* ===== UI elements ===== */
+const remoteVideo = document.getElementById('remoteVideo');
+const localVideo  = document.getElementById('localVideo');
+const startBtn    = document.getElementById('startBtn');
+const nextBtn     = document.getElementById('nextBtn');
+const endBtn      = document.getElementById('endBtn');
+const camBtn      = document.getElementById('camBtn');
+const micBtn      = document.getElementById('micBtn');
+const flipBtn     = document.getElementById('flipBtn');
+const statusEl    = document.getElementById('status');
+const chatMessages= document.getElementById('chatMessages');
+const textInput   = document.getElementById('textInput');
+const sendBtn     = document.getElementById('sendBtn');
+
+/* ===== state ===== */
+const uid = Math.random().toString(36).slice(2,11);
+let localStream = null;
+let pc = null;
+let callId = null;
+let partnerId = null;
+let dataChannel = null;
+let isCaller = false;
+let isCamOn = true;
+let isMicOn = true;
+let usingFront = true;
+const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+/* ===== presence cleanup ===== */
+onDisconnect(ref(db, `presence/${uid}`)).remove().catch(()=>{});
+set(ref(db, `presence/${uid}`), { online:true, time: Date.now() }).catch(()=>{});
+
+/* ===== draggable localVideo (mouse + touch) ===== */
+let dragging = false, dragOffsetX = 0, dragOffsetY = 0;
+localVideo.addEventListener('pointerdown', e=>{
+  dragging = true;
+  localVideo.style.cursor = 'grabbing';
+  dragOffsetX = e.clientX - localVideo.offsetLeft;
+  dragOffsetY = e.clientY - localVideo.offsetTop;
+  try { localVideo.setPointerCapture(e.pointerId); } catch(e){}
+});
+localVideo.addEventListener('pointermove', e=>{
+  if(!dragging) return;
+  let nx = e.clientX - dragOffsetX;
+  let ny = e.clientY - dragOffsetY;
+  nx = Math.max(0, Math.min(window.innerWidth - localVideo.offsetWidth, nx));
+  ny = Math.max(0, Math.min(window.innerHeight - localVideo.offsetHeight, ny));
+  localVideo.style.left = nx + 'px';
+  localVideo.style.top  = ny + 'px';
+});
+localVideo.addEventListener('pointerup', e=>{
+  dragging = false;
+  localVideo.style.cursor = 'grab';
+  try { localVideo.releasePointerCapture(e.pointerId); } catch(e){}
+});
+localVideo.addEventListener('pointercancel', ()=>{ dragging = false; localVideo.style.cursor='grab'; });
+
+/* ===== helpers ===== */
+function logStatus(text){ statusEl.textContent = text; console.log('[STATUS]', text); }
+function appendMsg(text, who='other'){
+  const d = document.createElement('div');
+  d.className = 'msg ' + (who==='self' ? 'self' : 'other');
+  d.textContent = text;
+  chatMessages.appendChild(d);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+/* ===== media stream ===== */
+async function ensureLocalStream(){
+  if(localStream) return localStream;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: usingFront ? 'user' : 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: true
+    });
+    localVideo.srcObject = localStream;
+    localVideo.style.transform = 'scaleX(-1)';
+    return localStream;
+  } catch (err){
+    alert('Camera / microphone permission required.');
+    throw err;
+  }
+}
+
+/* ===== create RTCPeerConnection and hooks ===== */
+async function createPeerConnection(){
+  pc = new RTCPeerConnection(servers);
+
+  pc.onicecandidate = e => {
+    if(e.candidate && callId){
+      const ts = Date.now();
+      set(ref(db, `calls/${callId}/ice/${uid}/${ts}`), e.candidate.toJSON()).catch(()=>{});
+    }
+  };
+
+  pc.ontrack = e => {
+    remoteVideo.srcObject = e.streams[0];
+  };
+
+  pc.onconnectionstatechange = ()=>{
+    const state = pc.connectionState;
+    console.log('PC state', state);
+    if(state === 'connected'){
+      logStatus('Connected');
+      enableControlsDuringCall();
+    }
+    if(state === 'failed' || state === 'disconnected' || state === 'closed'){
+      // partner probably disconnected — cleanup and auto-join next
+      cleanupAfterCall(true);
+    }
+  };
+
+  // add local tracks
+  await ensureLocalStream();
+  localStream.getTracks().forEach(t => {
+    try { pc.addTrack(t, localStream); } catch(e){ console.warn(e); }
+  });
+}
+
+/* ===== data channel setup for chat (caller creates channel; callee receives) ===== */
+function setupDataChannelAsCaller(){
+  if(!pc) return;
+  dataChannel = pc.createDataChannel('chat');
+  dataChannel.onopen = ()=> console.log('DataChannel open');
+  dataChannel.onmessage = e => appendMsg(e.data, 'other');
+}
+function setupDataChannelAsCallee(channel){
+  dataChannel = channel;
+  dataChannel.onopen = ()=> console.log('DataChannel open (callee)');
+  dataChannel.onmessage = e => appendMsg(e.data, 'other');
+}
+
+/* ===== matchmaking: join waiting pool (returns object when matched) ===== */
+let waitingListener = null;
+async function joinWaitingPool(){
+  logStatus('Searching for a partner...');
+  const myWaitingRef = ref(db, `waiting/${uid}`);
+  await set(myWaitingRef, { uid, time: Date.now() });
+  onDisconnect(myWaitingRef).remove();
+
+  // check snapshot for others
+  const rootRef = ref(db);
+  try {
+    const snap = await get(child(rootRef, 'waiting'));
+    const waiting = snap.exists() ? snap.val() : {};
+    const others = Object.keys(waiting || {}).filter(k => k !== uid);
+    if(others.length > 0){
+      const chosen = others[0];
+      // remove chosen's waiting entry
+      await remove(ref(db, `waiting/${chosen}`)).catch(()=>{});
+      // remove ours
+      await remove(myWaitingRef).catch(()=>{});
+      const sorted = [uid, chosen].sort();
+      const newCallId = `call_${sorted[0]}_${sorted[1]}`;
+      // create call node with offerFrom placeholder; caller will write actual offer later
+      await set(ref(db, `calls/${newCallId}`), { users: sorted, offerFrom: uid, createdAt: Date.now() });
+      return { callId: newCallId, partner: chosen, caller: true };
+    } else {
+      // listen for incoming others
+      return new Promise(resolve => {
+        waitingListener = onValue(ref(db, 'waiting'), async s => {
+          const data = s.val() || {};
+          const list = Object.keys(data).filter(k => k !== uid);
+          if(list.length > 0){
+            const chosen = list[0];
+            await remove(ref(db, `waiting/${chosen}`)).catch(()=>{});
+            await remove(ref(db, `waiting/${uid}`)).catch(()=>{});
+            if(waitingListener) waitingListener(); // unsubscribe
+            const sorted = [uid, chosen].sort();
+            const newCallId = `call_${sorted[0]}_${sorted[1]}`;
+            await set(ref(db, `calls/${newCallId}`), { users: sorted, offerFrom: uid, createdAt: Date.now() });
+            resolve({ callId: newCallId, partner: chosen, caller: true });
+          }
+        });
+      });
+    }
+  } catch(err){
+    console.error('joinWaitingPool error', err);
+    throw err;
+  }
+}
+
+/* ===== caller flow: create offer, write to DB, watch answer + ICE ===== */
+async function startCallerFlow(localCallId, partner){
+  isCaller = true;
+  callId = localCallId;
+  partnerId = partner;
+  logStatus('Creating offer...');
+
+  await createPeerConnection();
+  setupDataChannelAsCaller();
+
+  // create offer
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  // write offer
+  await set(ref(db, `calls/${callId}/offer`), offer.toJSON());
+  await set(ref(db, `calls/${callId}/offerFrom`), uid);
+
+  // watch for answer
+  const answerRef = ref(db, `calls/${callId}/answer`);
+  const unsubAnswer = onValue(answerRef, async snap=>{
+    const a = snap.val();
+    if(a && !pc.currentRemoteDescription){
+      await pc.setRemoteDescription(new RTCSessionDescription(a));
+      logStatus('Connected');
+      enableControlsDuringCall();
+      if(unsubAnswer) unsubAnswer();
+    }
+  });
+
+  // watch for ICE candidates in DB
+  const iceRef = ref(db, `calls/${callId}/ice`);
+  const unsubIce = onValue(iceRef, snap=>{
+    const obj = snap.val() || {};
+    Object.entries(obj).forEach(([who, bucket])=>{
+      if(who === uid) return;
+      Object.values(bucket || {}).forEach(c=>{
+        try { pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{}); } catch(e){}
+      });
+    });
+  });
+
+  // watch call removal (remote hangup)
+  const callRef = ref(db, `calls/${callId}`);
+  const unsubCall = onValue(callRef, snap=>{
+    if(!snap.exists()){
+      // call removed by remote — auto-reconnect
+      if(unsubCall) unsubCall();
+      cleanupAfterCall(true);
+    }
+  });
+}
+
+/* ===== callee flow: receive offer, create answer, write answer, watch ICE ===== */
+async function startCalleeFlow(callIdLocal, offerObj, offerFromUid){
+  isCaller = false;
+  callId = callIdLocal;
+  partnerId = offerFromUid;
+  logStatus('Answering offer...');
+
+  await createPeerConnection();
+
+  // setup datachannel handler (callee receives channel)
+  pc.ondatachannel = e => setupDataChannelAsCallee(e.channel);
+
+  // set remote offer
+  await pc.setRemoteDescription(new RTCSessionDescription(offerObj));
+
+  // create answer
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  // write answer
+  await set(ref(db, `calls/${callId}/answer`), answer.toJSON());
+
+  // watch db ICE
+  const iceRef = ref(db, `calls/${callId}/ice`);
+  const unsubIce = onValue(iceRef, snap=>{
+    const obj = snap.val() || {};
+    Object.entries(obj).forEach(([who, bucket])=>{
+      if(who === uid) return;
+      Object.values(bucket || {}).forEach(c=>{
+        try { pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{}); } catch(e){}
+      });
+    });
+  });
+
+  // watch call deletion
+  const callRef = ref(db, `calls/${callId}`);
+  const unsubCall = onValue(callRef, snap=>{
+    if(!snap.exists()){
+      if(unsubCall) unsubCall();
+      cleanupAfterCall(true);
+    }
+  });
+  logStatus('Connected');
+  enableControlsDuringCall();
+}
+
+/* ===== push ICE candidate helper ===== */
+function pushIceCandidate(candidate){
+  if(!callId) return;
+  const ts = Date.now();
+  set(ref(db, `calls/${callId}/ice/${uid}/${ts}`), candidate.toJSON()).catch(()=>{});
+}
+
+/* ===== global listener for incoming offers: answer them automatically ===== */
+let callsWatcherUnsub = null;
+function watchForCalls(){
+  if(callsWatcherUnsub) return;
+  callsWatcherUnsub = onValue(ref(db, 'calls'), async snap=>{
+    const calls = snap.val() || {};
+    if(callId) return; // if already in call ignore
+    for(const [cid, obj] of Object.entries(calls)){
+      if(!obj) continue;
+      const offer = obj.offer || null;
+      const offerFrom = obj.offerFrom || null;
+      const hasAnswer = !!obj.answer;
+      // If there's an offer and it's not from me and there's no answer yet -> act as callee
+      if(offer && offerFrom && offerFrom !== uid && !hasAnswer){
+        try {
+          await ensureLocalStream();
+          await startCalleeFlow(cid, offer, offerFrom);
+          break; // stop scanning others
+        } catch(e){
+          console.warn('Failed to start callee flow', e);
+        }
+      }
+    }
+  });
+}
+
+/* ===== cleanup after call (autoReconnect flag) ===== */
+let autoReconnectTimer = null;
+async function cleanupAfterCall(autoReconnect = false){
+  logStatus('Call ended / cleaning up');
+  try { if(pc) pc.close(); } catch(e){}
+  pc = null;
+  dataChannel = null;
+  // remove call node (best effort) — if you created it
+  if(callId){
+    try { await remove(ref(db, `calls/${callId}`)); } catch(e){}
+  }
+  callId = null;
+  partnerId = null;
+  // clear remote video
+  remoteVideo.srcObject = null;
+  disableControls();
+  // auto re-join pool after small delay
+  if(autoReconnect){
+    if(autoReconnectTimer) clearTimeout(autoReconnectTimer);
+    autoReconnectTimer = setTimeout(()=> {
+      // start new search only if not already searching/stream not null
+      if(!callId){
+        logStatus('Auto-searching next partner...');
+        (async ()=> {
+          try {
+            const match = await joinWaitingPool();
+            if(match) await startCallerFlow(match.callId, match.partner);
+          } catch(e){
+            console.warn('Auto rejoin failed', e);
+          }
+        })();
+      }
+    }, 900); // 900ms delay to allow DB cleanup
+  }
+}
+
+/* ===== UI enable/disable helpers ===== */
+function enableControlsDuringCall(){
+  nextBtn.disabled = false;
+  endBtn.disabled = false;
+  camBtn.disabled = false;
+  micBtn.disabled = false;
+  flipBtn.disabled = false;
+  startBtn.disabled = true;
+}
+function disableControls(){
+  nextBtn.disabled = true;
+  endBtn.disabled = true;
+  camBtn.disabled = true;
+  micBtn.disabled = true;
+  flipBtn.disabled = true;
+  startBtn.disabled = false;
+}
+
+/* ===== JOIN WAITING (wrapper used for both manual and auto reconnect) ===== */
+async function joinWaitingPool(){
+  // This function will create the call node and return match result (caller)
+  try {
+    return await joinWaitingPoolInternal();
+  } catch(e){
+    console.error('joinWaitingPool wrapper error', e);
+    throw e;
+  }
+}
+async function joinWaitingPoolInternal(){
+  logStatus('Searching for partner...');
+  const myWaitingRef = ref(db, `waiting/${uid}`);
+  await set(myWaitingRef, { uid, time: Date.now() });
+  onDisconnect(myWaitingRef).remove();
+
+  // immediate check
+  const root = ref(db);
+  const snap = await get(child(root, 'waiting'));
+  const waiting = snap.exists() ? snap.val() : {};
+  const others = Object.keys(waiting || {}).filter(k => k !== uid);
+  if(others.length > 0){
+    const chosen = others[0];
+    await remove(ref(db, `waiting/${chosen}`)).catch(()=>{});
+    await remove(myWaitingRef).catch(()=>{});
+    const sorted = [uid, chosen].sort();
+    const newCallId = `call_${sorted[0]}_${sorted[1]}`;
+    await set(ref(db, `calls/${newCallId}`), { users: sorted, offerFrom: uid, createdAt: Date.now() });
+    return { callId: newCallId, partner: chosen, caller: true };
+  } else {
+    return new Promise(resolve => {
+      const listener = onValue(ref(db, 'waiting'), async s=>{
+        const data = s.val() || {};
+        const list = Object.keys(data).filter(k => k !== uid);
+        if(list.length > 0){
+          const chosen = list[0];
+          await remove(ref(db, `waiting/${chosen}`)).catch(()=>{});
+          await remove(ref(db, `waiting/${uid}`)).catch(()=>{});
+          if(listener) listener();
+          const sorted = [uid, chosen].sort();
+          const newCallId = `call_${sorted[0]}_${sorted[1]}`;
+          await set(ref(db, `calls/${newCallId}`), { users: sorted, offerFrom: uid, createdAt: Date.now() });
+          resolve({ callId: newCallId, partner: chosen, caller: true });
+        }
+      });
+    });
+  }
+}
+
+/* ===== Global listener to detect offers (for callee) ===== */
+watchForCalls();
+
+/* ===== UI actions ===== */
+startBtn.onclick = async () => {
+  try {
+    startBtn.disabled = true;
+    await ensureLocalStream();
+    watchForCalls(); // ensure watching
+    const match = await joinWaitingPool();
+    if(match){
+      await startCallerFlow(match.callId, match.partner);
+    }
+  } catch(e){
+    console.error('Start error', e);
+    startBtn.disabled = false;
+    logStatus('Error starting — check camera/mic permissions');
+  }
+};
+
+nextBtn.onclick = async () => {
+  // end current call and immediately search for next (no auto)
+  await cleanupAfterCall(false);
+  // short delay then start again
+  setTimeout(()=> startBtn.click(), 300);
+};
+
+endBtn.onclick = async () => {
+  await cleanupAfterCall(false);
+};
+
+camBtn.onclick = () => {
+  if(!localStream) return;
+  const vt = localStream.getVideoTracks()[0];
+  if(!vt) return;
+  vt.enabled = !vt.enabled;
+  isCamOn = vt.enabled;
+  camBtn.textContent = isCamOn ? '📷 Off' : '📷 On';
+};
+
+micBtn.onclick = () => {
+  if(!localStream) return;
+  const at = localStream.getAudioTracks()[0];
+  if(!at) return;
+  at.enabled = !at.enabled;
+  isMicOn = at.enabled;
+  micBtn.textContent = isMicOn ? '🔇' : '🔈 Unmute';
+};
+
+flipBtn.onclick = async () => {
+  usingFront = !usingFront;
+  if(localStream){
+    // keep audio track, restart video
+    const audioTrack = localStream.getAudioTracks()[0];
+    localStream.getTracks().forEach(t => t.stop());
+    localStream = null;
+    await ensureLocalStream();
+    // replace sender track if in call
+    if(pc){
+      const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+      if(sender){
+        sender.replaceTrack(localStream.getVideoTracks()[0]).catch(()=>{});
+      }
+    }
+  }
+};
+
+/* ===== chat send ===== */
+sendBtn.onclick = () => {
+  const v = textInput.value && textInput.value.trim();
+  if(!v) return;
+  appendMsg(v, 'self');
+  if(dataChannel && dataChannel.readyState === 'open'){
+    dataChannel.send(v);
+  } else {
+    console.warn('DataChannel not open');
+  }
+  textInput.value = '';
+};
+
+/* ===== unload cleanup ===== */
+window.addEventListener('beforeunload', async ()=>{
+  try { await remove(ref(db, `waiting/${uid}`)); } catch(e){}
+  try { if(callId) await remove(ref(db, `calls/${callId}`)); } catch(e){}
+  try { await remove(ref(db, `presence/${uid}`)); } catch(e){}
+});
+
+/* ===== defensive stale waiting cleanup (periodic) ===== */
+setInterval(async ()=>{
+  try {
+    const root = ref(db);
+    const s = await get(child(root, 'waiting'));
+    const data = s.exists() ? s.val() : {};
+    const now = Date.now();
+    for(const key of Object.keys(data || {})){
+      try {
+        const entry = data[key];
+        if(entry && entry.time && now - entry.time > 1000 * 60 * 5){
+          await remove(ref(db, `waiting/${key}`)).catch(()=>{});
+        }
+      } catch(e){}
+    }
+  } catch(e){}
+}, 60_000);
+
+/* ===== initial UI state ===== */
+logStatus('Ready');
+startBtn.disabled = false;
+nextBtn.disabled = true;
+endBtn.disabled = true;
+camBtn.disabled = true;
+micBtn.disabled = true;
+flipBtn.disabled = true;
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
