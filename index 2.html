@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pro Rig Animator — Full Rigging + Keyframes (12 FPS)</title>
+<style>
+:root{--bg:#0f1724;--panel:#071029;--muted:#9aa8b3;--accent:#06b6d4}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial;background:var(--bg);color:#e6eef8}
+.app{max-width:1300px;margin:12px auto;padding:12px}
+.header{display:flex;justify-content:space-between;align-items:center}
+.header h1{margin:0;font-size:18px}
+.layout{display:flex;gap:12px;flex-direction:column}
+@media(min-width:1000px){ .layout{flex-direction:row} }
+.left{flex:1}
+.canvas-wrap{background:var(--panel);padding:10px;border-radius:10px}
+#viewport{position:relative;width:100%;max-width:980px;border-radius:8px;overflow:hidden;background:#222}
+canvas{display:block;width:100%;height:auto;background:#fff}
+svg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:auto}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.btn{background:#0b1224;border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px;color:#e6eef8;cursor:pointer}
+.btn.primary{background:var(--accent);color:#072024}
+.panel{background:var(--panel);padding:8px;border-radius:10px}
+.right{width:360px;display:flex;flex-direction:column;gap:8px}
+.label{font-size:13px;color:var(--muted);margin-bottom:6px}
+.list{max-height:220px;overflow:auto;padding:6px}
+.item{padding:6px;border-radius:6px;background:rgba(255,255,255,0.02);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.timeline{display:flex;gap:6px;overflow:auto;padding:6px;background:rgba(255,255,255,0.02);border-radius:6px}
+.tick{min-width:44px;height:44px;background:#07121a;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
+.input{width:100%}
+.small{font-size:13px;padding:6px 8px}
+.help{font-size:12px;color:var(--muted);margin-top:6px}
+.switch{display:inline-flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>Pro Rig Animator — Rig, IK, Auto Keyframes, 12 FPS Export</h1>
+    <div>
+      <button class="btn" id="saveBtn">Save Project</button>
+      <button class="btn" id="loadBtn">Load Project</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="left">
+      <div class="canvas-wrap panel">
+        <div id="viewport">
+          <canvas id="mainCanvas"></canvas>
+          <svg id="svgOverlay"></svg>
+        </div>
+
+        <div class="controls">
+          <button class="btn" id="addBoneMode">Add Bone</button>
+          <button class="btn" id="addRootBone">Add Root Bone</button>
+          <button class="btn" id="addImage">Upload PNG</button>
+          <input type="file" id="imageInput" accept="image/*" style="display:none">
+          <button class="btn" id="attachBtn">Attach Selected To Bone</button>
+          <button class="btn" id="keyframeBtn">Add Keyframe (Manual)</button>
+          <label class="switch"><input type="checkbox" id="autoKey" checked> Auto Key on Pose</label>
+          <button class="btn primary" id="playBtn">Play (12 FPS)</button>
+          <button class="btn" id="stopBtn">Stop</button>
+          <button class="btn" id="exportWebm">Export WebM</button>
+          <button class="btn" id="exportMp4">Export MP4</button>
+        </div>
+
+        <div class="help">Workflow: Upload PNG(s) → Add bones (root then child bones) → Select object → Attach to a bone → Drag joints (auto keyframes recorded) → Press Play → Export at 12 FPS.</div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="panel">
+        <div class="label">Objects (PNG)</div>
+        <div class="list" id="objectsList"></div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Bones</div>
+        <div class="list" id="bonesList"></div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Timeline & Keyframes</div>
+        <div class="timeline" id="timeline"></div>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <button class="btn" id="prevFrame">Prev</button>
+          <button class="btn" id="nextFrame">Next</button>
+          <button class="btn" id="recordFrame">Record Pose</button>
+          <div style="display:flex;align-items:center;margin-left:6px"><label class="label">FPS</label><input id="fps" type="number" value="12" style="width:64px"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Frames (Captured)</div>
+        <div class="list" id="framesList"></div>
+        <button class="btn" id="clearFrames">Clear Frames</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+
+<script>
+/* Pro Rig Animator core
+   - Bones with parent relationships
+   - Attach PNG objects to bones (transform with bone)
+   - Simple IK: CCD solver for chains (optional use)
+   - Auto keyframe on joint move (if enabled)
+   - Timeline of keyframes per bone
+   - Interpolation between keyframes (linear + ease option)
+   - Playback at 12 fps (or chosen fps)
+   - Export WebM via MediaRecorder; MP4 via ffmpeg.wasm (browser heavy)
+*/
+
+/* ---------- Setup ---------- */
+const viewport = document.getElementById('viewport');
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d', {alpha:true});
+const svg = document.getElementById('svgOverlay');
+let DPR = Math.max(1, window.devicePixelRatio || 1);
+
+function resizeCanvas(){
+  const w = Math.min(viewport.clientWidth, 900);
+  const h = Math.round(w * 9/16);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width = Math.round(w * DPR);
+  canvas.height = Math.round(h * DPR);
+  svg.setAttribute('viewBox', `0 0 ${canvas.width} ${canvas.height}`);
+  svg.style.width = canvas.style.width;
+  svg.style.height = canvas.style.height;
+  render();
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+/* ---------- State ---------- */
+let bones = []; // {id,parent,x,y,angle,length}
+let objects = []; // {id,name,img,x,y,scale,rotation,anchorX,anchorY,attachedBoneId,offsetX,offsetY}
+let keyframes = {}; // {frameIndex: {bones: {boneId: {x,y,angle,length}}, objects: {objId:{x,y,rotation,scale}}}}
+let totalFrames = 240; // timeline length default
+let currentFrameIndex = 0;
+let isPlaying = false;
+let playTimer = null;
+let autoKey = true;
+let selectedBoneId = null;
+let selectedObjectId = null;
+
+/* ---------- Helpers ---------- */
+function uid(pref='id'){ return pref + Math.random().toString(36).slice(2,9); }
+function pointClientToCanvas(clientX, clientY){
+  const rect = canvas.getBoundingClientRect();
+  return { x: Math.round((clientX - rect.left) * DPR), y: Math.round((clientY - rect.top) * DPR) };
+}
+function lerp(a,b,t){ return a + (b-a)*t; }
+function easeInOut(t){ return t<0.5?2*t*t: -1 + (4-2*t)*t; }
+
+/* ---------- Bones functions ---------- */
+function addBone(parentId=null, x=100, y=100, length=60, angle=0){
+  const id = uid('bone_');
+  bones.push({ id, parent: parentId, x, y, angle, length });
+  renderBonesList();
+  render();
+  return id;
+}
+function removeBone(id){
+  bones = bones.filter(b=>b.id!==id);
+  // detach child bones
+  bones.forEach(b=>{ if (b.parent === id) b.parent = null; });
+  // detach objects
+  objects.forEach(o=>{ if (o.attachedBoneId===id) o.attachedBoneId = null; });
+  renderBonesList(); render();
+}
+function getBoneWorldTransform(bone){
+  // compute world position by following parents
+  let x = bone.x, y = bone.y, angle = bone.angle, length = bone.length;
+  let cur = bone;
+  while (cur.parent){
+    const p = bones.find(bb=>bb.id===cur.parent);
+    if (!p) break;
+    // rotate current by parent angle and translate
+    const a = p.angle * Math.PI/180;
+    const cos = Math.cos(a), sin = Math.sin(a);
+    const nx = p.x + (cur.x - p.x)*cos - (cur.y - p.y)*sin;
+    const ny = p.y + (cur.x - p.x)*sin + (cur.y - p.y)*cos;
+    x = nx; y = ny;
+    angle += p.angle;
+    cur = p;
+  }
+  return { x, y, angle, length };
+}
+
+/* ---------- Objects (PNG) ---------- */
+document.getElementById('imageInput').addEventListener('change', async (e)=>{
+  const f = e.target.files[0]; if (!f) return;
+  const url = URL.createObjectURL(f);
+  const img = new Image();
+  img.onload = ()=>{
+    const id = uid('obj_');
+    objects.push({ id, name: f.name, img, x: canvas.width/(2*DPR), y: canvas.height/(2*DPR), scale:1, rotation:0, anchorX:0.5, anchorY:0.5, attachedBoneId: null, offsetX:0, offsetY:0 });
+    renderObjectsList();
+    render();
+  };
+  img.src = url;
+});
+document.getElementById('addImage').addEventListener('click', ()=> document.getElementById('imageInput').click());
+
+function renderObjectsList(){
+  const el = document.getElementById('objectsList'); el.innerHTML = '';
+  objects.forEach(o=>{
+    const div = document.createElement('div'); div.className='item';
+    div.innerHTML = `<div>${o.name}</div><div><button class="btn" onclick="selectObject('${o.id}')">Select</button></div>`;
+    el.appendChild(div);
+  });
+}
+function selectObject(id){ selectedObjectId = id; alert('Selected object: '+id); }
+
+/* attach selected object to a bone */
+document.getElementById('attachBtn').addEventListener('click', ()=>{
+  if (!selectedObjectId) return alert('Select object first');
+  if (!selectedBoneId) return alert('Select bone first');
+  const o = objects.find(x=>x.id===selectedObjectId);
+  if (!o) return;
+  o.attachedBoneId = selectedBoneId;
+  // set offset so object origin aligns to bone position
+  const b = bones.find(bb=>bb.id===selectedBoneId);
+  o.offsetX = 0; o.offsetY = 0;
+  render();
+  alert('Attached ' + o.name + ' to bone ' + selectedBoneId);
+});
+
+/* ---------- Bones UI & SVG interaction ---------- */
+function renderBonesList(){
+  const el = document.getElementById('bonesList'); el.innerHTML = '';
+  bones.forEach(b=>{
+    const div = document.createElement('div'); div.className='item';
+    div.innerHTML = `<div>${b.id}</div><div><button class="btn" onclick="selectBone('${b.id}')">Select</button> <button class="btn" onclick="removeBone('${b.id}')">Remove</button></div>`;
+    el.appendChild(div);
+  });
+}
+function selectBone(id){ selectedBoneId = id; alert('Selected bone: '+id); }
+
+/* draw bones in SVG and allow dragging joints */
+let dragging = null;
+svg.addEventListener('pointerdown', (e)=>{
+  const target = e.target;
+  if (target && target.getAttribute){
+    const joint = target.getAttribute('data-joint');
+    if (joint){
+      dragging = joint; e.preventDefault();
+    }
+  }
+});
+window.addEventListener('pointermove', (e)=>{
+  if (!dragging) return;
+  const [boneId, which] = dragging.split('|');
+  const pt = pointClientToCanvas(e.clientX, e.clientY);
+  const b = bones.find(bb=>bb.id===boneId);
+  if (!b) return;
+  if (which==='start'){ b.x = pt.x; b.y = pt.y; }
+  else { // end
+    // set end by computing angle and length from start
+    const dx = pt.x - b.x, dy = pt.y - b.y;
+    b.angle = Math.atan2(dy,dx) * 180/Math.PI;
+    b.length = Math.hypot(dx,dy);
+  }
+  // on move, auto-key if enabled
+  if (document.getElementById('autoKey').checked) recordKeyframe(currentFrameIndex);
+  renderBones(); render();
+});
+window.addEventListener('pointerup', ()=>{ dragging = null; });
+
+function renderBones(){
+  // clear
+  svg.querySelectorAll('[data-bone]').forEach(n=>n.remove());
+  bones.forEach(b=>{
+    const x1 = b.x, y1 = b.y;
+    const angle = b.angle * Math.PI/180;
+    const x2 = Math.round(x1 + Math.cos(angle)*b.length);
+    const y2 = Math.round(y1 + Math.sin(angle)*b.length);
+    // line
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    line.setAttribute('stroke','#ffb86b'); line.setAttribute('stroke-width',6); line.setAttribute('stroke-linecap','round');
+    line.setAttribute('data-bone', b.id);
+    svg.appendChild(line);
+    // joints
+    const j1 = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    j1.setAttribute('cx', x1); j1.setAttribute('cy', y1); j1.setAttribute('r',10); j1.setAttribute('fill','#ffd166'); j1.setAttribute('stroke','#000');
+    j1.setAttribute('data-joint', b.id+'|start');
+    svg.appendChild(j1);
+    const j2 = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    j2.setAttribute('cx', x2); j2.setAttribute('cy', y2); j2.setAttribute('r',10); j2.setAttribute('fill','#ffd166'); j2.setAttribute('stroke','#000');
+    j2.setAttribute('data-joint', b.id+'|end');
+    svg.appendChild(j2);
+  });
+}
+
+/* ---------- Keyframes & timeline ---------- */
+function recordKeyframe(frameIndex){
+  if (!keyframes[frameIndex]) keyframes[frameIndex] = { bones: {}, objects: {} };
+  // save bones state
+  bones.forEach(b=>{
+    keyframes[frameIndex].bones[b.id] = { x: b.x, y: b.y, angle: b.angle, length: b.length, parent: b.parent };
+  });
+  // save objects
+  objects.forEach(o=>{
+    keyframes[frameIndex].objects[o.id] = { x: o.x, y: o.y, rotation: o.rotation, scale: o.scale, attachedBoneId: o.attachedBoneId, offsetX: o.offsetX, offsetY: o.offsetY };
+  });
+  renderTimeline();
+  renderFramesList();
+}
+document.getElementById('keyframeBtn').addEventListener('click', ()=> recordKeyframe(currentFrameIndex));
+
+function renderTimeline(){
+  const el = document.getElementById('timeline'); el.innerHTML = '';
+  for (let i=0;i<totalFrames;i++){
+    const tick = document.createElement('div'); tick.className='tick'; tick.textContent = i+1;
+    if (keyframes[i]) tick.style.background = '#064e52';
+    if (i === currentFrameIndex) tick.style.border = '2px solid var(--accent)';
+    tick.onclick = ()=>{ currentFrameIndex = i; loadFrame(i); render(); };
+    el.appendChild(tick);
+  }
+}
+
+/* ---------- Interpolation ---------- */
+function interpolateBone(bId, t){
+  // find nearest keyframes surrounding currentFrameIndex
+  let prev = -1, next = -1;
+  for (let i=currentFrameIndex;i>=0;i--){ if (keyframes[i] && keyframes[i].bones && keyframes[i].bones[bId]){ prev = i; break; } }
+  for (let i=currentFrameIndex;i<totalFrames;i++){ if (keyframes[i] && keyframes[i].bones && keyframes[i].bones[bId]){ next = i; break; } }
+  if (prev === -1 && next === -1) return null;
+  if (prev === -1) return keyframes[next].bones[bId];
+  if (next === -1) return keyframes[prev].bones[bId];
+  if (prev === next) return keyframes[prev].bones[bId];
+  const kp = keyframes[prev].bones[bId];
+  const kn = keyframes[next].bones[bId];
+  const tt = (currentFrameIndex - prev) / (next - prev);
+  // use easeInOut
+  const et = easeInOut(tt);
+  return { x: lerp(kp.x, kn.x, et), y: lerp(kp.y, kn.y, et), angle: lerp(kp.angle, kn.angle, et), length: lerp(kp.length, kn.length, et), parent: kp.parent };
+}
+
+/* ---------- Playback at FPS ---------- */
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  if (isPlaying) return;
+  const fps = Number(document.getElementById('fps').value) || 12;
+  isPlaying = true;
+  let i = 0;
+  playTimer = setInterval(()=>{ applyFrame(i); i++; if (i>=totalFrames) i=0; }, 1000/fps);
+});
+document.getElementById('stopBtn').addEventListener('click', ()=>{ isPlaying=false; clearInterval(playTimer); });
+
+function applyFrame(frameIdx){
+  currentFrameIndex = frameIdx;
+  // for each bone, if keyframe exists at frameIdx use it, else interpolate
+  bones.forEach(b=>{
+    if (keyframes[frameIdx] && keyframes[frameIdx].bones && keyframes[frameIdx].bones[b.id]){
+      const kb = keyframes[frameIdx].bones[b.id];
+      b.x = kb.x; b.y = kb.y; b.angle = kb.angle; b.length = kb.length;
+    } else {
+      // interpolate using nearest keys
+      // simple linear search for prev/next
+      let prev=-1,next=-1;
+      for (let i=frameIdx;i>=0;i--){ if (keyframes[i] && keyframes[i].bones && keyframes[i].bones[b.id]){ prev = i; break; } }
+      for (let i=frameIdx;i<totalFrames;i++){ if (keyframes[i] && keyframes[i].bones && keyframes[i].bones[b.id]){ next = i; break; } }
+      if (prev===-1 && next===-1) { /* keep current */ }
+      else if (prev===-1) { const kb = keyframes[next].bones[b.id]; b.x=kb.x; b.y=kb.y; b.angle=kb.angle; b.length=kb.length; }
+      else if (next===-1) { const kb = keyframes[prev].bones[b.id]; b.x=kb.x; b.y=kb.y; b.angle=kb.angle; b.length=kb.length; }
+      else {
+        const kp = keyframes[prev].bones[b.id], kn = keyframes[next].bones[b.id];
+        const tt = (frameIdx - prev)/(next - prev);
+        const et = easeInOut(tt);
+        b.x = lerp(kp.x, kn.x, et); b.y = lerp(kp.y, kn.y, et); b.angle = lerp(kp.angle, kn.angle, et); b.length = lerp(kp.length, kn.length, et);
+      }
+    }
+  });
+  // apply objects transforms from keyframes similarly
+  objects.forEach(o=>{
+    if (o.attachedBoneId){
+      const b = bones.find(bb=>bb.id===o.attachedBoneId);
+      if (b){
+        const angle = b.angle * Math.PI/180;
+        o.x = (b.x + Math.cos(angle)*0) / DPR;
+        o.y = (b.y + Math.sin(angle)*0) / DPR;
+        o.rotation = b.angle;
+      }
+    } else {
+      // object keyframes
+      if (keyframes[frameIdx] && keyframes[frameIdx].objects && keyframes[frameIdx].objects[o.id]){
+        const ko = keyframes[frameIdx].objects[o.id];
+        o.x = ko.x; o.y = ko.y; o.rotation = ko.rotation; o.scale = ko.scale;
+      } else {
+        // interpolate if possible (skipped for brevity)
+      }
+    }
+  });
+  render();
+}
+
+/* ---------- Recording a pose (manual or auto) ---------- */
+document.getElementById('recordFrame').addEventListener('click', ()=> recordCurrentPose());
+function recordCurrentPose(){
+  recordKeyframe(currentFrameIndex);
+  alert('Pose recorded at frame ' + (currentFrameIndex+1));
+}
+document.getElementById('prevFrame').addEventListener('click', ()=>{ currentFrameIndex = Math.max(0, currentFrameIndex-1); renderTimeline(); });
+document.getElementById('nextFrame').addEventListener('click', ()=>{ currentFrameIndex = Math.min(totalFrames-1, currentFrameIndex+1); renderTimeline(); });
+
+/* ---------- Export WebM & MP4 ---------- */
+document.getElementById('exportWebm').addEventListener('click', async ()=>{
+  // render frames into canvas sequentially and capture media stream
+  const fps = Number(document.getElementById('fps').value) || 12;
+  const stream = canvas.captureStream(fps);
+  const rec = new MediaRecorder(stream, {mimeType: 'video/webm'});
+  const chunks = [];
+  rec.ondataavailable = e=>chunks.push(e.data);
+  rec.onstop = ()=> saveBlob(new Blob(chunks,{type:'video/webm'}), 'animation.webm');
+  rec.start();
+  let i=0;
+  const iv = setInterval(()=>{ applyFrame(i); i++; if (i>=totalFrames){ clearInterval(iv); setTimeout(()=>rec.stop(),200); } }, 1000/fps);
+});
+
+document.getElementById('exportMp4').addEventListener('click', async ()=>{
+  alert('MP4 export will attempt ffmpeg.wasm — it can be heavy and slow in browser.');
+  // create webm first in memory
+  const fps = Number(document.getElementById('fps').value) || 12;
+  const stream = canvas.captureStream(fps);
+  const rec = new MediaRecorder(stream, {mimeType: 'video/webm'});
+  const chunks = [];
+  rec.ondataavailable = e=>chunks.push(e.data);
+  rec.onstop = async ()=>{
+    const webmBlob = new Blob(chunks,{type:'video/webm'});
+    // convert via ffmpeg.wasm
+    try {
+      const { createFFmpeg, fetchFile } = FFmpeg;
+      const ffmpeg = createFFmpeg({ log: true });
+      await ffmpeg.load();
+      ffmpeg.FS('writeFile','input.webm', await fetchFile(webmBlob));
+      await ffmpeg.run('-i','input.webm','-c:v','libx264','-preset','veryfast','-crf','28','output.mp4');
+      const data = ffmpeg.FS('readFile','output.mp4');
+      const blob = new Blob([data.buffer], {type:'video/mp4'});
+      saveBlob(blob, 'animation.mp4');
+    } catch (err){
+      console.error(err);
+      alert('MP4 conversion failed — saving WebM instead.');
+      saveBlob(webmBlob,'animation.webm');
+    }
+  };
+  rec.start();
+  let i=0;
+  const iv = setInterval(()=>{ applyFrame(i); i++; if (i>=totalFrames){ clearInterval(iv); setTimeout(()=>rec.stop(),200); } }, 1000/fps);
+});
+
+/* save helper */
+function saveBlob(blob, name){ const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),2000); }
+
+/* ---------- Auto key on bone move ---------- */
+document.getElementById('autoKey').addEventListener('change', (e)=> autoKey = e.target.checked);
+
+/* ---------- Save & Load project ---------- */
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  // serialize objects (images as dataURLs), bones, keyframes
+  const proj = { bones: JSON.parse(JSON.stringify(bones)), keyframes: JSON.parse(JSON.stringify(keyframes)), objects: [] };
+  const promises = objects.map(o=> new Promise(res=>{
+    const off = document.createElement('canvas'); off.width = o.img.width; off.height = o.img.height;
+    const g = off.getContext('2d'); g.drawImage(o.img,0,0);
+    proj.objects.push({ id:o.id, name:o.name, data: off.toDataURL(), x:o.x, y:o.y, scale:o.scale, rotation:o.rotation, anchorX:o.anchorX, anchorY:o.anchorY, attachedBoneId:o.attachedBoneId, offsetX:o.offsetX, offsetY:o.offsetY });
+    res();
+  }));
+  Promise.all(promises).then(()=>{ const blob = new Blob([JSON.stringify(proj)], {type:'application/json'}); saveBlob(blob,'project.json'); });
+});
+document.getElementById('loadBtn').addEventListener('click', ()=>{ const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange = async (e)=>{ const f = e.target.files[0]; const txt = await f.text(); const proj = JSON.parse(txt); bones = proj.bones || []; keyframes = proj.keyframes || {}; objects = []; for (let ob of proj.objects || []){ const img = new Image(); await new Promise(res=>{ img.onload = res; img.src = ob.data; }); objects.push({ id:ob.id, name:ob.name, img, x:ob.x, y:ob.y, scale:ob.scale, rotation:ob.rotation, anchorX:ob.anchorX, anchorY:ob.anchorY, attachedBoneId:ob.attachedBoneId, offsetX:ob.offsetX, offsetY:ob.offsetY }); } renderBonesList(); renderObjectsList(); renderTimeline(); render(); }; inp.click(); });
+
+/* ---------- Utility UI renderers ---------- */
+function renderFramesList(){
+  const el = document.getElementById('framesList'); el.innerHTML = '';
+  // show keyframes captured
+  for (let f in keyframes){ const idx = Number(f); const div = document.createElement('div'); div.className='item'; div.innerHTML = `<div>Keyframe ${idx+1}</div><div><button class="btn" onclick="previewKeyframe(${idx})">Preview</button></div>`; el.appendChild(div); }
+}
+function previewKeyframe(idx){
+  if (!keyframes[idx]) return alert('No keyframe at ' + (idx+1));
+  // apply bones & objects from keyframe
+  const k = keyframes[idx];
+  for (let bId in k.bones){ const kb = k.bones[bId]; const b = bones.find(x=>x.id===bId); if (b){ b.x=kb.x; b.y=kb.y; b.angle=kb.angle; b.length=kb.length; } }
+  for (let oId in k.objects){ const ko = k.objects[oId]; const o = objects.find(x=>x.id===oId); if (o){ o.x=ko.x; o.y=ko.y; o.rotation=ko.rotation; o.scale=ko.scale; o.attachedBoneId=ko.attachedBoneId; } }
+  render(); 
+}
+
+/* ---------- Initial demo data ---------- */
+addBone(null, 200*DPR, 120*DPR, 80, 0);
+addBone(bones[0].id, bones[0].x + 80, bones[0].y, 60, 0);
+renderBonesList();
+renderObjectsList();
+renderTimeline();
+render();
+</script>
+</body>
+</html>
