@@ -117,13 +117,7 @@ document.getElementById("upload").addEventListener("click", async ()=>{
 });
 
 // Render Preview
-function renderVideo(v){
-  if(v.type === "iframe"){
-      return `<iframe src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`;
-  } else {
-      return `<video src="${v.url}" controls></video>`;
-  }
-}
+
 
 // Load list
 function loadList(){
