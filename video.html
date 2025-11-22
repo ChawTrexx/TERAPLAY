@@ -78,7 +78,7 @@
   function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   function shareVideo(id){
-    const url = location.origin + location.pathname.replace(/index.html$/,'') + 'watch.html?id=' + id;
+    const url = location.origin + location.pathname.replace(/video.html$/,'') + 'Watch.html?id=' + id;
     if(navigator.share){ navigator.share({title:'Watch video', url}).catch(()=>{}); }
     else { prompt('Copy link', url); }
   }
