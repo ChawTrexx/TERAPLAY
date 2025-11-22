@@ -100,8 +100,17 @@ document.getElementById("imageUpload").addEventListener("change", uploadThumbnai
 
 // ==== Detect Link Type ====
 function convertDropboxURL(url){
-    if(url.includes("dropbox.com") && !url.includes("raw=1"))
-        return url.split("?")[0]+"?raw=1";
+    if(url.includes("dropbox.com")) {
+        let u = new URL(url);
+
+        // dl=0 ko raw=1 me change karo
+        u.searchParams.set("raw", "1");
+
+        // dl parameter hatao
+        u.searchParams.delete("dl");
+
+        return u.toString();
+    }
     return url;
 }
 
