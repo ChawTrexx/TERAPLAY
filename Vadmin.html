@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
-<meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
 <title>Admin Panel - Video Upload</title>
 
 <style>
@@ -16,7 +14,7 @@ button:hover{opacity:0.8;}
 label{color:#aaa;font-size:13px;}
 #list{margin-top:25px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
 .video-item{background:#1b1b1b;padding:10px;border-radius:10px;text-align:center;box-shadow:0 0 8px #000;}
-.video-item iframe,.video-item video{width:100%;height:120px;border-radius:6px;margin-bottom:6px;object-fit:cover;}
+.video-item img{width:100%;height:120px;border-radius:6px;object-fit:cover;margin-bottom:6px;}
 .delete-btn{background:#ff4444;color:white;padding:6px 10px;border-radius:6px;margin-top:6px;}
 .delete-btn:hover{opacity:0.8;}
 </style>
@@ -33,7 +31,7 @@ label{color:#aaa;font-size:13px;}
 <input id="thumb" placeholder="https://example.com/image.jpg"/>
 
 <label>Video URL / Iframe Code</label>
-<textarea id="video" placeholder='Dropbox link, direct URL, or iframe code'></textarea>
+<textarea id="video" placeholder="Dropbox link, direct URL, or iframe code"></textarea>
 
 <button id="upload">UPLOAD TO DATABASE</button>
 </div>
@@ -41,7 +39,7 @@ label{color:#aaa;font-size:13px;}
 <h2 style="text-align:center;">All Videos</h2>
 <div id="list"></div>
 
-<script type="module" defer>
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
@@ -116,9 +114,6 @@ document.getElementById("upload").addEventListener("click", async ()=>{
     document.getElementById("video").value="";
 });
 
-// Render Preview
-
-
 // Load list
 function loadList(){
     onValue(ref(db,"videos"), snap=>{
@@ -127,14 +122,16 @@ function loadList(){
         list.innerHTML = "";
 
         Object.entries(data).forEach(([id,v])=>{
-    list.innerHTML += `
-    <div class="video-item">
-        <img src="${v.thumbnail}" style="width:100%;height:120px;border-radius:6px;object-fit:cover;" />
-        <b>${v.title}</b><br>
-        <small>${v.views} views</small><br>
-        <button class="delete-btn" onclick="del('${id}')">DELETE</button>
-    </div>`;
-});
+            list.innerHTML += `
+            <div class="video-item">
+                <img src="${v.thumbnail}" />
+                <b>${v.title}</b><br>
+                <small>${v.views} views</small><br>
+                <button class="delete-btn" onclick="del('${id}')">DELETE</button>
+            </div>`;
+        });
+    });
+}
 
 window.del = async id=>{
     if(confirm("Delete this video?")){
@@ -145,5 +142,6 @@ window.del = async id=>{
 
 loadList();
 </script>
+
 </body>
 </html>
