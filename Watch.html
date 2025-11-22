@@ -4,11 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,max-scale=1">
 <title>Watch - Teen18</title>
-<link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
-<script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
-<script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/videojs-contrib-ads@6.9.0/dist/videojs.ads.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.8.0/dist/videojs.ima.min.js"></script>
+
 <style>
 :root{--accent:#5b4dff;}
 
@@ -67,22 +63,6 @@ header{
   <div class="recommend-box" id="recommended"></div>
 
 </div> 
-  <script>
-function initAds() {
-    var player = videojs('my-video');
-
-    player.ima({
-        adTagUrl: 'https://aromatic-singer.com/dYmSF.zZdTGqNdvdZEG/U_/HeQmP9yu/ZNUTlDkQPUT/Yv3VMeTDE/xuMmjJM/tJNSj/cwxxM/TfEoyVNaAb',
-        debug: true
-    });
-
-    player.ready(function () {
-        player.one('click', function () {
-            player.ima.initializeAdDisplayContainer();
-        });
-    });
-}
-</script>
 
 <script type="module">
 
@@ -107,9 +87,9 @@ const videoId = new URLSearchParams(location.search).get("id");
 
 function renderVideo(v){
    if(v.type === "iframe"){
-       return `<iframe id="my-video" class="video-js vjs-default-skin" src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin" style="width:100%;height:250px;border:0;"></iframe>`;
+       return `<iframe src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin" style="width:100%;height:250px;border:0;"></iframe>`;
    } else {
-       return `<video id="my-video" class="video-js vjs-default-skin" src="${v.url}" controls autoplay style="width:100%;height:250px;border-radius:10px"></video>`;
+       return `<video  src="${v.url}" controls autoplay style="width:100%;height:250px;border-radius:10px"></video>`;
    }
 }
 
