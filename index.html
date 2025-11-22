@@ -111,38 +111,57 @@ function escapeHtml(s){
 
 
 
-// 🔥 SHARE BUTTON FIXED
-async function shareVideo(id){
-  const videoRef = ref(db, 'videos/' + id);
 
+
+
+// 🔥 SHARE VIDEO WITH TITLE & IMAGE
+async function shareVideo(id){
   try {
-    const snap = await get(videoRef);
-    if (!snap.exists()) {
-      alert("Video not found!");
-      return;
-    }
+    const snap = await get(ref(db, 'videos/' + id));
+    if (!snap.exists()) return alert("Video not found!");
 
     const video = snap.val();
     const url = `${window.location.origin}/Watch.html?id=${id}`;
     const title = video.title || "Watch this video";
+    const thumbnail = video.thumbnail; // image URL
 
     if (navigator.share){
-      navigator.share({
-        title: title, // Video title from database
-        url: url      // The link
-      }).catch(()=>{});
+      // Web Share API Level 2 supports files/images on supported browsers
+      const shareData = {
+        title: title,
+        url: url
+      };
+
+      // Only include image if supported
+      if (navigator.canShare && thumbnail) {
+        try {
+          const response = await fetch(thumbnail);
+          const blob = await response.blob();
+          const file = new File([blob], "thumbnail.jpg", { type: blob.type });
+          if (navigator.canShare({ files: [file] })) {
+            shareData.files = [file];
+          }
+        } catch(e){
+          console.warn("Failed to attach thumbnail", e);
+        }
+      }
+
+      navigator.share(shareData).catch(()=>{});
     } else {
+      // Fallback: just copy link
       prompt("Copy video link:", url);
     }
 
-  } catch (err) {
-    console.error("Error fetching video:", err);
-    alert("Unable to fetch video info.");
+  } catch(err) {
+    console.error("Error sharing video:", err);
   }
 }
 
 window.shareVideo = shareVideo;
 
+
+
+  
 function render(filter='trending'){
   let items=[...VIDEOS];
   if(filter==='recent') items.sort((a,b)=>b.timestamp-a.timestamp);
