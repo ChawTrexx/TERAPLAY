@@ -109,24 +109,38 @@ function escapeHtml(s){
                 .replace(/>/g,'&gt;');
 }
 
+import { ref, get } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-  // 🔥 SHARE BUTTON FIXED
-function shareVideo(id){
-  const video = VIDEOS.find(v => v.id === id);
-  if (!video) return;
+// 🔥 SHARE BUTTON FIXED
+async function shareVideo(id){
+  const videoRef = ref(db, 'videos/' + id);
 
-  const url = `${window.location.origin}/Watch.html?id=${id}`;
-  const title = video.title || "Watch this video";
+  try {
+    const snap = await get(videoRef);
+    if (!snap.exists()) {
+      alert("Video not found!");
+      return;
+    }
 
-  if (navigator.share){
-    navigator.share({
-      title: title, // Only the video title
-      url: url      // The link
-    }).catch(()=>{});
-  } else {
-    prompt("Copy video link:", url);
+    const video = snap.val();
+    const url = `${window.location.origin}/Watch.html?id=${id}`;
+    const title = video.title || "Watch this video";
+
+    if (navigator.share){
+      navigator.share({
+        title: title, // Video title from database
+        url: url      // The link
+      }).catch(()=>{});
+    } else {
+      prompt("Copy video link:", url);
+    }
+
+  } catch (err) {
+    console.error("Error fetching video:", err);
+    alert("Unable to fetch video info.");
   }
 }
+
 window.shareVideo = shareVideo;
 
 function render(filter='trending'){
