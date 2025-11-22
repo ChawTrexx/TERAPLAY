@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+<meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+<title>Admin Panel - Video Upload</title>
+
+<style>
+body{background:#0b0b0b;color:#fff;font-family:Arial,sans-serif;padding:20px;}
+.box{max-width:600px;margin:20px auto;background:#111;padding:20px;border-radius:12px;box-shadow:0 0 12px #000;}
+input,textarea{width:100%;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:15px;}
+button{padding:10px 18px;border-radius:8px;border:0;background:#5b4dff;color:#fff;font-size:15px;cursor:pointer;}
+button:hover{opacity:0.8;}
+label{color:#aaa;font-size:13px;}
+#list{margin-top:25px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+.video-item{background:#1b1b1b;padding:10px;border-radius:10px;text-align:center;box-shadow:0 0 8px #000;}
+.video-item iframe,.video-item video{width:100%;height:120px;border-radius:6px;margin-bottom:6px;object-fit:cover;}
+.delete-btn{background:#ff4444;color:white;padding:6px 10px;border-radius:6px;margin-top:6px;}
+.delete-btn:hover{opacity:0.8;}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>Admin Upload Panel</h2>
+
+<label>Video Title</label>
+<input id="title" placeholder="Video title"/>
+
+<label>Thumbnail URL</label>
+<input id="thumb" placeholder="https://example.com/image.jpg"/>
+
+<label>Video URL / Iframe Code</label>
+<textarea id="video" placeholder='Dropbox link, direct URL, or iframe code'></textarea>
+
+<button id="upload">UPLOAD TO DATABASE</button>
+</div>
+
+<h2 style="text-align:center;">All Videos</h2>
+<div id="list"></div>
+
+<script type="module" defer>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
+  authDomain: "videohosting-13776.firebaseapp.com",
+  databaseURL: "https://videohosting-13776-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "videohosting-13776",
+  storageBucket: "videohosting-13776.appspot.com",
+  messagingSenderId: "992909501546",
+  appId: "1:992909501546:web:3728b48ec4727a5679d613",
+  measurementId: "G-Q0YQVS6QJ6"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Convert Dropbox URL
+function convertDropboxURL(url){
+    if(url.includes("dropbox.com") && !url.includes("raw=1")){
+        return url.split("?")[0]+"?raw=1";
+    }
+    return url;
+}
+
+// Detect link type
+function detectType(input){
+    input = input.trim();
+
+    if(input.startsWith("<iframe")) {
+        return {
+            type: "iframe",
+            url: input.match(/src="([^"]+)"/)[1]
+        };
+    }
+
+    if(input.includes("dropbox.com")){
+        return { type: "video", url: convertDropboxURL(input) };
+    }
+
+    return { type: "video", url: input };
+}
+
+// Upload video
+document.getElementById("upload").addEventListener("click", async ()=>{
+    const title = document.getElementById("title").value.trim();
+    const thumb = document.getElementById("thumb").value.trim();
+    const videoInput = document.getElementById("video").value.trim();
+
+    if(!title || !thumb || !videoInput){
+        alert("⚠ Please fill all fields!");
+        return;
+    }
+
+    const { type, url } = detectType(videoInput);
+
+    await set(push(ref(db,"videos")),{
+        title,
+        thumbnail: thumb,
+        type,
+        url,
+        timestamp: Date.now(),
+        views: 0
+    });
+
+    alert("✔ Uploaded Successfully!");
+
+    document.getElementById("title").value="";
+    document.getElementById("thumb").value="";
+    document.getElementById("video").value="";
+});
+
+// Render Preview
+function renderVideo(v){
+  if(v.type === "iframe"){
+      return `<iframe src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`;
+  } else {
+      return `<video src="${v.url}" controls></video>`;
+  }
+}
+
+// Load list
+function loadList(){
+    onValue(ref(db,"videos"), snap=>{
+        const data = snap.val() || {};
+        const list = document.getElementById("list");
+        list.innerHTML = "";
+
+        Object.entries(data).forEach(([id,v])=>{
+            list.innerHTML += `
+            <div class="video-item">
+                ${renderVideo(v)}
+                <b>${v.title}</b><br>
+                <small>${v.views} views</small><br>
+                <button class="delete-btn" onclick="del('${id}')">DELETE</button>
+            </div>`;
+        });
+    });
+}
+
+window.del = async id=>{
+    if(confirm("Delete this video?")){
+        await remove(ref(db,"videos/"+id));
+        alert("Deleted!");
+    }
+};
+
+loadList();
+</script>
+</body>
+</html>
