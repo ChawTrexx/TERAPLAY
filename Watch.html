@@ -9,15 +9,15 @@
 :root{--accent:#5b4dff;}
 
 body{
- margin:0;background:#0b0b0b;color:#fff;
- font-family:Arial, sans-serif;
+  margin:0;background:#0b0b0b;color:#fff;
+  font-family:Arial, sans-serif;
 }
 
 /* Header */
 header{
- display:flex;align-items:center;justify-content:space-between;
- padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.05);
- background:#111;position:sticky;top:0;z-index:9;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.05);
+  background:#111;position:sticky;top:0;z-index:9;
 }
 .logo{font-weight:800;color:var(--accent);font-size:20px;}
 
@@ -26,10 +26,9 @@ header{
 @media(max-width:850px){.container{flex-direction:column;}}
 
 .video-box{flex:2;}
-.video-box iframe,
-.video-box video{
- width:100%;height:56vw;max-height:380px;
- border-radius:10px;background:#000;
+.video-box iframe, .video-box video{
+  width:100%;height:56vw;max-height:380px;
+  border-radius:10px;background:#000;
 }
 
 /* Title */
@@ -37,19 +36,20 @@ header{
 .meta{color:#aaa;font-size:13px;margin-bottom:16px;}
 
 .recommend-box{
- flex:1;overflow-y:auto;max-height:85vh;
- padding-right:6px;
+  flex:1;overflow-y:auto;max-height:85vh;
+  padding-right:6px;
 }
 .recommend-item{
- display:flex;gap:10px;margin-bottom:14px;cursor:pointer;
- transition:.2s;
+  display:flex;gap:10px;margin-bottom:14px;cursor:pointer;
+  transition:.2s;
 }
 .recommend-item:hover{opacity:.7;transform:scale(.97);}
 .recommend-item img{
- width:140px;height:95px;object-fit:cover;border-radius:8px;
+  width:140px;height:95px;object-fit:cover;border-radius:8px;
 }
+
 @media(max-width:600px){
- .recommend-item img{width:120px;height:80px;}
+  .recommend-item img{width:120px;height:80px;}
 }
 </style>
 </head>
@@ -58,84 +58,90 @@ header{
 <header><div class="logo">VIRAL DISK</div></header>
 
 <div class="container">
+
   <div class="video-box">
     <div id="player"></div>
     <div class="title" id="vtitle">Loading...</div>
     <div class="meta" id="vmeta">0 views • Loading...</div>
   </div>
+
   <div class="recommend-box" id="recommended"></div>
+
 </div>
 
 <script type="module" defer>
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-// Firebase config (same as admin)
+// Firebase config
 const firebaseConfig = {
- apiKey:"AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
- authDomain:"videohosting-13776.firebaseapp.com",
- databaseURL:"https://videohosting-13776-default-rtdb.asia-southeast1.firebasedatabase.app",
- projectId:"videohosting-13776",
- storageBucket:"videohosting-13776.appspot.com",
- messagingSenderId:"992909501546",
- appId:"1:992909501546:web:3728b48ec4727a5679d613",
- measurementId:"G-Q0YQVS6QJ6"
+  apiKey:"AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
+  authDomain:"videohosting-13776.firebaseapp.com",
+  databaseURL:"https://videohosting-13776-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"videohosting-13776",
+  storageBucket:"videohosting-13776.appspot.com",
+  messagingSenderId:"992909501546",
+  appId:"1:992909501546:web:3728b48ec4727a5679d613",
+  measurementId:"G-Q0YQVS6QJ6"
 };
 
-// init
+// Init
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // Get URL ID
 const videoId = new URLSearchParams(location.search).get("id");
 
-// Render embed/video
-// Render Preview
+// Render Video Player
 function renderVideo(v){
-  if(v.type === "iframe"){
-      return `<iframe src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin "></iframe>`;
-  } else {
-      return `<video src="${v.url}" controls></video>`;
-  }
+   if(v.type === "iframe"){
+       return `<iframe src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin"
+       style="width:100%;height:100%;border:0;"></iframe>`;
+   } else {
+       return `<video src="${v.url}" controls autoplay style="width:100%;height:100%;border-radius:10px"></video>`;
+   }
 }
 
-// Load main video
+// Load Main Video
 function loadVideo(){
- onValue(ref(db,"videos/"+videoId),(snap)=>{
-   const v=snap.val();
-   if(!v) return;
+  onValue(ref(db,"videos/"+videoId),(snap)=>{
+    const v=snap.val();
+    if(!v) return;
 
-   document.getElementById("player").innerHTML=renderPlayer(v);
-   document.getElementById("vtitle").innerText=v.title;
-   document.getElementById("vmeta").innerHTML=`${v.views} views`;
+    document.getElementById("player").innerHTML = renderVideo(v);
+    document.getElementById("vtitle").innerText = v.title;
+    document.getElementById("vmeta").innerHTML = `${v.views ?? 0} views`;
 
-   update(ref(db,"videos/"+videoId),{views:(v.views||0)+1});
- });
+    update(ref(db,"videos/"+videoId),{ views:(v.views||0)+1 });
+  });
 }
 
-// Load recommended
+// Load Recommended
 function loadRecommended(){
- onValue(ref(db,"videos"), snap=>{
-   const data=snap.val()||{};
-   const box=document.getElementById("recommended");
-   box.innerHTML="";
+  onValue(ref(db,"videos"), snap=>{
+    const data=snap.val()||{};
+    const box=document.getElementById("recommended");
+    box.innerHTML="";
 
-   Object.entries(data).reverse().forEach(([id,v])=>{
-     if(id===videoId) return;
-     box.innerHTML+=`
-     <div class="recommend-item" onclick="location='Watch.html?id=${id}'">
-       <img src="${v.thumbnail}">
-       <div>
-         <b>${v.title}</b><br>
-         <small style="color:#aaa">${v.views} views</small>
-       </div>
-     </div>`;
-   });
- });
+    Object.entries(data).reverse().forEach(([id,v])=>{
+      if(id===videoId) return;
+
+      box.innerHTML += `
+      <div class="recommend-item" onclick="location='Watch.html?id=${id}'">
+        <img src="${v.thumbnail}">
+        <div>
+          <b>${v.title}</b><br>
+          <small style="color:#aaa">${v.views ?? 0} views</small>
+        </div>
+      </div>`;
+    });
+  });
 }
 
 loadVideo();
 loadRecommended();
+
 </script>
 
 </body>
