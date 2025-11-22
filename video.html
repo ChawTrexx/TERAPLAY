@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Viral Disk - Home</title>
+  <style>
+    :root{--bg:#0b0b0b;--card:#141414;--muted:#9a9a9a;--accent:#5b4dff}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:#fff}
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .logo{font-weight:800;color:var(--accent);letter-spacing:2px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;padding:18px;justify-content:center}
+    .chip{background:rgba(255,255,255,0.03);padding:8px 14px;border-radius:20px;cursor:pointer;border:1px solid rgba(255,255,255,0.02)}
+    .chip.active{background:linear-gradient(90deg,var(--accent),#8a6bff);color:#fff}
+    .container{max-width:900px;margin:18px auto;padding:0 12px}
+    .card{background:var(--card);border-radius:14px;padding:12px;overflow:hidden;margin-bottom:16px}
+    .thumb{width:100%;height:360px;border-radius:12px;object-fit:cover;background:#000}
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+    .title{font-size:18px;font-weight:600}
+    .views{color:var(--muted);font-size:14px}
+    .actions{display:flex;gap:10px;margin-top:12px}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 14px;border-radius:10px;color:#fff;cursor:pointer}
+    button.primary{background:var(--accent);border:0}
+    a{color:inherit;text-decoration:none}
+    @media(max-width:700px){.thumb{height:320px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">VIRAL DISK</div>
+    <div style="display:flex;gap:8px;align-items:center">
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="chip" data-filter="recent">Recent</div>
+    <div class="chip active" data-filter="trending">Trending</div>
+    <div class="chip" data-filter="oldest">Oldest</div>
+  </div>
+
+  <main class="container" id="list"></main>
+
+  <script type="module">
+  import { db } from "./firebase.js";
+  import { ref, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+
+  const list = document.getElementById('list');
+  let VIDEOS = [];
+
+  function render(filter='trending'){
+    let items = [...VIDEOS];
+    if(filter==='recent') items.sort((a,b)=>b.timestamp - a.timestamp);
+    else if(filter==='oldest') items.sort((a,b)=>a.timestamp - b.timestamp);
+    else items.sort((a,b)=>b.views - a.views);
+
+    list.innerHTML = '';
+    for(const v of items){
+      list.innerHTML += `
+        <div class="card">
+          <a href="watch.html?id=${v.id}">
+            <img class="thumb" src="${v.thumbnail}" alt="thumb" onerror="this.style.display='none'">
+          </a>
+          <div class="meta">
+            <div>
+              <div class="title">${escapeHtml(v.title)}</div>
+              <div class="views">${Number(v.views).toLocaleString()} views • ${new Date(v.timestamp).toLocaleString()}</div>
+            </div>
+          </div>
+          <div class="actions">
+            <a href="watch.html?id=${v.id}"><button class="primary">Play</button></a>
+            <button onclick="shareVideo('${v.id}')">Share</button>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function shareVideo(id){
+    const url = location.origin + location.pathname.replace(/index.html$/,'') + 'watch.html?id=' + id;
+    if(navigator.share){ navigator.share({title:'Watch video', url}).catch(()=>{}); }
+    else { prompt('Copy link', url); }
+  }
+
+  // listen to db
+  onValue(ref(db, 'videos'), snap=>{
+    VIDEOS = [];
+    snap.forEach(ch=>{
+      const d = ch.val(); d.id = ch.key;
+      // ensure fields
+      d.views = d.views || 0;
+      d.timestamp = d.timestamp || Date.now();
+      VIDEOS.push(d);
+    });
+    // default filter
+    const active = document.querySelector('.chip.active')?.dataset.filter || 'trending';
+    render(active);
+  });
+
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active');
+      render(c.dataset.filter);
+    });
+  });
+  </script>
+</body>
+</html>
