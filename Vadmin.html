@@ -24,11 +24,15 @@ label{color:#aaa;font-size:13px;}
 <div class="box">
 <h2>Admin Upload Panel</h2>
 
-<label>Video Title</label>
-<input id="title" placeholder="Video title"/>
+<label>Upload Thumbnail</label>
+<input type="file" id="imageUpload">
+<p id="result" style="color:#72ff7e;margin-top:5px;font-size:13px;"></p>
 
 <label>Thumbnail URL</label>
-<input id="thumb" placeholder="https://example.com/image.jpg"/>
+<input id="thumb" placeholder="Auto filled after image upload"/>
+
+<label>Video Title</label>
+<input id="title" placeholder="Video title"/>
 
 <label>Video URL / Iframe Code</label>
 <textarea id="video" placeholder="Dropbox link, direct URL, or iframe code"></textarea>
@@ -38,6 +42,7 @@ label{color:#aaa;font-size:13px;}
 
 <h2 style="text-align:center;">All Videos</h2>
 <div id="list"></div>
+
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
@@ -55,93 +60,99 @@ const firebaseConfig = {
   measurementId: "G-Q0YQVS6QJ6"
 };
 
-// Initialize Firebase
+// Initialize
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Convert Dropbox URL
+// ===== ImgBB Upload + Auto Fill Thumbnail =====
+async function uploadThumbnail() {
+    const fileInput = document.getElementById("imageUpload");
+    if (!fileInput.files.length) return;
+
+    const file = fileInput.files[0];
+    const apiKey = "28303bb2f8b9d2907349e5567b265f2d";
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+
+    reader.onload = async () => {
+        const base64Data = reader.result.split(",")[1];
+
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+            method: "POST",
+            body: new URLSearchParams({ image: base64Data }),
+        });
+
+        const result = await response.json();
+
+        if (result.status === 200) {
+            const url = result.data.url;
+            document.getElementById("thumb").value = url;
+            document.getElementById("result").innerText = "✔ Thumbnail uploaded!";
+        } else {
+            alert("❌ ImgBB Upload Failed!");
+        }
+    };
+}
+
+document.getElementById("imageUpload").addEventListener("change", uploadThumbnail);
+
+
+// ==== Detect Link Type ====
 function convertDropboxURL(url){
-    if(url.includes("dropbox.com") && !url.includes("raw=1")){
+    if(url.includes("dropbox.com") && !url.includes("raw=1"))
         return url.split("?")[0]+"?raw=1";
-    }
     return url;
 }
 
-// Detect link type
 function detectType(input){
     input = input.trim();
-
-    if(input.startsWith("<iframe")) {
-        return {
-            type: "iframe",
-            url: input.match(/src="([^"]+)"/)[1]
-        };
-    }
-
-    if(input.includes("dropbox.com")){
-        return { type: "video", url: convertDropboxURL(input) };
-    }
-
-    return { type: "video", url: input };
+    if(input.startsWith("<iframe")) return {type:"iframe",url:input.match(/src="([^"]+)"/)[1]};
+    if(input.includes("dropbox.com")) return {type:"video",url:convertDropboxURL(input)};
+    return {type:"video",url:input};
 }
 
-// Upload video
+// ==== Upload to Firebase ====
 document.getElementById("upload").addEventListener("click", async ()=>{
     const title = document.getElementById("title").value.trim();
     const thumb = document.getElementById("thumb").value.trim();
     const videoInput = document.getElementById("video").value.trim();
 
     if(!title || !thumb || !videoInput){
-        alert("⚠ Please fill all fields!");
+        alert("⚠ Fill all fields!");
         return;
     }
 
-    const { type, url } = detectType(videoInput);
+    const {type, url} = detectType(videoInput);
 
     await set(push(ref(db,"videos")),{
-        title,
-        thumbnail: thumb,
-        type,
-        url,
-        timestamp: Date.now(),
-        views: 0
+        title,thumbnail:thumb,type,url,timestamp:Date.now(),views:0
     });
 
     alert("✔ Uploaded Successfully!");
-
-    document.getElementById("title").value="";
-    document.getElementById("thumb").value="";
-    document.getElementById("video").value="";
+    location.reload();
 });
 
-// Load list
+// ==== Load Data ====
 function loadList(){
     onValue(ref(db,"videos"), snap=>{
         const data = snap.val() || {};
-        const list = document.getElementById("list");
-        list.innerHTML = "";
-
-        Object.entries(data).forEach(([id,v])=>{
-            list.innerHTML += `
+        document.getElementById("list").innerHTML = Object.entries(data).map(([id,v])=>`
             <div class="video-item">
-                <img src="${v.thumbnail}" />
+                <img src="${v.thumbnail}">
                 <b>${v.title}</b><br>
                 <small>${v.views} views</small><br>
                 <button class="delete-btn" onclick="del('${id}')">DELETE</button>
-            </div>`;
-        });
+            </div>
+        `).join("");
     });
 }
 
 window.del = async id=>{
-    if(confirm("Delete this video?")){
-        await remove(ref(db,"videos/"+id));
-        alert("Deleted!");
-    }
+    if(confirm("Delete this video?")) await remove(ref(db,"videos/"+id));
 };
 
 loadList();
 </script>
-
 </body>
 </html>
