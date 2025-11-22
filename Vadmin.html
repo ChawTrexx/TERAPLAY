@@ -127,16 +127,14 @@ function loadList(){
         list.innerHTML = "";
 
         Object.entries(data).forEach(([id,v])=>{
-            list.innerHTML += `
-            <div class="video-item">
-                ${renderVideo(v)}
-                <b>${v.title}</b><br>
-                <small>${v.views} views</small><br>
-                <button class="delete-btn" onclick="del('${id}')">DELETE</button>
-            </div>`;
-        });
-    });
-}
+    list.innerHTML += `
+    <div class="video-item">
+        <img src="${v.thumbnail}" style="width:100%;height:120px;border-radius:6px;object-fit:cover;" />
+        <b>${v.title}</b><br>
+        <small>${v.views} views</small><br>
+        <button class="delete-btn" onclick="del('${id}')">DELETE</button>
+    </div>`;
+});
 
 window.del = async id=>{
     if(confirm("Delete this video?")){
