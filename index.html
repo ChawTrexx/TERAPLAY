@@ -109,14 +109,19 @@ function escapeHtml(s){
                 .replace(/>/g,'&gt;');
 }
 
-// 🔥 SHARE BUTTON FIXED
+
+  // 🔥 SHARE BUTTON FIXED
 function shareVideo(id){
+  const video = VIDEOS.find(v => v.id === id);
+  if (!video) return;
+
   const url = `${window.location.origin}/Watch.html?id=${id}`;
+  const title = video.title || "Watch this video";
+
   if (navigator.share){
     navigator.share({
-      title:"Watch this video",
-      text:"🔥 Viral video — watch now!",
-      url:url
+      title: title, // Only the video title
+      url: url      // The link
     }).catch(()=>{});
   } else {
     prompt("Copy video link:", url);
