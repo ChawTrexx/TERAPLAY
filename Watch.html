@@ -62,7 +62,24 @@ header{
 
   <div class="recommend-box" id="recommended"></div>
 
-</div>
+</div> 
+  <script>
+    var player = videojs('my-video');
+
+    // IMA (Google IMA SDK) का ऑप्शन सेट करें
+    player.ima({
+      adTagUrl: 'https://aromatic-singer.com/dYmSF.zZdTGqNdvdZEG/U_/HeQmP9yu/ZNUTlDkQPUT/Yv3VMeTDE/xuMmjJM/tJNSj/cwxxM/TfEoyVNaAb',  // ← यहाँ अपना VAST URL लगाएं
+      debug: true,  // टेस्टिंग के समय true; प्रोडक्शन में आप false कर सकते हैं
+    });
+
+    player.ready(function() {
+      // iOS / मोबाइल पर एड container initialize करने के लिए
+      player.one('click', function() {
+        player.ima.initializeAdDisplayContainer();
+      });
+      player.play();
+    });
+  </script>
 
 <script type="module">
 
@@ -87,9 +104,9 @@ const videoId = new URLSearchParams(location.search).get("id");
 
 function renderVideo(v){
    if(v.type === "iframe"){
-       return `<iframe src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin" style="width:100%;height:250px;border:0;"></iframe>`;
+       return `<iframe id="my-video" src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin" style="width:100%;height:250px;border:0;"></iframe>`;
    } else {
-       return `<video src="${v.url}" controls autoplay style="width:100%;height:250px;border-radius:10px"></video>`;
+       return `<video id="my-video" src="${v.url}" controls autoplay style="width:100%;height:250px;border-radius:10px"></video>`;
    }
 }
 
