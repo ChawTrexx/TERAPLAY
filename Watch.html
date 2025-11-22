@@ -13,7 +13,6 @@ body{
   font-family:Arial, sans-serif;
 }
 
-/* Header */
 header{
   display:flex;align-items:center;justify-content:space-between;
   padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.05);
@@ -21,17 +20,15 @@ header{
 }
 .logo{font-weight:800;color:var(--accent);font-size:20px;}
 
-/* Layout */
-.container{display:flex;gap:12px;padding:12px;}
+.container{display:flex;gap:12px;padding:0px;}
 @media(max-width:850px){.container{flex-direction:column;}}
 
 .video-box{flex:2;}
 .video-box iframe, .video-box video{
-  width:100%;height:56vw;max-height:380px;
+  width:100%;height:220px;
   border-radius:10px;background:#000;
 }
 
-/* Title */
 .title{font-size:18px;margin:12px 0 6px;}
 .meta{color:#aaa;font-size:13px;margin-bottom:16px;}
 
@@ -39,6 +36,7 @@ header{
   flex:1;overflow-y:auto;max-height:85vh;
   padding-right:6px;
 }
+
 .recommend-item{
   display:flex;gap:10px;margin-bottom:14px;cursor:pointer;
   transition:.2s;
@@ -47,10 +45,7 @@ header{
 .recommend-item img{
   width:140px;height:95px;object-fit:cover;border-radius:8px;
 }
-
-@media(max-width:600px){
-  .recommend-item img{width:120px;height:80px;}
-}
+@media(max-width:600px){.recommend-item img{width:120px;height:80px;}}
 </style>
 </head>
 <body>
@@ -61,20 +56,19 @@ header{
 
   <div class="video-box">
     <div id="player"></div>
-    <div class="title" id="vtitle">Loading...</div>
-    <div class="meta" id="vmeta">0 views • Loading...</div>
+    <div class="title" id="vtitle"></div>
+    <div class="meta" id="vmeta"></div>
   </div>
 
   <div class="recommend-box" id="recommended"></div>
 
 </div>
 
-<script type="module" defer>
+<script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey:"AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
   authDomain:"videohosting-13776.firebaseapp.com",
@@ -86,48 +80,41 @@ const firebaseConfig = {
   measurementId:"G-Q0YQVS6QJ6"
 };
 
-// Init
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Get URL ID
 const videoId = new URLSearchParams(location.search).get("id");
 
-// Render Video Player
 function renderVideo(v){
    if(v.type === "iframe"){
-       return `<iframe src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin"
-       style="width:100%;height:250;border:0;"></iframe>`;
+       return `<iframe src="${v.url}" allowfullscreen style="width:100%;height:220px;border:0;"></iframe>`;
    } else {
-       return `<video src="${v.url}" controls autoplay style="width:100%;height:250;border-radius:10px"></video>`;
+       return `<video src="${v.url}" controls autoplay style="width:100%;height:220px;border-radius:10px"></video>`;
    }
 }
 
-// Load Main Video
-function loadVideo(){
-  onValue(ref(db,"videos/"+videoId),(snap)=>{
-    const v=snap.val();
-    if(!v) return;
+async function loadVideo(){
+  const snap = await get(ref(db, "videos/"+videoId));
+  if(!snap.exists()) return;
+  
+  const v=snap.val();
 
-    document.getElementById("player").innerHTML = renderVideo(v);
-    document.getElementById("vtitle").innerText = v.title;
-    document.getElementById("vmeta").innerHTML = `${v.views ?? 0} views`;
+  document.getElementById("player").innerHTML = renderVideo(v);
+  document.getElementById("vtitle").innerText = v.title;
+  document.getElementById("vmeta").innerHTML = `${v.views ?? 0} views`;
 
-    update(ref(db,"videos/"+videoId),{ views:(v.views||0)+1 });
-  });
+  update(ref(db,"videos/"+videoId), { views:(v.views||0)+1 });
 }
 
-// Load Recommended
-function loadRecommended(){
-  onValue(ref(db,"videos"), snap=>{
-    const data=snap.val()||{};
-    const box=document.getElementById("recommended");
-    box.innerHTML="";
+async function loadRecommended(){
+  const snap = await get(ref(db,"videos"));
+  const data=snap.val()||{};
+  const box=document.getElementById("recommended");
+  box.innerHTML="";
 
-    Object.entries(data).reverse().forEach(([id,v])=>{
-      if(id===videoId) return;
-
-      box.innerHTML += `
+  Object.entries(data).reverse().forEach(([id,v])=>{
+    if(id===videoId) return;
+    box.innerHTML += `
       <div class="recommend-item" onclick="location='Watch.html?id=${id}'">
         <img src="${v.thumbnail}">
         <div>
@@ -135,7 +122,6 @@ function loadRecommended(){
           <small style="color:#aaa">${v.views ?? 0} views</small>
         </div>
       </div>`;
-    });
   });
 }
 
@@ -143,6 +129,5 @@ loadVideo();
 loadRecommended();
 
 </script>
-
 </body>
 </html>
