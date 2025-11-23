@@ -150,10 +150,19 @@ header{
 }
 
 ::-webkit-scrollbar{width:5px;}
-::-webkit-scrollbar-thumb{background:#555;border-radius:10px;}
+::-webkit-scrollbar-thumb{background:#555;border-radius:10px;} 
+
+  /* CSS */
+.no-select {
+  -webkit-user-select: none; /* Safari/Chrome */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE/Edge */
+  user-select: none;         /* standard */
+  -webkit-touch-callout: none; /* iOS long-press menu off */
+}
 </style>
 </head>
-<body>
+<body class="no-select">
 
 <header>
   <div class="logo">TEEN18 XXX</div>
