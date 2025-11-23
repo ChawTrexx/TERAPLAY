@@ -3,39 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fast Dropbox Upload</title>
+<title>Fast Dropbox Video Upload</title>
 
 <style>
 body{background:#0d0d0d;color:#fff;font-family:Arial;padding:20px;}
 .box{max-width:500px;margin:auto;background:#111;padding:20px;border-radius:14px}
 .progress{width:100%;height:10px;background:#222;border-radius:6px;margin-top:15px}
 .bar{height:100%;width:0;background:#00ff91;border-radius:6px;transition:.2s}
+#status{margin-top:10px;font-size:16px;font-weight:bold;text-align:center;}
 </style>
 </head>
 
 <body>
 <div class="box">
-<h2>Fast Dropbox Upload</h2>
+<h2>Fast Dropbox Video Upload</h2>
 
-<input type="file" id="fileInput" style="margin-bottom:15px"><br>
-<button onclick="uploadFile()" style="padding:10px 20px;border:0;border-radius:8px;background:#00ff91;color:#000;font-weight:bold">
-Upload
+<input type="file" id="fileInput" accept="video/*" style="margin-bottom:15px"><br>
+
+<button onclick="uploadFile()" 
+style="padding:10px 20px;border:0;border-radius:8px;background:#00ff91;color:#000;font-weight:bold;width:100%">
+Upload to Dropbox
 </button>
 
 <div class="progress"><div class="bar" id="bar"></div></div>
 <p id="status"></p>
+
 </div>
 
 <script>
-const ACCESS_TOKEN = "sl.u.AGKLzWcBeBJgy0UAAQ1L0E1DzjLJ05Bj2CNEIKSr8Ti6GM7gsj2Bqch6JiVDJkuhY-i1TQz_49py-AwBTC7f0V7gNEZvPqDcyEtz-HZXSfIoNNU2KG0366NhtL3gSVLw_dkPToWu18wz4YpuuZa_SZ9csBxC77u7SyVHygoepoz3sxTz9L4JN7opLjpK4hd07kmL8QoU6m1QN-F4DUMLDljtZBXOYQWap0g97oLp4vy1z96WD880iIFikjtTj7kjtuc8xSuYkg6k2EFRLd8TPNbHzOPgV1cjON2D4yOYd5qDWfO_d76wSCLKR39x9aaqfZnGGDhzR-qIfwWb9yWbV95CoYeVwAvMxW99CvUfehnwifvcnLh1Guhebu2Jb9dvhyFYnmWXpVbQRmjuNivFZ2gsqHMM1cKxFwGgIRzgijPNJ8CLDMxNhP1Qm6UTxlLgjxBEssGRjGU60NbqN7o-V6rQ1xRGl7-dEu1qanjjWpYeymjOFAB_j-VY5P0LTtGDUnYhuS3EWoM7FeCzoWmxCr8U2Mto0WvFAFTKflTFDrUQROpGwfOMaBdgiBXgebtWviQsQZ48w8jjyMW9jPfvFxfmVZmMTJ_2nHRsK_0Hb4ndiGPfxUVpNtZGOfOmy0VmzygHUFWN6zT8m3O8_hsCkyyjD2Q-Ydeb-EA65C1-kOAke8stzEkWSTcS0LJ49mpdNy1N1EX1qrwk1ztLHbdf1yAs6oZSo160H7eLN3NEIRGeqX_N16nw-uz3vQAD6vDnTAyyPOBGWo4hdwKJJVO3ZMOud-1CM7_SA1pkMsF5J88O-leK4Ad3RaIOBFJVLfWST2uy2MaPdb3bNjal4Mdl9Mr1lmJFgv-v8nnQltnG8_UIfx2WPgzOgEBm2MnNlyRLz9Wygi4PtFEWaZhMRIY2KZ-JOgP86AosafAhcawdDjoYYPbbKP3karBi8pmrXEM3U4Yq2UqBzF3ATZ4wnaBso3_rnrSVd3buDh6tICP0jEHPmLwm6CcdodpH-kgtOOL6DmBCSOQTvyK0VzoxpqvPyYlyxTRpdh6zi6RNL5ElN7kXRObDKC52hqKQsGb3iro-_PqGlZOawTLqeiUnaS-AlgE_D-tXWu13nZUhdult4R7vvgnXPnd5cEJhWFmHfHmBETUWVzb08yUq9MIzhh7yL90mI5ZIFUBJQYzkwxT0_wrFhYvxH53NaG-UYCsqIzpFAa0Pub_mHVaBpWkqffWlirH2teL-K7sH3VBAEbvdfBitM_bcGKy6m-8a_E2kr8ri2QU";  // Token yaha daalo
-const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB Chunk
+const ACCESS_TOKEN = "sl.u.AGKLzWcBeBJgy0UAAQ1L0E1DzjLJ05Bj2CNEIKSr8Ti6GM7gsj2Bqch6JiVDJkuhY-i1TQz_49py-AwBTC7f0V7gNEZvPqDcyEtz-HZXSfIoNNU2KG0366NhtL3gSVLw_dkPToWu18wz4YpuuZa_SZ9csBxC77u7SyVHygoepoz3sxTz9L4JN7opLjpK4hd07kmL8QoU6m1QN-F4DUMLDljtZBXOYQWap0g97oLp4vy1z96WD880iIFikjtTj7kjtuc8xSuYkg6k2EFRLd8TPNbHzOPgV1cjON2D4yOYd5qDWfO_d76wSCLKR39x9aaqfZnGGDhzR-qIfwWb9yWbV95CoYeVwAvMxW99CvUfehnwifvcnLh1Guhebu2Jb9dvhyFYnmWXpVbQRmjuNivFZ2gsqHMM1cKxFwGgIRzgijPNJ8CLDMxNhP1Qm6UTxlLgjxBEssGRjGU60NbqN7o-V6rQ1xRGl7-dEu1qanjjWpYeymjOFAB_j-VY5P0LTtGDUnYhuS3EWoM7FeCzoWmxCr8U2Mto0WvFAFTKflTFDrUQROpGwfOMaBdgiBXgebtWviQsQZ48w8jjyMW9jPfvFxfmVZmMTJ_2nHRsK_0Hb4ndiGPfxUVpNtZGOfOmy0VmzygHUFWN6zT8m3O8_hsCkyyjD2Q-Ydeb-EA65C1-kOAke8stzEkWSTcS0LJ49mpdNy1N1EX1qrwk1ztLHbdf1yAs6oZSo160H7eLN3NEIRGeqX_N16nw-uz3vQAD6vDnTAyyPOBGWo4hdwKJJVO3ZMOud-1CM7_SA1pkMsF5J88O-leK4Ad3RaIOBFJVLfWST2uy2MaPdb3bNjal4Mdl9Mr1lmJFgv-v8nnQltnG8_UIfx2WPgzOgEBm2MnNlyRLz9Wygi4PtFEWaZhMRIY2KZ-JOgP86AosafAhcawdDjoYYPbbKP3karBi8pmrXEM3U4Yq2UqBzF3ATZ4wnaBso3_rnrSVd3buDh6tICP0jEHPmLwm6CcdodpH-kgtOOL6DmBCSOQTvyK0VzoxpqvPyYlyxTRpdh6zi6RNL5ElN7kXRObDKC52hqKQsGb3iro-_PqGlZOawTLqeiUnaS-AlgE_D-tXWu13nZUhdult4R7vvgnXPnd5cEJhWFmHfHmBETUWVzb08yUq9MIzhh7yL90mI5ZIFUBJQYzkwxT0_wrFhYvxH53NaG-UYCsqIzpFAa0Pub_mHVaBpWkqffWlirH2teL-K7sH3VBAEbvdfBitM_bcGKy6m-8a_E2kr8ri2QU"; // <-- Replace this
+const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB chunk
 
 async function uploadFile() {
     const file = document.getElementById("fileInput").files[0];
-    if (!file) return alert("⚠ Select a file first");
+    if (!file) return alert("⚠ Select a video first!");
 
-    document.getElementById("status").innerText = "Uploading...";
     const bar = document.getElementById("bar");
+    const status = document.getElementById("status");
+
+    status.innerText = "Uploading...";
 
     const fileName = Date.now() + "_" + file.name;
     let offset = 0;
@@ -45,7 +51,6 @@ async function uploadFile() {
         const chunk = file.slice(offset, offset + CHUNK_SIZE);
 
         if (offset === 0) {
-
             const res = await fetch("https://content.dropboxapi.com/2/files/upload_session/start", {
                 method: "POST",
                 headers: {
@@ -55,12 +60,10 @@ async function uploadFile() {
                 },
                 body: chunk
             });
-            
+
             const data = await res.json();
             sessionId = data.session_id;
-
         } else if (offset + CHUNK_SIZE < file.size) {
-
             await fetch("https://content.dropboxapi.com/2/files/upload_session/append_v2", {
                 method: "POST",
                 headers: {
@@ -73,7 +76,6 @@ async function uploadFile() {
                 },
                 body: chunk
             });
-
         } else {
             await fetch("https://content.dropboxapi.com/2/files/upload_session/finish", {
                 method: "POST",
@@ -95,12 +97,12 @@ async function uploadFile() {
 
         offset += CHUNK_SIZE;
 
-        // 🔥 Progress Bar
         const progress = Math.min((offset / file.size) * 100, 100);
         bar.style.width = progress + "%";
     }
 
-    document.getElementById("status").innerHTML = "✔ Upload Complete!";
+    status.innerText = "✔ Upload Complete!";
+    status.style.color = "#00ff91";
 }
 </script>
 
