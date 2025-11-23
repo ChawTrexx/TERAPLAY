@@ -52,7 +52,68 @@ header{
 }
 
 .title{font-size:18px;margin:12px 0 6px;}
-.meta{color:#aaa;font-size:13px;margin-bottom:16px;}
+.meta{color:#aaa;font-size:13px;margin-bottom:16/* COMMENT PANEL */
+.comment-panel{
+position:fixed;
+left:0;
+bottom:-100%;
+width:100%;
+height:75%;
+background:#161616;
+border-radius:20px 20px 0 0;
+padding:15px;
+transition:.35s;
+z-index:9999;
+display:flex;
+flex-direction:column;
+}
+.comment-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+border-bottom:1px solid #333;
+padding-bottom:10px;
+}
+.close-btn{
+font-size:20px;
+cursor:pointer;
+}
+.comments-list{
+overflow-y:auto;
+flex:1;
+margin-top:10px;
+}
+.comment-item{
+background:#1f1f1f;
+padding:10px;
+border-radius:10px;
+margin:8px 0;
+}
+.comment-item .user{
+font-size:14px;
+color:var(--accent);
+margin-bottom:5px;
+}
+.comment-input-box{
+display:flex;
+gap:10px;
+}
+.comment-input-box input{
+flex:1;
+padding:10px;
+background:#000;
+border:1px solid #444;
+border-radius:8px;
+color:white;
+}
+.comment-input-box button{
+padding:10px 15px;
+background:var(--accent);
+border:none;
+border-radius:8px;
+font-weight:bold;
+cursor:pointer;
+}px;}
 
 
 /* RECOMMEND SECTION */
@@ -77,82 +138,7 @@ header{
   cursor:pointer;
 }
 
-/* COMMENT PANEL */
-.comment-panel{
-  position:fixed;
-  left:0;
-  bottom:-100%;
-  width:100vw;     /* <-- FIXED */
-  max-width:100%;  /* <-- FIXED */
-  height:75%;
-  background:#161616;
-  border-radius:20px 20px 0 0;
-  padding:15px;
-  box-sizing:border-box; /* <-- Prevent overflow */
-  transition:.35s;
-  z-index:9999;
-  display:flex;
-  flex-direction:column;
-}
 
-/* Header */
-.comment-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  border-bottom:1px solid #333;
-  padding-bottom:10px;
-}
-
-.close-btn{
-  font-size:20px;
-  cursor:pointer;
-}
-
-.comments-list{
-  overflow-y:auto;
-  flex:1;
-  margin-top:10px;
-}
-
-.comment-item{
-  background:#1f1f1f;
-  padding:10px;
-  border-radius:10px;
-  margin:8px 0;
-  word-wrap:break-word; /* <-- Long text fix */
-}
-
-.comment-item .user{
-  font-size:14px;
-  color:var(--accent);
-  margin-bottom:5px;
-}
-
-/* Input box */
-.comment-input-box{
-  display:flex;
-  gap:10px;
-  width:100%; /* <-- Fix on small mobile */
-}
-
-.comment-input-box input{
-  flex:1;
-  padding:10px;
-  background:#000;
-  border:1px solid #444;
-  border-radius:8px;
-  color:white;
-}
-
-.comment-input-box button{
-  padding:10px 15px;
-  background:var(--accent);
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-}
 
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-thumb{background:#555;border-radius:10px;}
