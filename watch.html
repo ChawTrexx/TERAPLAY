@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,max-scale=1">
+<title>Watch - Teen18</title>
+
+<style>
+:root{--accent:#ff00ff;}
+
+body{
+  margin:0;background:#0b0b0b;color:#fff;
+  font-family:Arial, sans-serif;
+}
+
+/* HEADER */
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  background:#111;
+}
+.logo{
+  font-weight:800;
+  color:var(--accent);
+  letter-spacing:2px;
+  text-shadow:0 0 4px var(--accent);
+}
+.home-btn{
+  color:white;
+  text-decoration:none;
+  font-weight:600;
+  padding:4px 12px;
+  border-radius:6px;
+  border:1px solid var(--accent);
+  transition:0.3s;
+}
+.home-btn:hover{
+  background:var(--accent);
+  color:#111;
+}
+
+/* LAYOUT */
+.container{display:flex;gap:12px;padding:0px;}
+@media(max-width:850px){.container{flex-direction:column;}}
+
+.video-box{flex:2;}
+.video-box iframe, .video-box video{
+  width:100%;height:220px;border-radius:10px;background:#000;
+}
+
+.title{font-size:18px;margin:12px 0 6px;}
+.meta{color:#aaa;font-size:13px;margin-bottom:16px;}
+
+
+/* RECOMMEND SECTION */
+.recommend-box{
+  flex:1;overflow-y:auto;max-height:85vh;
+  padding-right:6px;
+}
+.recommend-item{
+  display:flex;gap:10px;margin-bottom:14px;cursor:pointer;
+  transition:.2s;
+}
+.recommend-item:hover{opacity:.7;transform:scale(.97);}
+.recommend-item img{
+  width:140px;height:95px;object-fit:cover;border-radius:8px;
+}
+@media(max-width:600px){.recommend-item img{width:120px;height:80px;}}
+
+
+/* COMMENT PREVIEW */
+.comment-preview{
+  background:#111;
+  padding:12px;
+  border-radius:10px;
+  margin-top:15px;
+  cursor:pointer;
+}
+
+
+/* COMMENT PANEL */
+.comment-panel{
+  position:fixed;
+  left:0;
+  bottom:-100%;
+  width:100%;
+  height:75%;
+  background:#161616;
+  border-radius:20px 20px 0 0;
+  padding:15px;
+  transition:.35s;
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+}
+.comment-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid #333;
+  padding-bottom:10px;
+}
+.close-btn{
+  font-size:20px;
+  cursor:pointer;
+}
+.comments-list{
+  overflow-y:auto;
+  flex:1;
+  margin-top:10px;
+}
+.comment-item{
+  background:#1f1f1f;
+  padding:10px;
+  border-radius:10px;
+  margin:8px 0;
+}
+.comment-item .user{
+  font-size:14px;
+  color:var(--accent);
+  margin-bottom:5px;
+}
+.comment-input-box{
+  display:flex;
+  gap:10px;
+}
+.comment-input-box input{
+  flex:1;
+  padding:10px;
+  background:#000;
+  border:1px solid #444;
+  border-radius:8px;
+  color:white;
+}
+.comment-input-box button{
+  padding:10px 15px;
+  background:var(--accent);
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:#555;border-radius:10px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">TEEN18 XXX</div>
+  <a href="index.html" class="home-btn">Home</a>
+</header>
+
+
+<div class="container">
+
+  <div class="video-box">
+    <div id="player"></div>
+    <div class="title" id="vtitle"></div>
+    <div class="meta" id="vmeta"></div>
+
+    <!-- COMMENT PREVIEW -->
+    <div class="comment-preview" onclick="openComments()">
+      <b>Comments (<span id="commentCount">0</span>)</b>
+      <p id="latestComment" style="color:#ccc;font-size:14px;margin-top:4px;">
+        No comments yet...
+      </p>
+    </div>
+
+  </div>
+
+  <div class="recommend-box" id="recommended"></div>
+
+</div>
+
+
+<!-- FULL COMMENTS PANEL -->
+<div id="commentPanel" class="comment-panel">
+
+  <div class="comment-header">
+      <b style="font-size:18px;">Comments</b>
+      <span class="close-btn" onclick="closeComments()">✖</span>
+  </div>
+
+  <div id="commentsList" class="comments-list"></div>
+
+  <div class="comment-input-box">
+      <input id="commentText" placeholder="Add a comment..." maxlength="200">
+      <button onclick="sendComment()">Post</button>
+  </div>
+
+</div>
+
+
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getDatabase, ref, get, update, push, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+
+
+// FIREBASE
+const firebaseConfig = {
+  apiKey:"AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
+  authDomain:"videohosting-13776.firebaseapp.com",
+  databaseURL:"https://videohosting-13776-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"videohosting-13776",
+  storageBucket:"videohosting-13776.appspot.com",
+  messagingSenderId:"992909501546",
+  appId:"1:992909501546:web:3728b48ec4727a5679d613",
+  measurementId:"G-Q0YQVS6QJ6"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+
+// VIDEO LOGIC
+const videoId = new URLSearchParams(location.search).get("id");
+
+function renderVideo(v){
+   if(v.type === "iframe"){
+       return `<iframe src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin"
+       style="width:100%;height:250px;border:0;"></iframe>`;
+   } else {
+       return `<video src="${v.url}" controls autoplay style="width:100%;height:250px;border-radius:10px"></video>`;
+   }
+}
+
+async function loadVideo(){
+  const snap = await get(ref(db, "videos/"+videoId));
+  if(!snap.exists()) return;
+  
+  const v=snap.val();
+  document.getElementById("player").innerHTML = renderVideo(v);
+  document.getElementById("vtitle").innerText = v.title;
+  document.getElementById("vmeta").innerHTML = `${v.views ?? 0} views`;
+
+  update(ref(db,"videos/"+videoId), { views:(v.views||0)+1 });
+}
+
+async function loadRecommended(){
+  const snap = await get(ref(db,"videos"));
+  const data=snap.val()||{};
+  const box=document.getElementById("recommended");
+  box.innerHTML="";
+
+  Object.entries(data).reverse().forEach(([id,v])=>{
+    if(id===videoId) return;
+    box.innerHTML += `
+      <div class="recommend-item" onclick="location='Watch.html?id=${id}'">
+        <img src="${v.thumbnail}">
+        <div>
+          <b>${v.title}</b><br>
+          <small style="color:#aaa">${v.views ?? 0} views</small>
+        </div>
+      </div>`;
+  });
+}
+
+
+// COMMENT SYSTEM
+const commentsRef = ref(db, "comments/" + videoId);
+
+// Generate random username
+if (!localStorage.getItem("userName")) {
+  localStorage.setItem("userName", "User" + Math.floor(Math.random()*9999));
+}
+const username = localStorage.getItem("userName");
+
+// open-close
+window.openComments = ()=> document.getElementById("commentPanel").style.bottom="0";
+window.closeComments = ()=> document.getElementById("commentPanel").style.bottom="-100%";
+
+
+// Send Comment
+window.sendComment = async ()=>{
+  const text=document.getElementById("commentText").value.trim();
+  if(!text) return;
+
+  await push(commentsRef,{
+    user:username,
+    text,
+    time:Date.now()
+  });
+
+  document.getElementById("commentText").value="";
+};
+
+
+// Load comments live
+onValue(commentsRef, snap=>{
+  const data=snap.val()||{};
+  const list=document.getElementById("commentsList");
+  list.innerHTML="";
+
+  const entries=Object.values(data).reverse();
+
+  // count
+  document.getElementById("commentCount").innerText = entries.length;
+
+  // preview
+  document.getElementById("latestComment").innerText = entries[0]?.text || "No comments yet...";
+
+  entries.forEach(c=>{
+    list.innerHTML += `
+      <div class="comment-item">
+         <div class="user">⭐ ${c.user}</div>
+         <div>${c.text}</div>
+      </div>`;
+  });
+});
+
+
+loadVideo();
+loadRecommended();
+
+</script>
+</body>
+</html>
