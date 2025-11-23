@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fast Chunk Upload to Dropbox</title>
+<script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
+
+<style>
+body{
+    background:#111;color:#fff;font-family:Arial;
+    margin:0;padding:0;display:flex;justify-content:center;
+    align-items:center;min-height:100vh;
+}
+.container{
+    width:90%;max-width:420px;background:#1b1b1b;padding:20px;
+    border-radius:12px;text-align:center;box-shadow:0 0 10px #5b4dff88;
+}
+input[type=file]{
+    width:100%;padding:12px;background:#222;border:none;border-radius:8px;
+    margin-top:10px;color:#fff;
+}
+button{
+    width:100%;padding:14px;background:#5b4dff;border:none;
+    border-radius:8px;color:#fff;font-size:18px;margin-top:10px;
+}
+button:active{transform:scale(0.97);}
+.progress-bar{
+    width:100%;height:10px;background:#333;margin-top:15px;
+    border-radius:6px;overflow:hidden;display:none;
+}
+.progress-fill{
+    height:100%;width:0;background:#5b4dff;transition:0.2s;
+}
+#uploadedLink{
+    margin-top:12px;font-size:15px;word-break:break-all;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚀 Fast Upload</h2>
+    <input type="file" id="videoFile" accept="video/*">
+    <button onclick="startUpload()">Upload</button>
+    
+    <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <p id="status"></p>
+    <p id="uploadedLink"></p>
+</div>
+
+<script>
+const dropboxToken = "sl.u.AGKLzWcBeBJgy0UAAQ1L0E1DzjLJ05Bj2CNEIKSr8Ti6GM7gsj2Bqch6JiVDJkuhY-i1TQz_49py-AwBTC7f0V7gNEZvPqDcyEtz-HZXSfIoNNU2KG0366NhtL3gSVLw_dkPToWu18wz4YpuuZa_SZ9csBxC77u7SyVHygoepoz3sxTz9L4JN7opLjpK4hd07kmL8QoU6m1QN-F4DUMLDljtZBXOYQWap0g97oLp4vy1z96WD880iIFikjtTj7kjtuc8xSuYkg6k2EFRLd8TPNbHzOPgV1cjON2D4yOYd5qDWfO_d76wSCLKR39x9aaqfZnGGDhzR-qIfwWb9yWbV95CoYeVwAvMxW99CvUfehnwifvcnLh1Guhebu2Jb9dvhyFYnmWXpVbQRmjuNivFZ2gsqHMM1cKxFwGgIRzgijPNJ8CLDMxNhP1Qm6UTxlLgjxBEssGRjGU60NbqN7o-V6rQ1xRGl7-dEu1qanjjWpYeymjOFAB_j-VY5P0LTtGDUnYhuS3EWoM7FeCzoWmxCr8U2Mto0WvFAFTKflTFDrUQROpGwfOMaBdgiBXgebtWviQsQZ48w8jjyMW9jPfvFxfmVZmMTJ_2nHRsK_0Hb4ndiGPfxUVpNtZGOfOmy0VmzygHUFWN6zT8m3O8_hsCkyyjD2Q-Ydeb-EA65C1-kOAke8stzEkWSTcS0LJ49mpdNy1N1EX1qrwk1ztLHbdf1yAs6oZSo160H7eLN3NEIRGeqX_N16nw-uz3vQAD6vDnTAyyPOBGWo4hdwKJJVO3ZMOud-1CM7_SA1pkMsF5J88O-leK4Ad3RaIOBFJVLfWST2uy2MaPdb3bNjal4Mdl9Mr1lmJFgv-v8nnQltnG8_UIfx2WPgzOgEBm2MnNlyRLz9Wygi4PtFEWaZhMRIY2KZ-JOgP86AosafAhcawdDjoYYPbbKP3karBi8pmrXEM3U4Yq2UqBzF3ATZ4wnaBso3_rnrSVd3buDh6tICP0jEHPmLwm6CcdodpH-kgtOOL6DmBCSOQTvyK0VzoxpqvPyYlyxTRpdh6zi6RNL5ElN7kXRObDKC52hqKQsGb3iro-_PqGlZOawTLqeiUnaS-AlgE_D-tXWu13nZUhdult4R7vvgnXPnd5cEJhWFmHfHmBETUWVzb08yUq9MIzhh7yL90mI5ZIFUBJQYzkwxT0_wrFhYvxH53NaG-UYCsqIzpFAa0Pub_mHVaBpWkqffWlirH2teL-K7sH3VBAEbvdfBitM_bcGKy6m-8a_E2kr8ri2QU";
+const dbx = new Dropbox.Dropbox({ accessToken: dropboxToken });
+
+async function startUpload(){
+    const fileInput = document.getElementById("videoFile");
+    const file = fileInput.files[0];
+    const status = document.getElementById("status");
+    const linkBox = document.getElementById("uploadedLink");
+    const bar = document.getElementById("progressBar");
+    const fill = document.getElementById("progressFill");
+
+    if(!file) return alert("⚠ Select a video first!");
+
+    status.innerText = "Preparing upload...";
+    bar.style.display = "block";
+    fill.style.width = "0%";
+    linkBox.innerText = "";
+
+    const CHUNK = 8 * 1024 * 1024;
+    let offset = 0;
+    let sessionId = null;
+
+    while(offset < file.size){
+        const chunk = file.slice(offset, offset + CHUNK);
+        const buffer = await chunk.arrayBuffer();
+
+        if(offset === 0){
+            const res = await dbx.filesUploadSessionStart({ contents: buffer });
+            sessionId = res.result.session_id;
+        }
+        else if(offset + CHUNK < file.size){
+            await dbx.filesUploadSessionAppendV2({
+                cursor:{ session_id:sessionId, offset },
+                contents:buffer
+            });
+        }
+        else{
+            const result = await dbx.filesUploadSessionFinish({
+                cursor:{ session_id:sessionId, offset },
+                commit:{
+                    path:"/" + file.name,
+                    mode:"add",
+                    autorename:true,
+                    mute:false
+                },
+                contents:buffer
+            });
+
+            status.style.color = "lightgreen";
+            status.innerText = "Upload complete! Fetching link...";
+
+            const shared = await dbx.sharingCreateSharedLinkWithSettings({ path: result.result.path_lower });
+
+            const directLink = shared.result.url.replace("?dl=0", "?raw=1");
+            linkBox.innerHTML = `📌 Share / Play Link:<br><strong>${directLink}</strong>`;
+            return;
+        }
+
+        offset += CHUNK;
+
+        let percent = Math.floor((offset / file.size) * 100);
+        fill.style.width = percent + "%";
+        status.innerText = `Uploading... ${percent}%`;
+    }
+}
+</script>
+
+</body>
+</html>
