@@ -86,11 +86,13 @@ header{
   position:fixed;
   left:0;
   bottom:-100%;
-  width:100%;
-  height:55%;
+  width:100vw;      /* <-- Fixed */
+  max-width:100%;   /* <-- Prevents extra overflow */
+  height:60%;
   background:#161616;
   border-radius:20px 20px 0 0;
   padding:15px;
+  box-sizing:border-box; /* <-- padding overflow fix */
   transition:.35s;
   z-index:9999;
   display:flex;
