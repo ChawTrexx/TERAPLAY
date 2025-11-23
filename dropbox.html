@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Small Video to Dropbox</title>
+<script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 10px;
+}
+
+.container {
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 0 10px #5b4dff66;
+}
+
+input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+    color: #fff;
+    background: #222;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #5b4dff;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover { background: #4433cc; }
+
+#status {
+    margin-top: 15px;
+    font-size: 16px;
+    min-height: 24px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>Upload Small Video</h2>
+    <input type="file" id="videoFile" accept="video/*">
+    <button id="uploadBtn">Upload to Dropbox</button>
+    <p id="status"></p>
+</div>
+
+<script>
+const dropboxToken = "sl.u.AGKLzWcBeBJgy0UAAQ1L0E1DzjLJ05Bj2CNEIKSr8Ti6GM7gsj2Bqch6JiVDJkuhY-i1TQz_49py-AwBTC7f0V7gNEZvPqDcyEtz-HZXSfIoNNU2KG0366NhtL3gSVLw_dkPToWu18wz4YpuuZa_SZ9csBxC77u7SyVHygoepoz3sxTz9L4JN7opLjpK4hd07kmL8QoU6m1QN-F4DUMLDljtZBXOYQWap0g97oLp4vy1z96WD880iIFikjtTj7kjtuc8xSuYkg6k2EFRLd8TPNbHzOPgV1cjON2D4yOYd5qDWfO_d76wSCLKR39x9aaqfZnGGDhzR-qIfwWb9yWbV95CoYeVwAvMxW99CvUfehnwifvcnLh1Guhebu2Jb9dvhyFYnmWXpVbQRmjuNivFZ2gsqHMM1cKxFwGgIRzgijPNJ8CLDMxNhP1Qm6UTxlLgjxBEssGRjGU60NbqN7o-V6rQ1xRGl7-dEu1qanjjWpYeymjOFAB_j-VY5P0LTtGDUnYhuS3EWoM7FeCzoWmxCr8U2Mto0WvFAFTKflTFDrUQROpGwfOMaBdgiBXgebtWviQsQZ48w8jjyMW9jPfvFxfmVZmMTJ_2nHRsK_0Hb4ndiGPfxUVpNtZGOfOmy0VmzygHUFWN6zT8m3O8_hsCkyyjD2Q-Ydeb-EA65C1-kOAke8stzEkWSTcS0LJ49mpdNy1N1EX1qrwk1ztLHbdf1yAs6oZSo160H7eLN3NEIRGeqX_N16nw-uz3vQAD6vDnTAyyPOBGWo4hdwKJJVO3ZMOud-1CM7_SA1pkMsF5J88O-leK4Ad3RaIOBFJVLfWST2uy2MaPdb3bNjal4Mdl9Mr1lmJFgv-v8nnQltnG8_UIfx2WPgzOgEBm2MnNlyRLz9Wygi4PtFEWaZhMRIY2KZ-JOgP86AosafAhcawdDjoYYPbbKP3karBi8pmrXEM3U4Yq2UqBzF3ATZ4wnaBso3_rnrSVd3buDh6tICP0jEHPmLwm6CcdodpH-kgtOOL6DmBCSOQTvyK0VzoxpqvPyYlyxTRpdh6zi6RNL5ElN7kXRObDKC52hqKQsGb3iro-_PqGlZOawTLqeiUnaS-AlgE_D-tXWu13nZUhdult4R7vvgnXPnd5cEJhWFmHfHmBETUWVzb08yUq9MIzhh7yL90mI5ZIFUBJQYzkwxT0_wrFhYvxH53NaG-UYCsqIzpFAa0Pub_mHVaBpWkqffWlirH2teL-K7sH3VBAEbvdfBitM_bcGKy6m-8a_E2kr8ri2QU"; // Replace with your token
+const dbx = new Dropbox.Dropbox({ accessToken: dropboxToken });
+
+const uploadBtn = document.getElementById('uploadBtn');
+const status = document.getElementById('status');
+
+uploadBtn.addEventListener('click', async () => {
+    const fileInput = document.getElementById('videoFile');
+    status.textContent = '';
+
+    if (!fileInput.files.length) {
+        alert("Select a video file first!");
+        return;
+    }
+
+    const file = fileInput.files[0];
+
+    if(file.size > 150 * 1024 * 1024) { // 150MB limit
+        alert("File too large! Please select a file smaller than 150MB.");
+        return;
+    }
+
+    status.style.color = 'blue';
+    status.textContent = `Uploading "${file.name}"...`;
+
+    try {
+        await dbx.filesUpload({ path: '/' + file.name, contents: file });
+        status.style.color = 'green';
+        status.textContent = `✅ "${file.name}" uploaded successfully!`;
+    } catch (err) {
+        console.error("Dropbox upload error:", err);
+        status.style.color = 'red';
+        status.textContent = "❌ Upload failed: " + (err.error_summary || err.message || JSON.stringify(err));
+    }
+});
+</script>
+</body>
+</html>
