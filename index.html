@@ -85,10 +85,18 @@
       border-radius:20px;
       border:1px solid rgba(255,255,255,0.05);
       box-shadow:0 0 5px rgba(92,73,255,0.3);
-    }
+    } 
+    /* CSS */
+.no-select {
+  -webkit-user-select: none; /* Safari/Chrome */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE/Edge */
+  user-select: none;         /* standard */
+  -webkit-touch-callout: none; /* iOS long-press menu off */
+}
   </style>
 </head>
-<body>
+<body class="no-select">
 <header><div class="logo">TEEN18 APP</div></header>
 
 <div class="controls">
