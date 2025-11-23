@@ -1,6 +1,6 @@
 {
-  "name": "weChat",
-  "short_name": "weChat",
+  "name": "Teen+18",
+  "short_name": "Teen+18",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0a0a0a",
@@ -13,7 +13,7 @@
       "type": "image/png"
     },
     {
-      "src": "chat.png.png",
+      "src": "teen18.png",
       "sizes": "512x512",
       "type": "image/png"
     }
