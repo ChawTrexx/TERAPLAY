@@ -118,7 +118,7 @@ header{
   bottom:-100%;
   width:100vw;
   height:70%;
-  background:#161616;
+  background:#333333;
   border-radius:20px 20px 0 0;
   padding:15px;
   box-sizing:border-box;
@@ -305,44 +305,47 @@ async function loadRecommended(){
 
 // ---------- COMMENT SYSTEM (Optimized) -------------
 
+// COMMENT SYSTEM
 const commentsRef = ref(db, "comments/" + videoId);
+
+// Generate random username
 if (!localStorage.getItem("userName")) {
   localStorage.setItem("userName", "User" + Math.floor(Math.random()*9999));
 }
 const username = localStorage.getItem("userName");
 
-window.openComments = async ()=>{
-  document.getElementById("commentPanel").style.bottom="0";
-  loadComments();
-};
-
+// open-close
+window.openComments = ()=> document.getElementById("commentPanel").style.bottom="0";
 window.closeComments = ()=> document.getElementById("commentPanel").style.bottom="-100%";
 
+
+// Send Comment
 window.sendComment = async ()=>{
   const text=document.getElementById("commentText").value.trim();
   if(!text) return;
 
-  await push(commentsRef,{ user:username,text, time:Date.now() });
+  await push(commentsRef,{
+    user:username,
+    text,
+    time:Date.now()
+  });
+
   document.getElementById("commentText").value="";
-  loadComments();
 };
 
-async function loadComments(){
-  const snap = await get(commentsRef);
-  const data = snap.val();
 
+// Load comments live
+onValue(commentsRef, snap=>{
+  const data=snap.val()||{};
   const list=document.getElementById("commentsList");
   list.innerHTML="";
 
-  if(!data){
-    document.getElementById("commentCount").innerText = 0;
-    document.getElementById("latestComment").innerText = "No comments yet...";
-    return;
-  }
+  const entries=Object.values(data).reverse();
 
-  const entries = Object.keys(data).map(key => data[key]).reverse();
-
+  // count
   document.getElementById("commentCount").innerText = entries.length;
+
+  // preview
   document.getElementById("latestComment").innerText = entries[0]?.text || "No comments yet...";
 
   entries.forEach(c=>{
@@ -352,7 +355,7 @@ async function loadComments(){
          <div>${c.text}</div>
       </div>`;
   });
-}
+});
 
 
 loadVideo();
