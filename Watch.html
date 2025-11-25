@@ -5,16 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,max-scale=1">
 <title>Watch - Teen18</title> 
 <meta name="referrer" content="no-referrer-when-downgrade" /> 
-  <script type="text/javascript" data-cfasync="false">
-/*<![CDATA[/* */
-(function(){var r=window,n="c7c81412ec48f0ae361fb200abc24504",c=[["siteId",111*947-12+5151344],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","always"]],g=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL2JocHJvc2UtaHRtbDUuY3Nz","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvQ3RObk9vL3B1aS5taW4uanM=","d3d3Lnl4ZXV1bnl2bmhtZS5jb20vbmhwcm9zZS1odG1sNS5jc3M=","d3d3LmF6a3VqbmN1LmNvbS9oWXdEZy9udWkubWluLmpz"],w=-1,k,v,q=function(){clearTimeout(v);w++;if(g[w]&&!(1789990499000<(new Date).getTime()&&1<w)){k=r.document.createElement("script");k.type="text/javascript";k.async=!0;var u=r.document.getElementsByTagName("script")[0];k.src="https://"+atob(g[w]);k.crossOrigin="anonymous";k.onerror=q;k.onload=function(){clearTimeout(v);r[n.slice(0,16)+n.slice(0,16)]||q()};v=setTimeout(q,5E3);u.parentNode.insertBefore(k,u)}};if(!r[n]){try{Object.freeze(r[n]=c)}catch(e){}q()}})();
-/*]]>/* */
-  </script>
-  
-
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 
 <style>
 :root{--accent:#ff00ff;}
@@ -67,7 +57,6 @@ header{
 
 
 
-
 /* RECOMMEND SECTION */
 .recommend-box{
   flex:1;overflow-y:auto;max-height:85vh;
@@ -86,24 +75,23 @@ header{
   flex-shrink:0;
 }
 .recommend-item b{
-  font-size:14px; /* 🔥 Title small */
+  font-size:14px;
   font-weight:600;
 }
 .recommend-item small{
-  font-size:12px; /* 🔥 Views text smaller */
+  font-size:12px;
   color:#aaa;
 }
 
 @media(max-width:600px){
   .recommend-item img{width:120px;height:80px;}
-  .recommend-item b{font-size:13px;} /* Phone pe aur chota */
+  .recommend-item b{font-size:13px;}
 }
 
 
-  
 /* COMMENT PREVIEW */
 .comment-preview{
-  background:#4c4c4c;
+  background:#333;
   padding:12px;
   border-radius:10px;
   margin-top:15px;
@@ -118,7 +106,7 @@ header{
   bottom:-100%;
   width:100vw;
   height:70%;
-  background:#333333;
+  background:#222;
   border-radius:20px 20px 0 0;
   padding:15px;
   box-sizing:border-box;
@@ -144,7 +132,7 @@ header{
   margin-top:10px;
 }
 .comment-item{
-  background:#1f1f1f;
+  background:#111;
   padding:10px;
   border-radius:10px;
   margin:8px 0;
@@ -225,24 +213,11 @@ header{
 
 </div> 
 
-  <script>
-(function(rkpeg){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = rkpeg || {};
-s.src = "\/\/bogustrouble.com\/bqX.V\/s\/dSGll\/0xYRWvcs\/Te\/m\/9xuMZhUolxkAPQTBYb3AMiTvIyzhNbjRgOtfN\/j\/cnxHMvjJM\/2mOWQB";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
-  </script>
-
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getDatabase, ref, get, update, push } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+import { getDatabase, ref, get, update, push, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey:"AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
@@ -260,15 +235,10 @@ const db = getDatabase(app);
 const videoId = new URLSearchParams(location.search).get("id");
 
 function renderVideo(v){
-   if(v.type === "iframe"){
-       return `<iframe src="${v.url}&autoplay=1" allowfullscreen loading="lazy"
-       sandbox="allow-scripts allow-same-origin"
-       allow="autoplay"
-       style="width:100%;height:250px;border:0;"></iframe>`;
-   } else {
-       return `<video src="${v.url}" controls autoplay muted playsinline preload="none" 
-       style="width:100%;height:250px;border-radius:10px"></video>`;
-   }
+   return `<iframe src="${v.url}&autoplay=1&muted=1" allowfullscreen loading="lazy"
+   sandbox="allow-scripts allow-same-origin"
+   allow="autoplay"
+   style="width:100%;height:250px;border:0;"></iframe>`;
 }
 
 async function loadVideo(){
@@ -296,30 +266,25 @@ async function loadRecommended(){
         <img loading="lazy" src="${v.thumbnail}">
         <div>
           <b>${v.title}</b><br>
-          <small style="color:#aaa">${v.views ?? 0} views</small>
+          <small>${v.views ?? 0} views</small>
         </div>
       </div>`;
   });
 }
 
 
-// ---------- COMMENT SYSTEM (Optimized) -------------
+// ---------- COMMENT SYSTEM ----------
 
-// COMMENT SYSTEM
 const commentsRef = ref(db, "comments/" + videoId);
 
-// Generate random username
 if (!localStorage.getItem("userName")) {
   localStorage.setItem("userName", "User" + Math.floor(Math.random()*9999));
 }
 const username = localStorage.getItem("userName");
 
-// open-close
 window.openComments = ()=> document.getElementById("commentPanel").style.bottom="0";
 window.closeComments = ()=> document.getElementById("commentPanel").style.bottom="-100%";
 
-
-// Send Comment
 window.sendComment = async ()=>{
   const text=document.getElementById("commentText").value.trim();
   if(!text) return;
@@ -333,8 +298,6 @@ window.sendComment = async ()=>{
   document.getElementById("commentText").value="";
 };
 
-
-// Load comments live
 onValue(commentsRef, snap=>{
   const data=snap.val()||{};
   const list=document.getElementById("commentsList");
@@ -342,10 +305,7 @@ onValue(commentsRef, snap=>{
 
   const entries=Object.values(data).reverse();
 
-  // count
   document.getElementById("commentCount").innerText = entries.length;
-
-  // preview
   document.getElementById("latestComment").innerText = entries[0]?.text || "No comments yet...";
 
   entries.forEach(c=>{
@@ -360,7 +320,6 @@ onValue(commentsRef, snap=>{
 
 loadVideo();
 loadRecommended();
-
 </script>
 </body>
 </html>
