@@ -329,11 +329,18 @@ window.sendComment = async ()=>{
 
 async function loadComments(){
   const snap = await get(commentsRef);
-  const data = snap.val() || {};
+  const data = snap.val();
+
   const list=document.getElementById("commentsList");
   list.innerHTML="";
 
-  const entries=Object.values(data).reverse();
+  if(!data){
+    document.getElementById("commentCount").innerText = 0;
+    document.getElementById("latestComment").innerText = "No comments yet...";
+    return;
+  }
+
+  const entries = Object.keys(data).map(key => data[key]).reverse();
 
   document.getElementById("commentCount").innerText = entries.length;
   document.getElementById("latestComment").innerText = entries[0]?.text || "No comments yet...";
