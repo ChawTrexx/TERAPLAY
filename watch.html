@@ -227,11 +227,13 @@ const videoId = new URLSearchParams(location.search).get("id");
 
 function renderVideo(v){
    if(v.type === "iframe"){
-       return `<iframe src="${v.url}" allowfullscreen loading="lazy"
+       return `<iframe src="${v.url}&autoplay=1" allowfullscreen loading="lazy"
        sandbox="allow-scripts allow-same-origin"
+       allow="autoplay"
        style="width:100%;height:250px;border:0;"></iframe>`;
    } else {
-       return `<video src="${v.url}" controls preload="none" style="width:100%;height:250px;border-radius:10px"></video>`;
+       return `<video src="${v.url}" controls autoplay muted playsinline preload="none" 
+       style="width:100%;height:250px;border-radius:10px"></video>`;
    }
 }
 
