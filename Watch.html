@@ -66,6 +66,8 @@ header{
 .meta{color:#aaa;font-size:13px;margin-bottom:16px;}
 
 
+
+
 /* RECOMMEND SECTION */
 .recommend-box{
   flex:1;overflow-y:auto;max-height:85vh;
@@ -83,9 +85,22 @@ header{
   border-radius:8px;
   flex-shrink:0;
 }
-@media(max-width:600px){.recommend-item img{width:120px;height:80px;}}
+.recommend-item b{
+  font-size:14px; /* 🔥 Title small */
+  font-weight:600;
+}
+.recommend-item small{
+  font-size:12px; /* 🔥 Views text smaller */
+  color:#aaa;
+}
+
+@media(max-width:600px){
+  .recommend-item img{width:120px;height:80px;}
+  .recommend-item b{font-size:13px;} /* Phone pe aur chota */
+}
 
 
+  
 /* COMMENT PREVIEW */
 .comment-preview{
   background:#111;
