@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,max-scale=1">
-<title>Watch - Teen18</title>
+<title>Watch - Teen18</title> 
+<meta name="referrer" content="no-referrer-when-downgrade" />
+
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 
 <style>
 :root{--accent:#ff00ff;}
@@ -66,7 +71,11 @@ header{
 }
 .recommend-item:hover{opacity:.7;transform:scale(.97);}
 .recommend-item img{
-  width:140px;height:95px;object-fit:cover;border-radius:8px;
+  width:140px;
+  height:80px;
+  object-fit:cover;
+  border-radius:8px;
+  flex-shrink:0;
 }
 @media(max-width:600px){.recommend-item img{width:120px;height:80px;}}
 
@@ -86,13 +95,12 @@ header{
   position:fixed;
   left:0;
   bottom:-100%;
-  width:100vw;      /* <-- Fixed */
-  max-width:100%;   /* <-- Prevents extra overflow */
+  width:100vw;
   height:70%;
   background:#161616;
   border-radius:20px 20px 0 0;
   padding:15px;
-  box-sizing:border-box; /* <-- padding overflow fix */
+  box-sizing:border-box;
   transition:.35s;
   z-index:9999;
   display:flex;
@@ -147,10 +155,11 @@ header{
 }
 
 ::-webkit-scrollbar{width:5px;}
-::-webkit-scrollbar-thumb{background:#555;border-radius:10px;}
+::-webkit-scrollbar-thumb{background:#555;border-radius:10px;} 
+.no-select {user-select:none;}
 </style>
 </head>
-<body>
+<body class="no-select">
 
 <header>
   <div class="logo">TEEN18 XXX</div>
@@ -165,7 +174,6 @@ header{
     <div class="title" id="vtitle"></div>
     <div class="meta" id="vmeta"></div>
 
-    <!-- COMMENT PREVIEW -->
     <div class="comment-preview" onclick="openComments()">
       <b>Comments (<span id="commentCount">0</span>)</b>
       <p id="latestComment" style="color:#ccc;font-size:14px;margin-top:4px;">
@@ -180,7 +188,6 @@ header{
 </div>
 
 
-<!-- FULL COMMENTS PANEL -->
 <div id="commentPanel" class="comment-panel">
 
   <div class="comment-header">
@@ -198,14 +205,11 @@ header{
 </div>
 
 
-
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getDatabase, ref, get, update, push, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+import { getDatabase, ref, get, update, push } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-
-// FIREBASE
 const firebaseConfig = {
   apiKey:"AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
   authDomain:"videohosting-13776.firebaseapp.com",
@@ -214,22 +218,20 @@ const firebaseConfig = {
   storageBucket:"videohosting-13776.appspot.com",
   messagingSenderId:"992909501546",
   appId:"1:992909501546:web:3728b48ec4727a5679d613",
-  measurementId:"G-Q0YQVS6QJ6"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-
-// VIDEO LOGIC
 const videoId = new URLSearchParams(location.search).get("id");
 
 function renderVideo(v){
    if(v.type === "iframe"){
-       return `<iframe src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin"
+       return `<iframe src="${v.url}" allowfullscreen loading="lazy"
+       sandbox="allow-scripts allow-same-origin"
        style="width:100%;height:250px;border:0;"></iframe>`;
    } else {
-       return `<video src="${v.url}" controls autoplay style="width:100%;height:250px;border-radius:10px"></video>`;
+       return `<video src="${v.url}" controls preload="none" style="width:100%;height:250px;border-radius:10px"></video>`;
    }
 }
 
@@ -255,7 +257,7 @@ async function loadRecommended(){
     if(id===videoId) return;
     box.innerHTML += `
       <div class="recommend-item" onclick="location='Watch.html?id=${id}'">
-        <img src="${v.thumbnail}">
+        <img loading="lazy" src="${v.thumbnail}">
         <div>
           <b>${v.title}</b><br>
           <small style="color:#aaa">${v.views ?? 0} views</small>
@@ -265,47 +267,39 @@ async function loadRecommended(){
 }
 
 
-// COMMENT SYSTEM
-const commentsRef = ref(db, "comments/" + videoId);
+// ---------- COMMENT SYSTEM (Optimized) -------------
 
-// Generate random username
+const commentsRef = ref(db, "comments/" + videoId);
 if (!localStorage.getItem("userName")) {
   localStorage.setItem("userName", "User" + Math.floor(Math.random()*9999));
 }
 const username = localStorage.getItem("userName");
 
-// open-close
-window.openComments = ()=> document.getElementById("commentPanel").style.bottom="0";
+window.openComments = async ()=>{
+  document.getElementById("commentPanel").style.bottom="0";
+  loadComments();
+};
+
 window.closeComments = ()=> document.getElementById("commentPanel").style.bottom="-100%";
 
-
-// Send Comment
 window.sendComment = async ()=>{
   const text=document.getElementById("commentText").value.trim();
   if(!text) return;
 
-  await push(commentsRef,{
-    user:username,
-    text,
-    time:Date.now()
-  });
-
+  await push(commentsRef,{ user:username,text, time:Date.now() });
   document.getElementById("commentText").value="";
+  loadComments();
 };
 
-
-// Load comments live
-onValue(commentsRef, snap=>{
-  const data=snap.val()||{};
+async function loadComments(){
+  const snap = await get(commentsRef);
+  const data = snap.val() || {};
   const list=document.getElementById("commentsList");
   list.innerHTML="";
 
   const entries=Object.values(data).reverse();
 
-  // count
   document.getElementById("commentCount").innerText = entries.length;
-
-  // preview
   document.getElementById("latestComment").innerText = entries[0]?.text || "No comments yet...";
 
   entries.forEach(c=>{
@@ -315,7 +309,7 @@ onValue(commentsRef, snap=>{
          <div>${c.text}</div>
       </div>`;
   });
-});
+}
 
 
 loadVideo();
