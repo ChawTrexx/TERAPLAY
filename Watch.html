@@ -295,8 +295,15 @@ function renderVideo(v){
        return `<iframe src="${v.url}" allowfullscreen sandbox="allow-scripts allow-same-origin"
        style="width:100%;height:250px;border:0;"></iframe>`;
    } else {
-       return `<video src="${v.url}" controls autoplay style="width:100%;height:250px;border-radius:10px"></video>`;
-   }
+    return `
+    <video 
+        src="${v.url}" 
+        controls 
+        autoplay 
+        playsinline 
+        style="width:100%;height:250px;border-radius:10px">
+    </video>`;
+}
 }
 
 async function loadVideo(){
