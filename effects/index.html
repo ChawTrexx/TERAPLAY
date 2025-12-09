@@ -92,20 +92,18 @@ body {
 <div class="grid" id="soundGrid"></div>
 
 <script type="module">
-/* ---------------- Firebase ---------------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
-import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-storage.js";
+import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
   authDomain: "videohosting-13776.firebaseapp.com",
   databaseURL: "https://videohosting-13776-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "videohosting-13776",
-  storageBucket: "videohosting-13776.firebasestorage.app",
+  storageBucket: "videohosting-13776.appspot.com",
   messagingSenderId: "992909501546",
-  appId: "1:992909501546:web:3728b48ec4727a5679d613",
-  measurementId: "G-Q0YQVS6QJ6"
+  appId: "1:992909501546:web:3728b48ec4727a5679d613"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -114,7 +112,7 @@ const storage = getStorage(app);
 
 /* ---------------- Upload Toggle ---------------- */
 function toggleUpload(){
-  let box = document.getElementById("uploadBox");
+  const box = document.getElementById("uploadBox");
   box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
@@ -125,17 +123,30 @@ window.uploadSound = async () => {
   if(!title) return alert("Enter title");
   if(!file) return alert("Choose mp3 file");
 
-  const filePath = "sounds/" + Date.now() + "_" + file.name;
+  const id = Date.now();
+  const filePath = `sounds/${id}_${file.name}`;
   const storageRef = sRef(storage, filePath);
 
-  await uploadBytes(storageRef, file);
-  const url = await getDownloadURL(storageRef);
+  // Upload with progress
+  const uploadTask = uploadBytesResumable(storageRef, file);
 
-  const id = Date.now();
-  await set(ref(db, "sounds/"+id), {id, title, url, filePath});
-
-  alert("Uploaded!");
-  location.reload();
+  uploadTask.on('state_changed', 
+    (snapshot) => {
+      // Optional: Progress can be shown here
+    }, 
+    (error) => {
+      alert("Upload failed: " + error.message);
+    }, 
+    async () => {
+      const url = await getDownloadURL(uploadTask.snapshot.ref);
+      await set(ref(db, `sounds/${id}`), {id, title, url, filePath});
+      addSoundToUI({id, title, url, filePath});
+      alert("Uploaded!");
+      // Reset inputs
+      document.getElementById("title").value = "";
+      document.getElementById("fileInput").value = "";
+    }
+  );
 };
 
 /* ---------------- Load Sounds ---------------- */
@@ -144,35 +155,25 @@ const soundGrid = document.getElementById("soundGrid");
 onValue(ref(db, "sounds"), (snap)=>{
   soundGrid.innerHTML = "";
   snap.forEach(child=>{
-    const s = child.val();
-
-    soundGrid.innerHTML += `
-      <div class="sound-box">
-        
-        <!-- Glossy Button -->
-        <button onclick="new Audio('${s.url}').play()" class="cursor-pointer">
-          <div class="w-[83px] h-[83px] bg-blue-50 rounded-full relative shadow-[inset_0px_0px_1px_1px_rgba(0,0,0,0.3),_2px_3px_5px_rgba(0,0,0,0.1)] flex items-center justify-center">
-            <div class="absolute w-[72px] h-[72px] z-10 bg-black rounded-full left-1/2 -translate-x-1/2 top-[5px] blur-[1px]"></div>
-            <label class="group cursor-pointer absolute w-[72px] h-[72px] bg-gradient-to-b from-blue-600 to-blue-400 rounded-full left-1/2 -translate-x-1/2 top-[5px] shadow-[inset_0px_4px_2px_#60a5fa,inset_0px_-4px_0px_#1e3a8a,0px_0px_2px_rgba(0,0,0,10)] active:shadow-[inset_0px_4px_2px_rgba(96,165,250,0.5),inset_0px_-4px_2px_rgba(37,99,235,0.5),0px_0px_2px_rgba(0,0,0,10)] z-20 flex items-center justify-center">
-              <div class="w-8 group-active:w-[31px] fill-blue-100 drop-shadow-[0px_2px_2px_rgba(0,0,0,0.5)]">
-                ▶️
-              </div>
-            </label>
-          </div>
-        </button>
-
-        <div class="title">${s.title}</div>
-
-        <div class="btn-row">
-          <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" onclick="copyLink('${s.url}')">
-          <img src="https://cdn-icons-png.flaticon.com/512/929/929610.png" onclick="shareSound('${s.url}')">
-          <img src="https://cdn-icons-png.flaticon.com/512/1214/1214428.png" onclick="deleteSound('${s.id}','${s.filePath}')">
-        </div>
-
-      </div>
-    `;
+    addSoundToUI(child.val());
   });
 });
+
+function addSoundToUI(s){
+  soundGrid.innerHTML += `
+    <div class="sound-box">
+      <button onclick="new Audio('${s.url}').play()">
+        <div style="width:83px;height:83px;background:#4fc3f7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;">▶️</div>
+      </button>
+      <div class="title">${s.title}</div>
+      <div class="btn-row">
+        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" onclick="copyLink('${s.url}')">
+        <img src="https://cdn-icons-png.flaticon.com/512/929/929610.png" onclick="shareSound('${s.url}')">
+        <img src="https://cdn-icons-png.flaticon.com/512/1214/1214428.png" onclick="deleteSound('${s.id}','${s.filePath}')">
+      </div>
+    </div>
+  `;
+}
 
 /* ---------------- Actions ---------------- */
 window.copyLink = (url) => {
@@ -188,11 +189,13 @@ window.shareSound = async (url) => {
 
 window.deleteSound = async (id, path) => {
   if(!confirm("Delete this?")) return;
-
-  await remove(ref(db,"sounds/"+id));
-  await deleteObject(sRef(storage,path));
-  alert("Deleted!");
-  location.reload();
+  try{
+    await remove(ref(db, `sounds/${id}`));
+    await deleteObject(sRef(storage, path));
+    alert("Deleted!");
+  }catch(e){
+    alert("Error deleting: "+e.message);
+  }
 };
 </script>
 
