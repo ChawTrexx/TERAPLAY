@@ -3,15 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sound Buttons UI</title>
-
+<title>Sound Buttons UI - Fast Version</title>
 <style>
 body {
   background:#f5f5f5;
   margin:0;
   font-family:Arial, sans-serif;
 }
-
 .header {
   background:#e91e63;
   color:white;
@@ -20,37 +18,26 @@ body {
   font-weight:bold;
   text-align:center;
 }
-
 .grid {
   display:grid;
   grid-template-columns:repeat(3, 1fr);
   gap:20px;
   padding:20px;
 }
-
 .sound-box {
   text-align:center;
 }
-
 .title {
   font-size:14px;
   margin:8px 0;
   font-weight:bold;
 }
-
 .btn-row {
   display:flex;
   justify-content:center;
   gap:10px;
   margin-top:8px;
 }
-
-.btn-row img {
-  width:22px;
-  height:22px;
-  cursor:pointer;
-}
-
 /* Toggle Upload Box */
 #uploadBox {
   background:#fff;
@@ -60,7 +47,6 @@ body {
   display:none;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
-
 /* Upload Box button */
 .toggle-btn {
   background:#e91e63;
@@ -73,42 +59,47 @@ body {
   border-radius:10px;
   font-size:18px;
 }
+input[type="text"], input[type="file"] {
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  margin-bottom:10px;
+}
+.upload-btn {
+  width:100%;
+  padding:10px;
+  background:#4caf50;
+  color:white;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+}
+.upload-btn:hover {
+  background:#45a049;
+}
+button {
+  cursor:pointer;
+}
 </style>
 </head>
 <body>
 
-<div class="header">MyInstants Clone</div>
+<div class="header">MyInstants Clone - Fast Version</div>
 
 <button class="toggle-btn" onclick="toggleUpload()">Upload Sound ▼</button>
 
 <div id="uploadBox">
-  <input type="text" id="title" placeholder="Enter title" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;">
-  <br><br>
-  <input type="file" id="fileInput" accept="audio/mp3,audio/mpeg" style="width:100%;">
-  <br><br>
-  <button onclick="uploadSound()" style="width:100%;padding:10px;background:#4caf50;color:white;border:none;border-radius:8px;font-size:16px;">Upload</button>
+  <input type="text" id="title" placeholder="Enter title">
+  <input type="file" id="fileInput" accept="audio/mp3,audio/mpeg">
+  <button class="upload-btn" onclick="uploadSound()">Upload</button>
 </div>
 
 <div class="grid" id="soundGrid"></div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
-import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-storage.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
-  authDomain: "videohosting-13776.firebaseapp.com",
-  databaseURL: "https://videohosting-13776-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "videohosting-13776",
-  storageBucket: "videohosting-13776.appspot.com",
-  messagingSenderId: "992909501546",
-  appId: "1:992909501546:web:3728b48ec4727a5679d613"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const storage = getStorage(app);
+<script>
+const soundGrid = document.getElementById("soundGrid");
 
 /* ---------------- Upload Toggle ---------------- */
 function toggleUpload(){
@@ -116,87 +107,98 @@ function toggleUpload(){
   box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
+/* ---------------- Local Storage Functions ---------------- */
+function getSounds() {
+  return JSON.parse(localStorage.getItem("sounds") || "[]");
+}
+
+function saveSounds(sounds) {
+  localStorage.setItem("sounds", JSON.stringify(sounds));
+}
+
 /* ---------------- Upload Sound ---------------- */
-window.uploadSound = async () => {
+function uploadSound() {
   const title = document.getElementById("title").value.trim();
   const file = document.getElementById("fileInput").files[0];
   if(!title) return alert("Enter title");
   if(!file) return alert("Choose mp3 file");
 
   const id = Date.now();
-  const filePath = `sounds/${id}_${file.name}`;
-  const storageRef = sRef(storage, filePath);
 
-  // Upload with progress
-  const uploadTask = uploadBytesResumable(storageRef, file);
+  // Save only metadata to localStorage
+  const sounds = getSounds();
+  sounds.push({id, title});
+  saveSounds(sounds);
 
-  uploadTask.on('state_changed', 
-    (snapshot) => {
-      // Optional: Progress can be shown here
-    }, 
-    (error) => {
-      alert("Upload failed: " + error.message);
-    }, 
-    async () => {
-      const url = await getDownloadURL(uploadTask.snapshot.ref);
-      await set(ref(db, `sounds/${id}`), {id, title, url, filePath});
-      addSoundToUI({id, title, url, filePath});
-      alert("Uploaded!");
-      // Reset inputs
-      document.getElementById("title").value = "";
-      document.getElementById("fileInput").value = "";
-    }
-  );
-};
-
-/* ---------------- Load Sounds ---------------- */
-const soundGrid = document.getElementById("soundGrid");
-
-onValue(ref(db, "sounds"), (snap)=>{
-  soundGrid.innerHTML = "";
-  snap.forEach(child=>{
-    addSoundToUI(child.val());
-  });
-});
-
-function addSoundToUI(s){
-  soundGrid.innerHTML += `
-    <div class="sound-box">
-      <button onclick="new Audio('${s.url}').play()">
-        <div style="width:83px;height:83px;background:#4fc3f7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;">▶️</div>
-      </button>
-      <div class="title">${s.title}</div>
-      <div class="btn-row">
-        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" onclick="copyLink('${s.url}')">
-        <img src="https://cdn-icons-png.flaticon.com/512/929/929610.png" onclick="shareSound('${s.url}')">
-        <img src="https://cdn-icons-png.flaticon.com/512/1214/1214428.png" onclick="deleteSound('${s.id}','${s.filePath}')">
-      </div>
-    </div>
-  `;
+  addSoundToUI({id, title, file});
+  alert("Uploaded!");
+  document.getElementById("title").value = "";
+  document.getElementById("fileInput").value = "";
 }
 
-/* ---------------- Actions ---------------- */
-window.copyLink = (url) => {
-  navigator.clipboard.writeText(url);
-  alert("Copied!");
+/* ---------------- Load Sounds ---------------- */
+window.onload = () => {
+  const sounds = getSounds();
+  sounds.forEach(s => {
+    // On reload, we can't restore File object, so we just skip it
+    addSoundToUI({id:s.id, title:s.title});
+  });
 };
 
-window.shareSound = async (url) => {
-  if(navigator.share){
-    navigator.share({title:"Sound", url});
-  } else alert("Share not supported");
-};
+function addSoundToUI(s){
+  const box = document.createElement("div");
+  box.className = "sound-box";
 
-window.deleteSound = async (id, path) => {
-  if(!confirm("Delete this?")) return;
-  try{
-    await remove(ref(db, `sounds/${id}`));
-    await deleteObject(sRef(storage, path));
-    alert("Deleted!");
-  }catch(e){
-    alert("Error deleting: "+e.message);
-  }
-};
+  const fileExists = !!s.file; // true if just uploaded
+  box.audioFile = s.file || null;
+
+  box.innerHTML = `
+    <button class="play-btn">
+      <div style="width:83px;height:83px;background:#4fc3f7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;">▶️</div>
+    </button>
+    <div class="title">${s.title}</div>
+    <div class="btn-row">
+      <button class="download-btn">Download</button>
+      <button class="delete-btn">Delete</button>
+    </div>
+  `;
+
+  // Play sound
+  box.querySelector(".play-btn").onclick = () => {
+    if(box.audioFile){
+      const url = URL.createObjectURL(box.audioFile);
+      const audio = new Audio(url);
+      audio.play();
+    } else {
+      alert("Cannot play: reload loses file. Re-upload to play.");
+    }
+  };
+
+  // Download sound
+  box.querySelector(".download-btn").onclick = () => {
+    if(box.audioFile){
+      const url = URL.createObjectURL(box.audioFile);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = s.title + ".mp3";
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      alert("Cannot download: reload loses file. Re-upload to download.");
+    }
+  };
+
+  // Delete sound
+  box.querySelector(".delete-btn").onclick = () => {
+    if(!confirm("Delete this?")) return;
+    let sounds = getSounds();
+    sounds = sounds.filter(x => x.id != s.id);
+    saveSounds(sounds);
+    box.remove();
+  };
+
+  soundGrid.appendChild(box);
+}
 </script>
 
 </body>
