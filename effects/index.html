@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sound Buttons UI - Fast Version</title>
+<title>Sound Buttons UI - Firebase Version</title>
 <style>
 body {
   background:#f5f5f5;
@@ -20,101 +20,117 @@ body {
 }
 .grid {
   display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:20px;
+  grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+  gap:15px;
   padding:20px;
 }
 .sound-box {
   text-align:center;
+  background:#fff;
+  padding:10px;
+  border-radius:10px;
+  box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 .title {
-  font-size:14px;
-  margin:8px 0;
+  font-size:13px;
+  margin:5px 0;
   font-weight:bold;
 }
 .btn-row {
   display:flex;
   justify-content:center;
-  gap:10px;
-  margin-top:8px;
+  gap:5px;
+  margin-top:5px;
+  flex-wrap: wrap;
 }
-/* Toggle Upload Box */
+/* Upload Box - always visible and small */
 #uploadBox {
   background:#fff;
-  padding:20px;
-  margin:15px;
+  padding:10px;
+  margin:10px 20px;
   border-radius:10px;
-  display:none;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-/* Upload Box button */
-.toggle-btn {
-  background:#e91e63;
-  color:white;
-  padding:12px;
-  width:90%;
-  margin:10px auto;
-  display:block;
-  border:none;
-  border-radius:10px;
-  font-size:18px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.1);
+  max-width:300px;
 }
 input[type="text"], input[type="file"] {
   width:100%;
-  padding:10px;
-  border-radius:8px;
+  padding:6px;
+  border-radius:5px;
   border:1px solid #ccc;
-  margin-bottom:10px;
+  margin-bottom:6px;
+  font-size:14px;
 }
 .upload-btn {
   width:100%;
-  padding:10px;
+  padding:8px;
   background:#4caf50;
   color:white;
   border:none;
-  border-radius:8px;
-  font-size:16px;
+  border-radius:5px;
+  font-size:14px;
   cursor:pointer;
 }
 .upload-btn:hover {
   background:#45a049;
 }
+.progress-bar {
+  width: 0%;
+  height: 6px;
+  background: #4caf50;
+  border-radius: 3px;
+  margin-bottom: 6px;
+}
+.progress-container {
+  width: 100%;
+  background: #ddd;
+  border-radius: 3px;
+  margin-bottom: 6px;
+}
 button {
   cursor:pointer;
+  font-size:12px;
+  padding:4px 6px;
 }
 </style>
 </head>
 <body>
 
-<div class="header">MyInstants Clone - Fast Version</div>
-
-<button class="toggle-btn" onclick="toggleUpload()">Upload Sound ▼</button>
+<div class="header">MyInstants Clone - Firebase Version</div>
 
 <div id="uploadBox">
   <input type="text" id="title" placeholder="Enter title">
   <input type="file" id="fileInput" accept="audio/mp3,audio/mpeg">
+  <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
   <button class="upload-btn" onclick="uploadSound()">Upload</button>
 </div>
 
 <div class="grid" id="soundGrid"></div>
 
-<script>
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-storage.js";
+
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
+  authDomain: "videohosting-13776.firebaseapp.com",
+  databaseURL: "https://videohosting-13776-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "videohosting-13776",
+  storageBucket: "videohosting-13776.appspot.com",
+  messagingSenderId: "992909501546",
+  appId: "1:992909501546:web:3728b48ec4727a5679d613",
+  measurementId: "G-Q0YQVS6QJ6"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const storage = getStorage(app);
+
 const soundGrid = document.getElementById("soundGrid");
-
-/* ---------------- Upload Toggle ---------------- */
-function toggleUpload(){
-  const box = document.getElementById("uploadBox");
-  box.style.display = box.style.display === "none" ? "block" : "none";
-}
-
-/* ---------------- Local Storage Functions ---------------- */
-function getSounds() {
-  return JSON.parse(localStorage.getItem("sounds") || "[]");
-}
-
-function saveSounds(sounds) {
-  localStorage.setItem("sounds", JSON.stringify(sounds));
-}
+const progressBar = document.getElementById("progressBar");
 
 /* ---------------- Upload Sound ---------------- */
 function uploadSound() {
@@ -124,37 +140,47 @@ function uploadSound() {
   if(!file) return alert("Choose mp3 file");
 
   const id = Date.now();
+  const storageReference = sRef(storage, `sounds/${id}_${file.name}`);
+  const uploadTask = uploadBytesResumable(storageReference, file);
 
-  // Save only metadata to localStorage
-  const sounds = getSounds();
-  sounds.push({id, title});
-  saveSounds(sounds);
-
-  addSoundToUI({id, title, file});
-  alert("Uploaded!");
-  document.getElementById("title").value = "";
-  document.getElementById("fileInput").value = "";
+  uploadTask.on('state_changed', 
+    (snapshot) => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      progressBar.style.width = progress + "%";
+    }, 
+    (error) => {
+      console.error(error);
+      alert("Upload failed: " + error.message);
+    }, 
+    async () => {
+      const url = await getDownloadURL(uploadTask.snapshot.ref);
+      const newSoundRef = push(ref(db, "sounds"));
+      await set(newSoundRef, {id, title, url});
+      addSoundToUI({id, title, url}, newSoundRef.key);
+      document.getElementById("title").value = "";
+      document.getElementById("fileInput").value = "";
+      progressBar.style.width = "0%";
+    }
+  );
 }
 
-/* ---------------- Load Sounds ---------------- */
-window.onload = () => {
-  const sounds = getSounds();
-  sounds.forEach(s => {
-    // On reload, we can't restore File object, so we just skip it
-    addSoundToUI({id:s.id, title:s.title});
+/* ---------------- Load Sounds from Firebase ---------------- */
+onValue(ref(db, "sounds"), (snapshot) => {
+  soundGrid.innerHTML = "";
+  snapshot.forEach(child => {
+    const data = child.val();
+    addSoundToUI(data, child.key);
   });
-};
+});
 
-function addSoundToUI(s){
+/* ---------------- Add Sound to UI ---------------- */
+function addSoundToUI(s, dbKey){
   const box = document.createElement("div");
   box.className = "sound-box";
 
-  const fileExists = !!s.file; // true if just uploaded
-  box.audioFile = s.file || null;
-
   box.innerHTML = `
     <button class="play-btn">
-      <div style="width:83px;height:83px;background:#4fc3f7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;">▶️</div>
+      <div style="width:60px;height:60px;background:#4fc3f7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:white;">▶️</div>
     </button>
     <div class="title">${s.title}</div>
     <div class="btn-row">
@@ -163,38 +189,29 @@ function addSoundToUI(s){
     </div>
   `;
 
-  // Play sound
   box.querySelector(".play-btn").onclick = () => {
-    if(box.audioFile){
-      const url = URL.createObjectURL(box.audioFile);
-      const audio = new Audio(url);
-      audio.play();
-    } else {
-      alert("Cannot play: reload loses file. Re-upload to play.");
-    }
+    const audio = new Audio(s.url);
+    audio.play();
   };
 
-  // Download sound
   box.querySelector(".download-btn").onclick = () => {
-    if(box.audioFile){
-      const url = URL.createObjectURL(box.audioFile);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = s.title + ".mp3";
-      a.click();
-      URL.revokeObjectURL(url);
-    } else {
-      alert("Cannot download: reload loses file. Re-upload to download.");
-    }
+    const a = document.createElement("a");
+    a.href = s.url;
+    a.download = s.title + ".mp3";
+    a.click();
   };
 
-  // Delete sound
-  box.querySelector(".delete-btn").onclick = () => {
+  box.querySelector(".delete-btn").onclick = async () => {
     if(!confirm("Delete this?")) return;
-    let sounds = getSounds();
-    sounds = sounds.filter(x => x.id != s.id);
-    saveSounds(sounds);
-    box.remove();
+    try {
+      if(dbKey) await remove(ref(db, "sounds/" + dbKey));
+      const fileRef = sRef(storage, `sounds/${s.id}_${s.title}.mp3`);
+      await deleteObject(fileRef).catch(()=>{});
+      box.remove();
+    } catch(err) {
+      console.error(err);
+      alert("Delete failed: " + err.message);
+    }
   };
 
   soundGrid.appendChild(box);
