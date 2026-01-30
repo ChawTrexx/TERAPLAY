@@ -1,0 +1,24 @@
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(#075E54, #128C7E);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial;
+}
+.login-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+}
+button {
+  padding: 12px;
+  width: 100%;
+  background: #075E54;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
