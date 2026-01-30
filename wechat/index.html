@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Firebase Voice Call</title>
+<title>Firebase Voice & Video Call</title>
 <style>
   body { background:#0a192f; color:white; font-family:sans-serif; text-align:center; padding:20px; }
   #onlineUsers { background: #007bff; padding: 10px; border-radius: 15px; margin-bottom: 20px; display:inline-block; text-align:left; }
@@ -11,18 +11,26 @@
   #callControls { display:none; margin-top:20px; }
   #incomingPopup { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
     background:white; color:black; padding:30px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:100; }
-  .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; border-radius: 10px; border:none; background: #28a745; color: white; margin:5px; }
+  .btn { padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 10px; border:none; background: #28a745; color: white; margin:5px; }
+  #localVideo, #remoteVideo { width: 300px; height: 200px; margin:10px; background:black; }
 </style>
 </head>
 <body>
 
-<h1>Firebase Voice Call</h1>
+<h1>Firebase Voice & Video Call</h1>
 <p id="myIdDisplay"></p>
 
 <div id="onlineUsers">💫 Online Users:<br></div>
 
+<div>
+  <button id="voiceCallBtn" class="btn">📞 Voice Call</button>
+  <button id="videoCallBtn" class="btn">🎥 Video Call</button>
+</div>
+
 <div id="callControls">
   <h2 id="status">Connected</h2>
+  <video id="localVideo" autoplay muted></video>
+  <video id="remoteVideo" autoplay></video><br>
   <button id="hangupBtn" class="btn" style="background:#dc3545;">❌ End Call</button>
 </div>
 
@@ -31,8 +39,6 @@
   <button id="acceptBtn" class="btn">✅ Accept</button>
   <button id="rejectBtn" class="btn" style="background:#dc3545;">❌ Reject</button>
 </div>
-
-<audio id="remoteAudio" autoplay></audio>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -51,7 +57,6 @@ const firebaseConfig = {
   measurementId: "G-Z433F9L74V"
 };
 
-// --- INITIALIZE FIREBASE ---
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
@@ -66,7 +71,6 @@ onDisconnect(myPresenceRef).remove();
 
 // --- ONLINE USERS LIST ---
 const onlineUsersDiv = document.getElementById('onlineUsers');
-
 function updateOnlineUsers(users) {
   onlineUsersDiv.innerHTML = "💫 Online Users:<br>";
   for (let id of users) {
@@ -74,7 +78,7 @@ function updateOnlineUsers(users) {
     const btn = document.createElement('button');
     btn.className = "userBtn";
     btn.innerText = id;
-    btn.onclick = () => startCall(id); // call on click
+    btn.onclick = () => selectCallType(id);
     onlineUsersDiv.appendChild(btn);
   }
 }
@@ -88,9 +92,17 @@ onValue(ref(db, 'presence'), snap => {
 let pc, localStream;
 const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 let currentCallTarget = null;
+let callType = "voice"; // default
 
-async function startLocalStream() {
-  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+async function startLocalStream(type="voice") {
+  if(type === "video") {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio:true, video:true });
+    document.getElementById('localVideo').srcObject = localStream;
+    document.getElementById('localVideo').style.display = "block";
+  } else {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    document.getElementById('localVideo').style.display = "none";
+  }
 }
 
 async function createPeer() {
@@ -98,7 +110,8 @@ async function createPeer() {
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
   pc.ontrack = (e) => {
-    document.getElementById('remoteAudio').srcObject = e.streams[0];
+    document.getElementById('remoteVideo').srcObject = e.streams[0];
+    document.getElementById('remoteVideo').style.display = "block";
   };
 
   pc.onicecandidate = (e) => {
@@ -108,16 +121,23 @@ async function createPeer() {
   };
 }
 
-// --- START CALL TO SELECTED USER ---
-async function startCall(targetId) {
+// --- SELECT CALL TYPE ---
+function selectCallType(targetId) {
   currentCallTarget = targetId;
-  await startLocalStream();
+  const type = prompt("Type 'voice' or 'video' for call:", "voice");
+  callType = (type === "video") ? "video" : "voice";
+  startCall(targetId, callType);
+}
+
+// --- START CALL ---
+async function startCall(targetId, type="voice") {
+  await startLocalStream(type);
   await createPeer();
 
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  await set(ref(db, `calls/${targetId}`), { offer: offer.toJSON(), from: uid });
+  await set(ref(db, `calls/${targetId}`), { offer: offer.toJSON(), from: uid, type: type });
   document.getElementById('callControls').style.display = 'block';
   listenForIce();
   listenForAnswer(targetId);
@@ -137,11 +157,12 @@ onValue(ref(db, `calls/${uid}`), async snap => {
   const data = snap.val();
   if(data && data.from && !data.answer) {
     document.getElementById('incomingPopup').style.display = 'block';
+    callType = data.type || "voice";
 
     document.getElementById('acceptBtn').onclick = async () => {
       document.getElementById('incomingPopup').style.display = 'none';
       currentCallTarget = data.from;
-      await startLocalStream();
+      await startLocalStream(callType);
       await createPeer();
       await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
       const answer = await pc.createAnswer();
