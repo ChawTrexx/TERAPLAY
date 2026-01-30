@@ -1,173 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Call - Active</title>
-    <style>
-        body { background:#0b1120; color:#cbd5e1; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        #status-bar { position: fixed; top: 20px; background: rgba(59, 130, 246, 0.2); padding: 10px 20px; border-radius: 30px; border: 1px solid #3b82f6; color: #60a5fa; font-weight: bold; }
-        .controls { margin-top: 20px; display: none; }
-        button { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        #callBtn { background: #10b981; color: white; }
-        #hangupBtn { background: #ef4444; color: white; }
-        #incoming { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; z-index:100; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firebase Voice Call</title>
+<style>
+  body { background:#0a192f; color:white; font-family:sans-serif; text-align:center; padding:20px; }
+  #onlineCount { background: #007bff; padding: 10px; border-radius: 50px; display: inline-block; margin-bottom: 20px; }
+  .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; border-radius: 10px; border:none; background: #28a745; color: white; margin:5px; }
+  #incomingPopup { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; color:black; padding:30px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:100; }
+  #callControls { display:none; margin-top:20px; }
+</style>
 </head>
 <body>
 
-<div id="status-bar">💫 Users Online: <span id="count">0</span></div>
+<div id="onlineCount">💫 Users Online: 0</div>
+<h1>Firebase Voice Call</h1>
+<p id="myIdDisplay"></p>
 
-<h2 id="info">Ready to Call</h2>
-<p id="userId"></p>
+<button id="callBtn" class="btn">📞 Start Call</button>
 
-<button id="callBtn">📞 Start Voice Call</button>
-
-<div id="controls" class="controls">
-    <button id="hangupBtn">❌ End Call</button>
-    <div id="timer" style="margin-top:10px; color:#10b981">00:00</div>
+<div id="callControls">
+  <h2 id="status">Connected</h2>
+  <button id="hangupBtn" class="btn" style="background:#dc3545;">❌ End Call</button>
 </div>
 
-<div id="incoming">
-    <h1>📞 Incoming Call...</h1>
-    <div style="display:flex; gap:20px;">
-        <button id="acceptBtn" style="background:#10b981; color:white;">Accept</button>
-        <button id="rejectBtn" style="background:#ef4444; color:white;">Reject</button>
-    </div>
+<div id="incomingPopup">
+  <h2>📞 Incoming Call...</h2>
+  <button id="acceptBtn" class="btn">✅ Accept</button>
+  <button id="rejectBtn" class="btn" style="background:#dc3545;">❌ Reject</button>
 </div>
 
 <audio id="remoteAudio" autoplay></audio>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove, onDisconnect, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, onDisconnect, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // --- AAPKA CHECKED CONFIG ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyALvB7xgYjhBZi5y2JSBamDysNdgIm2mEo",
-        authDomain: "wechat-54b07.firebaseapp.com",
-        databaseURL: "https://wechat-54b07-default-rtdb.firebaseio.com",
-        projectId: "wechat-54b07",
-        storageBucket: "wechat-54b07.firebasestorage.app",
-        messagingSenderId: "221397223557",
-        appId: "1:221397223557:web:8a1255eed805e34dab81ec",
-        measurementId: "G-0889G8X0C4"
+// --- FIREBASE CONFIG ---
+const firebaseConfig = {
+  apiKey: "AIzaSyALvB7xgYjhBZi5y2JSBamDysNdgIm2mEo",
+  authDomain: "wechat-54b07.firebaseapp.com",
+  databaseURL: "https://wechat-54b07-default-rtdb.firebaseio.com",
+  projectId: "wechat-54b07",
+  storageBucket: "wechat-54b07.firebasestorage.app",
+  messagingSenderId: "221397223557",
+  appId: "1:221397223557:web:40703bc5c13dc1b2ab81ec"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// --- USER ID ---
+const uid = "User_" + Math.floor(Math.random() * 1000);
+document.getElementById('myIdDisplay').innerText = "Your ID: " + uid;
+
+// --- ONLINE PRESENCE ---
+const myPresenceRef = ref(db, 'presence/' + uid);
+set(myPresenceRef, true);
+onDisconnect(myPresenceRef).remove();
+
+onValue(ref(db, 'presence'), (snap) => {
+  const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+  document.getElementById('onlineCount').innerText = `💫 Users Online: ${count}`;
+});
+
+// --- WEBRTC SETUP ---
+let pc, localStream;
+const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+async function startLocalStream() {
+  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+}
+
+async function createPeer() {
+  pc = new RTCPeerConnection(servers);
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  pc.ontrack = (e) => {
+    document.getElementById('remoteAudio').srcObject = e.streams[0];
+  };
+
+  pc.onicecandidate = (e) => {
+    if(e.candidate) {
+      push(ref(db, 'ice/' + uid), e.candidate.toJSON());
+    }
+  };
+}
+
+// --- CALLER SIDE ---
+document.getElementById('callBtn').onclick = async () => {
+  await startLocalStream();
+  await createPeer();
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  await set(ref(db, 'calls/active'), { offer: offer.toJSON(), from: uid });
+  document.getElementById('callBtn').style.display = 'none';
+  document.getElementById('callControls').style.display = 'block';
+
+  // Listen for answer
+  onValue(ref(db, 'calls/active/answer'), async (snap) => {
+    if(snap.exists() && pc && !pc.currentRemoteDescription) {
+      await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+    }
+  });
+
+  listenForIce();
+};
+
+// --- RECEIVER SIDE ---
+onValue(ref(db, 'calls/active'), async (snap) => {
+  const data = snap.val();
+  if(data && data.from !== uid && !data.answer) {
+    document.getElementById('incomingPopup').style.display = 'block';
+
+    document.getElementById('acceptBtn').onclick = async () => {
+      document.getElementById('incomingPopup').style.display = 'none';
+      await startLocalStream();
+      await createPeer();
+
+      if(pc && data.offer) {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await set(ref(db, 'calls/active/answer'), answer.toJSON());
+
+        document.getElementById('callBtn').style.display = 'none';
+        document.getElementById('callControls').style.display = 'block';
+        listenForIce();
+      }
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const uid = "User_" + Math.random().toString(36).substring(7);
-    document.getElementById('userId').innerText = "Your ID: " + uid;
-
-    // --- 1. ONLINE STATUS LOGIC ---
-    const presenceRef = ref(db, 'presence/' + uid);
-    set(presenceRef, true);
-    onDisconnect(presenceRef).remove();
-
-    onValue(ref(db, 'presence'), (snap) => {
-        const onlineUsers = snap.exists() ? Object.keys(snap.val()).length : 0;
-        document.getElementById('count').innerText = onlineUsers;
-    });
-
-    // --- 2. WEBRTC LOGIC ---
-    let pc, localStream;
-    const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-    async function initAudio() {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    }
-
-    async function createPeer() {
-        pc = new RTCPeerConnection(servers);
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-        
-        pc.ontrack = (e) => {
-            document.getElementById('remoteAudio').srcObject = e.streams[0];
-        };
-
-        pc.onicecandidate = (e) => {
-            if(e.candidate) {
-                push(ref(db, 'ice/' + uid), e.candidate.toJSON());
-            }
-        };
-    }
-
-    // CALLER SIDE
-    document.getElementById('callBtn').onclick = async () => {
-        try {
-            await initAudio();
-            await createPeer();
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            
-            await set(ref(db, 'calls/active'), { offer, from: uid });
-            document.getElementById('callBtn').style.display = 'none';
-            document.getElementById('controls').style.display = 'block';
-            document.getElementById('info').innerText = "Calling...";
-            
-            onValue(ref(db, 'calls/active/answer'), async (snap) => {
-                if(snap.exists() && !pc.currentRemoteDescription) {
-                    await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
-                    document.getElementById('info').innerText = "Connected";
-                }
-            });
-            syncIce();
-        } catch (err) {
-            alert("Mic access denied or error: " + err);
-        }
+    document.getElementById('rejectBtn').onclick = async () => {
+      document.getElementById('incomingPopup').style.display = 'none';
+      // Remove call
+      await remove(ref(db, 'calls/active'));
     };
+  }
 
-    // RECEIVER SIDE
-    onValue(ref(db, 'calls/active'), async (snap) => {
-        const data = snap.val();
-        if(data && data.from !== uid && !data.answer) {
-            document.getElementById('incoming').style.display = 'flex';
-            
-            document.getElementById('acceptBtn').onclick = async () => {
-                document.getElementById('incoming').style.display = 'none';
-                await initAudio();
-                await createPeer();
-                await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
-                await set(ref(db, 'calls/active/answer'), answer.toJSON());
-                document.getElementById('callBtn').style.display = 'none';
-                document.getElementById('controls').style.display = 'block';
-                document.getElementById('info').innerText = "Connected";
-                syncIce();
-            };
-            
-            document.getElementById('rejectBtn').onclick = () => {
-                remove(ref(db, 'calls/active'));
-                location.reload();
-            };
-        }
-        if(!data && pc) {
-            alert("Call Ended");
-            location.reload();
-        }
-    });
+  if(!data && pc) location.reload();
+});
 
-    function syncIce() {
-        onValue(ref(db, 'ice'), (snap) => {
-            if(!snap.exists()) return;
-            const allCandidates = snap.val();
-            Object.keys(allCandidates).forEach(id => {
-                if(id !== uid) {
-                    Object.values(allCandidates[id]).forEach(cand => {
-                        pc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => {});
-                    });
-                }
-            });
+// --- ICE CANDIDATES ---
+function listenForIce() {
+  const iceRef = ref(db, 'ice');
+  onValue(iceRef, (snap) => {
+    if(!snap.exists()) return;
+    Object.keys(snap.val()).forEach(id => {
+      if(id !== uid) {
+        Object.values(snap.val()[id]).forEach(cand => {
+          if(pc) pc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => {});
         });
-    }
+      }
+    });
+  });
+}
 
-    document.getElementById('hangupBtn').onclick = () => {
-        remove(ref(db, 'calls/active'));
-        remove(ref(db, 'ice'));
-        location.reload();
-    };
+// --- HANGUP ---
+document.getElementById('hangupBtn').onclick = async () => {
+  await remove(ref(db, 'calls/active'));
+  await remove(ref(db, 'ice'));
+  location.reload();
+};
 </script>
 </body>
 </html>
