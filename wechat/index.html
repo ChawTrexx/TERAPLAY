@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>WeChat Login</title>
-  <link rel="stylesheet" href="login.css">
-  <script type="module" src="auth.js"></script>
+  <title>Guest Login</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="login-box">
-    <h2>WeChat</h2>
-    <p>Private chat & calls</p>
-    <button onclick="googleLogin()">Continue with Google</button>
-  </div>
+
+<div class="login-box">
+  <h2>Guest Login</h2>
+  <input type="text" id="username" placeholder="Enter username">
+  <button onclick="guestLogin()">Enter Chat</button>
+</div>
+
+<script type="module" src="app.js"></script>
 </body>
 </html>
