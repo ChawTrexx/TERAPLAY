@@ -1,17 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Guest Login</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<script type="module" src="auth.js"></script>
 
-<div class="login-box">
-  <h2>Guest Login</h2>
-  <input type="text" id="username" placeholder="Enter username">
-  <button onclick="guestLogin()">Enter Chat</button>
-</div>
+<button onclick="googleLogin()">Google Login</button>
 
-<script type="module" src="app.js"></script>
-</body>
-</html>
+<input id="username" placeholder="Guest username">
+<button onclick="guestLogin()">Guest Login</button>
