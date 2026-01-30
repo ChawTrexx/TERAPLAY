@@ -6,19 +6,20 @@
 <title>Firebase Voice Call</title>
 <style>
   body { background:#0a192f; color:white; font-family:sans-serif; text-align:center; padding:20px; }
-  #onlineCount { background: #007bff; padding: 10px; border-radius: 50px; display: inline-block; margin-bottom: 20px; }
-  .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; border-radius: 10px; border:none; background: #28a745; color: white; margin:5px; }
-  #incomingPopup { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; color:black; padding:30px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:100; }
+  #onlineUsers { background: #007bff; padding: 10px; border-radius: 15px; margin-bottom: 20px; display:inline-block; text-align:left; }
+  .userBtn { padding:5px 10px; margin:3px; border-radius:10px; cursor:pointer; background:#28a745; color:white; border:none; }
   #callControls { display:none; margin-top:20px; }
+  #incomingPopup { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+    background:white; color:black; padding:30px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:100; }
+  .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; border-radius: 10px; border:none; background: #28a745; color: white; margin:5px; }
 </style>
 </head>
 <body>
 
-<div id="onlineCount">💫 Users Online: 0</div>
 <h1>Firebase Voice Call</h1>
 <p id="myIdDisplay"></p>
 
-<button id="callBtn" class="btn">📞 Start Call</button>
+<div id="onlineUsers">💫 Online Users:<br></div>
 
 <div id="callControls">
   <h2 id="status">Connected</h2>
@@ -58,19 +59,35 @@ const db = getDatabase(app);
 const uid = "User_" + Math.floor(Math.random() * 1000);
 document.getElementById('myIdDisplay').innerText = "Your ID: " + uid;
 
-// --- ONLINE PRESENCE ---
+// --- PRESENCE SETUP ---
 const myPresenceRef = ref(db, 'presence/' + uid);
 set(myPresenceRef, true);
 onDisconnect(myPresenceRef).remove();
 
-onValue(ref(db, 'presence'), (snap) => {
-  const count = snap.exists() ? Object.keys(snap.val()).length : 0;
-  document.getElementById('onlineCount').innerText = `💫 Users Online: ${count}`;
+// --- ONLINE USERS LIST ---
+const onlineUsersDiv = document.getElementById('onlineUsers');
+
+function updateOnlineUsers(users) {
+  onlineUsersDiv.innerHTML = "💫 Online Users:<br>";
+  for (let id of users) {
+    if (id === uid) continue; // skip self
+    const btn = document.createElement('button');
+    btn.className = "userBtn";
+    btn.innerText = id;
+    btn.onclick = () => startCall(id); // call on click
+    onlineUsersDiv.appendChild(btn);
+  }
+}
+
+onValue(ref(db, 'presence'), snap => {
+  const users = snap.exists() ? Object.keys(snap.val()) : [];
+  updateOnlineUsers(users);
 });
 
 // --- WEBRTC SETUP ---
 let pc, localStream;
 const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+let currentCallTarget = null;
 
 async function startLocalStream() {
   localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -85,86 +102,80 @@ async function createPeer() {
   };
 
   pc.onicecandidate = (e) => {
-    if(e.candidate) {
-      push(ref(db, 'ice/' + uid), e.candidate.toJSON());
+    if(e.candidate && currentCallTarget) {
+      push(ref(db, `ice/${currentCallTarget}`), e.candidate.toJSON());
     }
   };
 }
 
-// --- CALLER SIDE ---
-document.getElementById('callBtn').onclick = async () => {
+// --- START CALL TO SELECTED USER ---
+async function startCall(targetId) {
+  currentCallTarget = targetId;
   await startLocalStream();
   await createPeer();
 
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  await set(ref(db, 'calls/active'), { offer: offer.toJSON(), from: uid });
-  document.getElementById('callBtn').style.display = 'none';
+  await set(ref(db, `calls/${targetId}`), { offer: offer.toJSON(), from: uid });
   document.getElementById('callControls').style.display = 'block';
+  listenForIce();
+  listenForAnswer(targetId);
+}
 
-  // Listen for answer
-  onValue(ref(db, 'calls/active/answer'), async (snap) => {
+// --- LISTEN FOR ANSWER ---
+function listenForAnswer(targetId) {
+  onValue(ref(db, `calls/${uid}/answer`), async snap => {
     if(snap.exists() && pc && !pc.currentRemoteDescription) {
       await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
     }
   });
+}
 
-  listenForIce();
-};
-
-// --- RECEIVER SIDE ---
-onValue(ref(db, 'calls/active'), async (snap) => {
+// --- RECEIVING CALL ---
+onValue(ref(db, `calls/${uid}`), async snap => {
   const data = snap.val();
-  if(data && data.from !== uid && !data.answer) {
+  if(data && data.from && !data.answer) {
     document.getElementById('incomingPopup').style.display = 'block';
 
     document.getElementById('acceptBtn').onclick = async () => {
       document.getElementById('incomingPopup').style.display = 'none';
+      currentCallTarget = data.from;
       await startLocalStream();
       await createPeer();
-
-      if(pc && data.offer) {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        await set(ref(db, 'calls/active/answer'), answer.toJSON());
-
-        document.getElementById('callBtn').style.display = 'none';
-        document.getElementById('callControls').style.display = 'block';
-        listenForIce();
-      }
+      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await set(ref(db, `calls/${data.from}/answer`), answer.toJSON());
+      document.getElementById('callControls').style.display = 'block';
+      listenForIce();
     };
 
     document.getElementById('rejectBtn').onclick = async () => {
       document.getElementById('incomingPopup').style.display = 'none';
-      // Remove call
-      await remove(ref(db, 'calls/active'));
+      await remove(ref(db, `calls/${uid}`));
     };
   }
-
-  if(!data && pc) location.reload();
 });
 
 // --- ICE CANDIDATES ---
 function listenForIce() {
-  const iceRef = ref(db, 'ice');
-  onValue(iceRef, (snap) => {
+  onValue(ref(db, `ice/${uid}`), snap => {
     if(!snap.exists()) return;
-    Object.keys(snap.val()).forEach(id => {
-      if(id !== uid) {
-        Object.values(snap.val()[id]).forEach(cand => {
-          if(pc) pc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => {});
-        });
-      }
+    Object.values(snap.val()).forEach(cand => {
+      if(pc) pc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => {});
     });
   });
 }
 
 // --- HANGUP ---
 document.getElementById('hangupBtn').onclick = async () => {
-  await remove(ref(db, 'calls/active'));
-  await remove(ref(db, 'ice'));
+  if(currentCallTarget) {
+    await remove(ref(db, `calls/${currentCallTarget}`));
+    await remove(ref(db, `ice/${currentCallTarget}`));
+  }
+  await remove(ref(db, `calls/${uid}`));
+  await remove(ref(db, `ice/${uid}`));
   location.reload();
 };
 </script>
