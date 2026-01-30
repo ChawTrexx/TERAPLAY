@@ -3,207 +3,150 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎙️ Firebase Voice Call</title>
+<title>Voice Call Debugged</title>
 <style>
-  body {background:#0a0f1e;color:#e6eef8;font-family:"Poppins",sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;margin:0}
-  button{padding:10px 20px;margin:8px;border-radius:10px;border:none;font-size:16px;cursor:pointer;transition:0.3s}
-  button:hover{transform:scale(1.05)}
-  #onlineCount{position:fixed;top:15px;right:15px;padding:8px 14px;border-radius:20px;background:linear-gradient(90deg,#06b6d4,#3b82f6,#9333ea);color:#fff;font-weight:bold;box-shadow:0 0 15px rgba(59,130,246,0.7)}
-  #incomingPopup{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);color:white;justify-content:center;align-items:center;flex-direction:column;z-index:10}
-  #incomingPopup button{margin:10px;font-size:18px;padding:12px 25px}
-  #acceptBtn{background:#10b981;color:#fff}
-  #rejectBtn{background:#ef4444;color:#fff}
-  #callControls{display:none;margin-top:15px}
-  #muteBtn,#speakerBtn,#hangupBtn{background:#3b82f6;color:#fff}
-  #timer{margin-top:10px;font-size:18px;color:#0ff;font-weight:bold}
+  body { background:#0a192f; color:white; font-family:sans-serif; text-align:center; padding:20px; }
+  #onlineCount { background: #007bff; padding: 10px; border-radius: 50px; display: inline-block; margin-bottom: 20px; }
+  .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; border-radius: 10px; border:none; background: #28a745; color: white; }
+  #incomingPopup { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; color:black; padding:30px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:100; }
+  #callControls { display:none; margin-top:20px; }
 </style>
 </head>
 <body>
 
-<div id="onlineCount">💫 0 Online</div>
-<h2>🎙️ Real-time Voice Call</h2>
-<p id="status">Status: Waiting...</p>
+<div id="onlineCount">💫 Users Online: 0</div>
+<h1>Firebase Voice Call</h1>
+<p id="myIdDisplay"></p>
 
-<button id="callBtn">📞 Start Call</button>
+<button id="callBtn" class="btn">📞 Start Call</button>
 
 <div id="callControls">
-  <button id="muteBtn">🔇 Mute</button>
-  <button id="hangupBtn">❌ End Call</button>
-  <div id="timer">00:00</div>
+  <h2 id="status">Connected</h2>
+  <button id="hangupBtn" class="btn" style="background:#dc3545;">❌ End Call</button>
 </div>
-
-<audio id="remoteAudio" autoplay playsinline></audio>
-<audio id="localAudio" autoplay muted playsinline style="display:none;"></audio>
 
 <div id="incomingPopup">
   <h2>📞 Incoming Call...</h2>
-  <div>
-    <button id="acceptBtn">✅ Receive</button>
-    <button id="rejectBtn">❌ Reject</button>
-  </div>
+  <button id="acceptBtn" class="btn">✅ Accept</button>
+  <button id="rejectBtn" class="btn" style="background:#dc3545;">❌ Reject</button>
 </div>
 
+<audio id="remoteAudio" autoplay></audio>
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, onDisconnect, serverTimestamp, push } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, remove, onDisconnect, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// --- YOUR UPDATED CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyALvB7xgYjhBZi5y2JSBamDysNdgIm2mEo",
-  authDomain: "wechat-54b07.firebaseapp.com",
-  databaseURL: "https://wechat-54b07-default-rtdb.firebaseio.com",
-  projectId: "wechat-54b07",
-  storageBucket: "wechat-54b07.firebasestorage.app",
-  messagingSenderId: "221397223557",
-  appId: "1:221397223557:web:40703bc5c13dc1b2ab81ec"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-// Elements
-const callBtn = document.getElementById('callBtn');
-const hangupBtn = document.getElementById('hangupBtn');
-const muteBtn = document.getElementById('muteBtn');
-const onlineCount = document.getElementById('onlineCount');
-const incomingPopup = document.getElementById('incomingPopup');
-const acceptBtn = document.getElementById('acceptBtn');
-const rejectBtn = document.getElementById('rejectBtn');
-const remoteAudio = document.getElementById('remoteAudio');
-const callControls = document.getElementById('callControls');
-const timerDisplay = document.getElementById('timer');
-const statusText = document.getElementById('status');
-
-let pc, localStream, isMuted = false, timerInterval, seconds = 0;
-const uid = Math.random().toString(36).slice(2);
-const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
-
-// --- Presence Logic ---
-const myPresenceRef = ref(db, 'presence/' + uid);
-set(myPresenceRef, { online: true, last_active: serverTimestamp() });
-onDisconnect(myPresenceRef).remove();
-onValue(ref(db, 'presence'), (snap) => {
-  onlineCount.textContent = `💫 ${snap.exists() ? Object.keys(snap.val()).length : 0} Online`;
-});
-
-// --- Timer ---
-function startTimer() {
-  seconds = 0;
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    seconds++;
-    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-    const s = String(seconds % 60).padStart(2, '0');
-    timerDisplay.textContent = `${m}:${s}`;
-  }, 1000);
-}
-
-// --- WebRTC Logic ---
-async function setupWebRTC() {
-  pc = new RTCPeerConnection(servers);
-  
-  pc.onicecandidate = (event) => {
-    if (event.candidate) {
-      push(ref(db, `iceCandidates/${uid}`), event.candidate.toJSON());
-    }
+  const firebaseConfig = {
+    apiKey: "AIzaSyALvB7xgYjhBZi5y2JSBamDysNdgIm2mEo",
+    authDomain: "wechat-54b07.firebaseapp.com",
+    databaseURL: "https://wechat-54b07-default-rtdb.firebaseio.com",
+    projectId: "wechat-54b07",
+    storageBucket: "wechat-54b07.firebasestorage.app",
+    messagingSenderId: "221397223557",
+    appId: "1:221397223557:web:40703bc5c13dc1b2ab81ec"
   };
 
-  pc.ontrack = (event) => {
-    remoteAudio.srcObject = event.streams[0];
-  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-}
+  const uid = "User_" + Math.floor(Math.random() * 1000);
+  document.getElementById('myIdDisplay').innerText = "Your ID: " + uid;
 
-// Start Call (Caller)
-callBtn.onclick = async () => {
-  statusText.textContent = "Status: Calling...";
-  await setupWebRTC();
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
+  // --- ONLINE PRESENCE ---
+  const myPresenceRef = ref(db, 'presence/' + uid);
+  set(myPresenceRef, true);
+  onDisconnect(myPresenceRef).remove();
 
-  await set(ref(db, 'activeCall'), { offer, from: uid });
-  callBtn.style.display = 'none';
-  callControls.style.display = 'block';
-
-  // Watch for answer
-  onValue(ref(db, 'activeCall/answer'), async (snap) => {
-    const answer = snap.val();
-    if (answer && !pc.currentRemoteDescription) {
-      await pc.setRemoteDescription(new RTCSessionDescription(answer));
-      statusText.textContent = "Status: Connected";
-      startTimer();
-    }
+  onValue(ref(db, 'presence'), (snap) => {
+    const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+    document.getElementById('onlineCount').innerText = `💫 Users Online: ${count}`;
   });
 
-  listenForIce(uid);
-};
+  // --- WEBRTC SETUP ---
+  let pc, localStream;
+  const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-// Answer Call (Receiver)
-onValue(ref(db, 'activeCall'), async (snap) => {
-  const data = snap.val();
-  if (data && data.from !== uid && !data.answer) {
-    incomingPopup.style.display = 'flex';
+  async function startLocalStream() {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  }
 
-    acceptBtn.onclick = async () => {
-      incomingPopup.style.display = 'none';
-      await setupWebRTC();
-      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      await set(ref(db, 'activeCall/answer'), answer);
-      callBtn.style.display = 'none';
-      callControls.style.display = 'block';
-      statusText.textContent = "Status: Connected";
-      startTimer();
-      listenForIce(uid);
+  async function createPeer(targetId) {
+    pc = new RTCPeerConnection(servers);
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    
+    pc.ontrack = (e) => {
+      document.getElementById('remoteAudio').srcObject = e.streams[0];
     };
 
-    rejectBtn.onclick = async () => {
-      incomingPopup.style.display = 'none';
-      await remove(ref(db, 'activeCall'));
+    pc.onicecandidate = (e) => {
+      if(e.candidate) {
+        push(ref(db, 'ice/' + uid), e.candidate.toJSON());
+      }
     };
   }
-  
-  // If call ended by other person
-  if (!data && pc) {
-    stopCall();
-  }
-});
 
-// ICE Syncing
-function listenForIce(myId) {
-  onValue(ref(db, 'iceCandidates'), (snap) => {
-    const allIce = snap.val();
-    if (!allIce) return;
-    Object.keys(allIce).forEach(peerId => {
-      if (peerId !== myId) {
-        Object.values(allIce[peerId]).forEach(candidate => {
-          pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
-        });
+  // CALLER SIDE
+  document.getElementById('callBtn').onclick = async () => {
+    await startLocalStream();
+    await createPeer();
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    
+    await set(ref(db, 'calls/active'), { offer, from: uid });
+    document.getElementById('callBtn').style.display = 'none';
+    document.getElementById('callControls').style.display = 'block';
+    
+    // Listen for answer
+    onValue(ref(db, 'calls/active/answer'), async (snap) => {
+      if(snap.exists() && !pc.currentRemoteDescription) {
+        await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
       }
     });
+    listenForIce();
+  };
+
+  // RECEIVER SIDE
+  onValue(ref(db, 'calls/active'), async (snap) => {
+    const data = snap.val();
+    if(data && data.from !== uid && !data.answer) {
+      document.getElementById('incomingPopup').style.display = 'block';
+      
+      document.getElementById('acceptBtn').onclick = async () => {
+        document.getElementById('incomingPopup').style.display = 'none';
+        await startLocalStream();
+        await createPeer();
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await set(ref(db, 'calls/active/answer'), answer.toJSON());
+        document.getElementById('callBtn').style.display = 'none';
+        document.getElementById('callControls').style.display = 'block';
+        listenForIce();
+      };
+    }
+    if(!data && pc) location.reload();
   });
-}
 
-// End Call
-async function stopCall() {
-  clearInterval(timerInterval);
-  if (pc) pc.close();
-  if (localStream) localStream.getTracks().forEach(t => t.stop());
-  await remove(ref(db, 'activeCall'));
-  await remove(ref(db, `iceCandidates`));
-  location.reload(); 
-}
+  function listenForIce() {
+    onValue(ref(db, 'ice'), (snap) => {
+      if(!snap.exists()) return;
+      Object.keys(snap.val()).forEach(id => {
+        if(id !== uid) {
+          Object.values(snap.val()[id]).forEach(cand => {
+            pc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => {});
+          });
+        }
+      });
+    });
+  }
 
-hangupBtn.onclick = stopCall;
+  document.getElementById('hangupBtn').onclick = async () => {
+    await remove(ref(db, 'calls/active'));
+    await remove(ref(db, 'ice'));
+    location.reload();
+  };
 
-muteBtn.onclick = () => {
-  isMuted = !isMuted;
-  localStream.getAudioTracks()[0].enabled = !isMuted;
-  muteBtn.textContent = isMuted ? "🔈 Unmute" : "🔇 Mute";
-};
 </script>
 </body>
 </html>
