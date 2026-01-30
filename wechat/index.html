@@ -35,18 +35,22 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, onDisconnect, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove, onDisconnect, push } 
+  from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // --- FIREBASE CONFIG ---
 const firebaseConfig = {
-  apiKey: "AIzaSyALvB7xgYjhBZi5y2JSBamDysNdgIm2mEo",
-  authDomain: "wechat-54b07.firebaseapp.com",
-  databaseURL: "https://wechat-54b07-default-rtdb.firebaseio.com",
-  projectId: "wechat-54b07",
-  storageBucket: "wechat-54b07.firebasestorage.app",
-  messagingSenderId: "221397223557",
-  appId: "1:221397223557:web:40703bc5c13dc1b2ab81ec"
+  apiKey: "AIzaSyAC5RgES5ZCqgzCWGsSaNwaAR2o7JFjDrM",
+  authDomain: "freecall-17619.firebaseapp.com",
+  databaseURL: "https://freecall-17619-default-rtdb.firebaseio.com",
+  projectId: "freecall-17619",
+  storageBucket: "freecall-17619.firebasestorage.app",
+  messagingSenderId: "945050839263",
+  appId: "1:945050839263:web:b04def47bbed0f9e84e16a",
+  measurementId: "G-Z433F9L74V"
 };
+
+// --- INITIALIZE FIREBASE ---
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
