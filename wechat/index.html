@@ -32,7 +32,7 @@
 </div>
 
 <div id="incomingPopup">
-  <h2>📞 Incoming Call...</h2>
+  <h2 id="incomingText">📞 Incoming Call...</h2>
   <button id="acceptBtn" class="btn">✅ Accept</button>
   <button id="rejectBtn" class="btn" style="background:#dc3545;">❌ Reject</button>
 </div>
@@ -61,30 +61,29 @@ const db = getDatabase(app);
 const uid = "User_" + Math.floor(Math.random() * 1000);
 document.getElementById('myIdDisplay').innerText = "Your ID: " + uid;
 
-// --- PRESENCE SETUP ---
+// --- PRESENCE ---
 const myPresenceRef = ref(db, 'presence/' + uid);
 set(myPresenceRef, true);
 onDisconnect(myPresenceRef).remove();
 
-// --- ONLINE USERS LIST ---
+// --- ONLINE USERS ---
 const onlineUsersDiv = document.getElementById('onlineUsers');
 function updateOnlineUsers(users) {
   onlineUsersDiv.innerHTML = "💫 Online Users:<br>";
   for (let id of users) {
-    if (id === uid) continue; // skip self
-
-    // Voice call button
+    if(id === uid) continue;
+    // Voice button
     const voiceBtn = document.createElement('button');
     voiceBtn.className = "userBtn voiceBtn";
     voiceBtn.innerText = "📞 " + id;
-    voiceBtn.onclick = () => startCall(id, "voice");
+    voiceBtn.onclick = () => initiateCall(id, "voice");
     onlineUsersDiv.appendChild(voiceBtn);
 
-    // Video call button
+    // Video button
     const videoBtn = document.createElement('button');
     videoBtn.className = "userBtn videoBtn";
     videoBtn.innerText = "🎥 " + id;
-    videoBtn.onclick = () => startCall(id, "video");
+    videoBtn.onclick = () => initiateCall(id, "video");
     onlineUsersDiv.appendChild(videoBtn);
   }
 }
@@ -98,8 +97,7 @@ onValue(ref(db, 'presence'), snap => {
 let pc, localStream;
 const servers = {
   iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' }, // STUN
-    // Free TURN server (may limit usage)
+    { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'turn:numb.viagenie.ca', username: 'webrtc@live.com', credential: 'muazkh' }
   ]
 };
@@ -123,20 +121,20 @@ async function createPeer() {
   pc = new RTCPeerConnection(servers);
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
-  pc.ontrack = (e) => {
+  pc.ontrack = e => {
     document.getElementById('remoteVideo').srcObject = e.streams[0];
     document.getElementById('remoteVideo').style.display = "block";
   };
 
-  pc.onicecandidate = (e) => {
+  pc.onicecandidate = e => {
     if(e.candidate && currentCallTarget) {
       push(ref(db, `ice/${currentCallTarget}`), e.candidate.toJSON());
     }
   };
 }
 
-// --- START CALL ---
-async function startCall(targetId, type="voice") {
+// --- INITIATE CALL ---
+async function initiateCall(targetId, type="voice") {
   currentCallTarget = targetId;
   callType = type;
   await startLocalStream(type);
@@ -145,14 +143,14 @@ async function startCall(targetId, type="voice") {
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  await set(ref(db, `calls/${targetId}`), { offer: offer.toJSON(), from: uid, type: type });
-  document.getElementById('callControls').style.display = 'block';
+  await set(ref(db, `calls/${targetId}`), { from: uid, offer: offer.toJSON(), type: type });
+  document.getElementById('callControls').style.display = "block";
+  listenForAnswer();
   listenForIce();
-  listenForAnswer(targetId);
 }
 
 // --- LISTEN FOR ANSWER ---
-function listenForAnswer(targetId) {
+function listenForAnswer() {
   onValue(ref(db, `calls/${uid}/answer`), async snap => {
     if(snap.exists() && pc && !pc.currentRemoteDescription) {
       await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
@@ -160,16 +158,17 @@ function listenForAnswer(targetId) {
   });
 }
 
-// --- RECEIVING CALL ---
+// --- RECEIVE CALL ---
 onValue(ref(db, `calls/${uid}`), async snap => {
   const data = snap.val();
   if(data && data.from && !data.answer) {
-    document.getElementById('incomingPopup').style.display = 'block';
+    currentCallTarget = data.from;
     callType = data.type || "voice";
+    document.getElementById('incomingText').innerText = `📞 Incoming ${callType} call from ${data.from}`;
+    document.getElementById('incomingPopup').style.display = 'block';
 
     document.getElementById('acceptBtn').onclick = async () => {
       document.getElementById('incomingPopup').style.display = 'none';
-      currentCallTarget = data.from;
       await startLocalStream(callType);
       await createPeer();
       await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
@@ -192,14 +191,14 @@ function listenForIce() {
   onValue(ref(db, `ice/${uid}`), snap => {
     if(!snap.exists()) return;
     Object.values(snap.val()).forEach(cand => {
-      if(pc) pc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => {});
+      if(pc) pc.addIceCandidate(new RTCIceCandidate(cand)).catch(e=>{});
     });
   });
 }
 
 // --- HANGUP ---
 document.getElementById('hangupBtn').onclick = async () => {
-  if(currentCallTarget) {
+  if(currentCallTarget){
     await remove(ref(db, `calls/${currentCallTarget}`));
     await remove(ref(db, `ice/${currentCallTarget}`));
   }
