@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chats</title>
+  <link rel="stylesheet" href="chat.css">
+  <script type="module" src="chat.js"></script>
+</head>
+<body>
+
+<div class="chat-header">
+  <span id="chatWith">Select user</span>
+  <div>
+    <button onclick="startCall('voice')">📞</button>
+    <button onclick="startCall('video')">🎥</button>
+  </div>
+</div>
+
+<div id="messages"></div>
+
+<div class="chat-input">
+  <input id="msg" placeholder="Type message">
+  <button onclick="sendMsg()">Send</button>
+</div>
+
+</body>
+</html>
