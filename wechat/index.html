@@ -7,11 +7,13 @@
 <style>
   body { background:#0a192f; color:white; font-family:sans-serif; text-align:center; padding:20px; }
   #onlineUsers { background: #007bff; padding: 10px; border-radius: 15px; margin-bottom: 20px; display:inline-block; text-align:left; }
-  .userBtn { padding:5px 10px; margin:3px; border-radius:10px; cursor:pointer; background:#28a745; color:white; border:none; }
+  .userBtn { padding:5px 10px; margin:3px; border-radius:10px; cursor:pointer; color:white; border:none; }
+  .voiceBtn { background:#28a745; }
+  .videoBtn { background:#ffc107; color:black; }
   #callControls { display:none; margin-top:20px; }
   #incomingPopup { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
     background:white; color:black; padding:30px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:100; }
-  .btn { padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 10px; border:none; background: #28a745; color: white; margin:5px; }
+  .btn { padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 10px; border:none; margin:5px; }
   #localVideo, #remoteVideo { width: 300px; height: 200px; margin:10px; background:black; }
 </style>
 </head>
@@ -21,11 +23,6 @@
 <p id="myIdDisplay"></p>
 
 <div id="onlineUsers">💫 Online Users:<br></div>
-
-<div>
-  <button id="voiceCallBtn" class="btn">📞 Voice Call</button>
-  <button id="videoCallBtn" class="btn">🎥 Video Call</button>
-</div>
 
 <div id="callControls">
   <h2 id="status">Connected</h2>
@@ -75,11 +72,20 @@ function updateOnlineUsers(users) {
   onlineUsersDiv.innerHTML = "💫 Online Users:<br>";
   for (let id of users) {
     if (id === uid) continue; // skip self
-    const btn = document.createElement('button');
-    btn.className = "userBtn";
-    btn.innerText = id;
-    btn.onclick = () => selectCallType(id);
-    onlineUsersDiv.appendChild(btn);
+
+    // Voice call button
+    const voiceBtn = document.createElement('button');
+    voiceBtn.className = "userBtn voiceBtn";
+    voiceBtn.innerText = "📞 " + id;
+    voiceBtn.onclick = () => startCall(id, "voice");
+    onlineUsersDiv.appendChild(voiceBtn);
+
+    // Video call button
+    const videoBtn = document.createElement('button');
+    videoBtn.className = "userBtn videoBtn";
+    videoBtn.innerText = "🎥 " + id;
+    videoBtn.onclick = () => startCall(id, "video");
+    onlineUsersDiv.appendChild(videoBtn);
   }
 }
 
@@ -90,10 +96,17 @@ onValue(ref(db, 'presence'), snap => {
 
 // --- WEBRTC SETUP ---
 let pc, localStream;
-const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+const servers = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' }, // STUN
+    // Free TURN server (may limit usage)
+    { urls: 'turn:numb.viagenie.ca', username: 'webrtc@live.com', credential: 'muazkh' }
+  ]
+};
 let currentCallTarget = null;
-let callType = "voice"; // default
+let callType = "voice";
 
+// --- LOCAL STREAM ---
 async function startLocalStream(type="voice") {
   if(type === "video") {
     localStream = await navigator.mediaDevices.getUserMedia({ audio:true, video:true });
@@ -105,6 +118,7 @@ async function startLocalStream(type="voice") {
   }
 }
 
+// --- CREATE PEER ---
 async function createPeer() {
   pc = new RTCPeerConnection(servers);
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
@@ -121,16 +135,10 @@ async function createPeer() {
   };
 }
 
-// --- SELECT CALL TYPE ---
-function selectCallType(targetId) {
-  currentCallTarget = targetId;
-  const type = prompt("Type 'voice' or 'video' for call:", "voice");
-  callType = (type === "video") ? "video" : "voice";
-  startCall(targetId, callType);
-}
-
 // --- START CALL ---
 async function startCall(targetId, type="voice") {
+  currentCallTarget = targetId;
+  callType = type;
   await startLocalStream(type);
   await createPeer();
 
