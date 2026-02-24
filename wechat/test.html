@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Chat App with Supabase</title>
+  <style>
+    #chat { max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; }
+    .msg { margin: 5px 0; }
+    .me { text-align: right; color: green; }
+    .other { text-align: left; color: blue; }
+  </style>
+</head>
+<body>
+
+<h2>Supabase Chat</h2>
+
+<div id="chat"></div>
+
+<input id="msg" placeholder="Type message...">
+<button onclick="sendMessage()">Send</button>
+
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
