@@ -78,8 +78,12 @@
   z-index: 2;
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* Image kategi nahi, puri dikhegi */
+  object-fit: contain;
+  /* 1.1 ka matlab hai 10% zoom. Aap ise 1.2 ya 1.3 bhi kar sakte hain */
+  transform: scale(1.1); 
+  transition: transform 0.3s ease; /* Smooth effect ke liye */
 }
+
 
 @media(max-width:700px){
   .thumb-container { height: 200px; }
