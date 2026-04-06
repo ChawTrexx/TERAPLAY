@@ -81,21 +81,67 @@ async function uploadThumbnail() {
 document.getElementById("imageUpload").addEventListener("change", uploadThumbnail);
 
 // ==== Detect Link Type ====
+// ==== Dropbox Convert ====
 function convertDropboxURL(url){
-    if(url.includes("dropbox.com")) {
-        let u = new URL(url);
-        u.searchParams.set("raw", "1");
-        u.searchParams.delete("dl");
-        return u.toString();
-    }
+    try {
+        if(url.includes("dropbox.com")) {
+            let u = new URL(url);
+            u.searchParams.set("raw", "1");
+            u.searchParams.delete("dl");
+            return u.toString();
+        }
+    } catch(e){}
     return url;
 }
 
+// ==== Extract iframe src ====
+function extractIframeSrc(iframe){
+    const match = iframe.match(/src\s*=\s*["']([^"']+)["']/i);
+    return match ? match[1] : null;
+}
+
+// ==== Convert to SAFE iframe ====
+function makeSafeIframe(url){
+    return `<iframe 
+        src="${url}"
+        width="510"
+        height="400"
+        frameborder="0"
+        scrolling="no"
+        sandbox="allow-scripts allow-same-origin"
+        allowfullscreen>
+    </iframe>`;
+}
+
+// ==== Detect Link Type ====
 function detectType(input){
     input = input.trim();
-    if(input.startsWith("<iframe")) return {type:"iframe",url:input.match(/src="([^"]+)"/)[1]};
-    if(input.includes("dropbox.com")) return {type:"video",url:convertDropboxURL(input)};
-    return {type:"video",url:input};
+
+    // 🔥 iframe detect + safe convert
+    if(input.startsWith("<iframe")){
+        const src = extractIframeSrc(input);
+
+        if(src){
+            return {
+                type: "iframe",
+                url: makeSafeIframe(src)
+            };
+        }
+    }
+
+    // 🔥 Dropbox support (same as before)
+    if(input.includes("dropbox.com")){
+        return {
+            type: "video",
+            url: convertDropboxURL(input)
+        };
+    }
+
+    // 🔥 Normal link
+    return {
+        type: "video",
+        url: input
+    };
 }
 
 // ==== Upload to Supabase ====
@@ -109,25 +155,39 @@ document.getElementById("upload").addEventListener("click", async ()=>{
         return;
     }
 
-    const {url} = detectType(videoInput);
+    const {url, type} = detectType(videoInput);
 
-    await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "apikey": API_KEY,
-            "Authorization": `Bearer ${API_KEY}`
-        },
-        body: JSON.stringify({
-            title: title,
-            thumbnail: thumb,
-            video_link: url,
-            views: 0
-        })
-    });
+    if(!url){
+        alert("❌ Invalid link!");
+        return;
+    }
 
-    alert("✔ Uploaded Successfully!");
-    loadList();
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "apikey": API_KEY,
+                "Authorization": `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                title: title,
+                thumbnail: thumb,
+                video_link: url, // 👈 SAFE iframe ya Dropbox link
+                type: type,
+                views: 0
+            })
+        });
+
+        if(!res.ok) throw new Error("Upload failed");
+
+        alert("✔ Uploaded Successfully!");
+        loadList();
+
+    } catch(err){
+        console.error(err);
+        alert("❌ Upload Error!");
+    }
 });
 
 // ==== Load Data from Supabase ====
