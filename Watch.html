@@ -236,18 +236,7 @@ header{
   
   <!-- Ads Script video -->
 
-<script>
-(function(wdj){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = wdj || {};
-s.src = "\/\/bogustrouble.com\/bmXVV.sXddGClf0yYnWQcH\/derme9OuoZyU-l\/k\/PtTbYs3dM\/TYIozgNljNgXtRNrj\/cyx\/M\/j\/MJ2eOTQR";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
-</script>
+
   <!-- Ads Script notification -->
 
 
@@ -263,20 +252,32 @@ const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const rawId = new URLSearchParams(location.search).get("id");
 const videoId = rawId ? parseInt(rawId) : null;
 
-// ===== VIDEO RENDER =====
+
+
+      // ===== VIDEO RENDER =====
 function renderVideo(v){
-   if(v.video_link.includes("<iframe")){
-       return v.video_link;
-   } else {
-    return `
-    <video 
-        src="${v.video_link}" 
-        controls 
-        autoplay 
-        playsinline 
-        style="width:100%;height:250px;border-radius:10px">
-    </video>`;
-   }
+
+    const link = (v.video_link || "").trim();
+
+    // 🔥 Check: SAFE iframe hai ya nahi
+    if(link.startsWith("<iframe") && link.includes("sandbox")){
+        return link; // direct render iframe
+    }
+
+    // 🔥 Check: Dropbox ya direct video link
+    if(link.startsWith("http")){
+        return `
+        <video 
+            src="${link}" 
+            controls 
+            autoplay 
+            playsinline 
+            style="width:100%;height:250px;border-radius:10px">
+        </video>`;
+    }
+
+    // ❌ Fallback (invalid case)
+    return `<p style="color:red;">Invalid Video</p>`;
 }
 
 // ===== LOAD VIDEO =====
