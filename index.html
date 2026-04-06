@@ -40,10 +40,51 @@
 
     .container{max-width:900px;margin:18px auto;padding:0 12px}
     .card{background:var(--card);border-radius:14px;padding:12px;overflow:hidden;margin-bottom:14px}
-    .thumb{width:100%;height:260px;border-radius:12px;object-fit:contain;background:#000}
+    
     .meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
     .title{font-size:16px;font-weight:600}
     .views{color:var(--muted);font-size:13px}
+
+
+    /* Container jo background aur image dono ko hold karega */
+.thumb-container {
+  width: 100%;
+  height: 260px; /* Aapki pasand ki height */
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background wali blurred image */
+.thumb-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Puri jagah fill karega */
+  filter: blur(15px) brightness(0.6); /* Blur effect aur thoda dark */
+  transform: scale(1.1); /* Taki edges pe white line na dikhe */
+  z-index: 1;
+}
+
+/* Samne wali main image */
+.thumb-main {
+  position: relative;
+  z-index: 2;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Image kategi nahi, puri dikhegi */
+}
+
+@media(max-width:700px){
+  .thumb-container { height: 200px; }
+}
+    
 
     .actions{display:flex;gap:10px;margin-top:10px}
     button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 14px;border-radius:10px;color:#fff;cursor:pointer;font-size:14px}
@@ -210,7 +251,10 @@ function render(filter='trending'){
     list.innerHTML +=`
       <div class="card">
         <a href="Watch.html?id=${v.id}">
-          <img class="thumb" src="${v.thumbnail}" />
+           <div class="thumb-container">
+        <img class="thumb-bg" src="${v.thumbnail}" />
+        <img class="thumb-main" src="${v.thumbnail}" />
+      </div>
         </a>
         <div class="meta">
           <div class="title">${escapeHtml(v.title)}</div>
