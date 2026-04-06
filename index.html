@@ -138,8 +138,8 @@ l.parentNode.insertBefore(s, l);
   
 
 <script type="module">
-import { db } from "./firebase.js";
-import { ref,get, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+const SUPABASE_URL = "https://emhnjxzenbxsaxdpzltf.supabase.co";
+const API_KEY = "sb_publishable_M5uncURrLhOrH1o5qDgFbQ_zcs97EEc";
 
 let VIDEOS = [];
 let currentPage = 1;
@@ -154,61 +154,49 @@ function escapeHtml(s){
                 .replace(/>/g,'&gt;');
 }
 
-
-
-
-
-
-// 🔥 SHARE VIDEO WITH TITLE & IMAGE
+// 🔥 SHARE VIDEO
 async function shareVideo(id){
-  try {
-    const snap = await get(ref(db, 'videos/' + id));
-    if (!snap.exists()) return alert("Video not found!");
+  const video = VIDEOS.find(v => v.id == id);
+  if (!video) return alert("Video not found!");
 
-    const video = snap.val();
-    const url = `${window.location.origin}/Watch.html?id=${id}`;
-    const title = video.title || "Watch this video";
-    const thumbnail = video.thumbnail; // image URL
+  const url = `${window.location.origin}/Watch.html?id=${id}`;
+  const title = video.title || "Watch this video";
 
-    if (navigator.share){
-      // Web Share API Level 2 supports files/images on supported browsers
-      const shareData = {
-        title: title,
-        url: url
-      };
-
-      // Only include image if supported
-      if (navigator.canShare && thumbnail) {
-        try {
-          const response = await fetch(thumbnail);
-          const blob = await response.blob();
-          const file = new File([blob], "thumbnail.jpg", { type: blob.type });
-          if (navigator.canShare({ files: [file] })) {
-            shareData.files = [file];
-          }
-        } catch(e){
-          console.warn("Failed to attach thumbnail", e);
-        }
-      }
-
-      navigator.share(shareData).catch(()=>{});
-    } else {
-      // Fallback: just copy link
-      prompt("Copy video link:", url);
-    }
-
-  } catch(err) {
-    console.error("Error sharing video:", err);
+  if (navigator.share){
+    navigator.share({ title, url }).catch(()=>{});
+  } else {
+    prompt("Copy video link:", url);
   }
 }
 
 window.shareVideo = shareVideo;
 
+// 🔥 FETCH FROM SUPABASE
+async function fetchVideos(){
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/videos?select=*`,
+    {
+      headers: {
+        "apikey": API_KEY,
+        "Authorization": `Bearer ${API_KEY}`
+      }
+    }
+  );
 
+  const data = await res.json();
 
-  
+  VIDEOS = data.map(v => ({
+    ...v,
+    timestamp: new Date(v.created_at).getTime()
+  }));
+
+  render('trending');
+}
+
+// 🔥 RENDER
 function render(filter='trending'){
   let items=[...VIDEOS];
+
   if(filter==='recent') items.sort((a,b)=>b.timestamp-a.timestamp);
   else if(filter==='oldest') items.sort((a,b)=>a.timestamp-b.timestamp);
   else items.sort((a,b)=>b.views-a.views);
@@ -235,7 +223,6 @@ function render(filter='trending'){
       </div>`;
   }
 
-  // ⭐ NEW PAGINATION UI
   pagination.innerHTML = `
     <div class="pagination">
       <button onclick="goPage(${Math.max(1,currentPage-1)})" ${currentPage===1?'disabled':''}>◀ Prev</button>
@@ -250,18 +237,6 @@ window.goPage=function(p){
   render(active);
 }
 
-onValue(ref(db,'videos'), snap=>{
-  VIDEOS=[];
-  snap.forEach(ch=>{
-    const d=ch.val();
-    d.id=ch.key;
-    d.views=d.views||0;
-    d.timestamp=d.timestamp||Date.now();
-    VIDEOS.push(d);
-  });
-  render('trending');
-});
-
 document.querySelectorAll('.chip').forEach(c=>{
   c.addEventListener('click',()=>{
     document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
@@ -270,7 +245,11 @@ document.querySelectorAll('.chip').forEach(c=>{
     render(c.dataset.filter);
   });
 });
-</script> 
+
+// 🚀 LOAD
+fetchVideos();
+</script>
+
 
   
 </body>
