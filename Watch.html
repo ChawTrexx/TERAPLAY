@@ -254,13 +254,14 @@ l.parentNode.insertBefore(s, l);
 
   <!-- Ads Script -->
 
-  <script type="module">
+    <script type="module">
 
 const SUPABASE_URL = "https://emhnjxzenbxsaxdpzltf.supabase.co";
 const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtaG5qeHplbmJ4c2F4ZHB6bHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0Nzk2MzcsImV4cCI6MjA5MTA1NTYzN30.7f0MSHe_UABXWnLhZh0oPYrGzMiiggiBpALuhLnDL1U";
 
-// VIDEO ID
-const videoId = new URLSearchParams(location.search).get("id");
+// URL se ID lena (parseInt use kiya taaki database number se match ho)
+const rawId = new URLSearchParams(location.search).get("id");
+const videoId = rawId ? parseInt(rawId) : null;
 
 // ===== VIDEO RENDER =====
 function renderVideo(v){
@@ -280,6 +281,11 @@ function renderVideo(v){
 
 // ===== LOAD VIDEO =====
 async function loadVideo(){
+  if(!videoId) {
+      document.getElementById("vtitle").innerText = "No Video ID provided!";
+      return;
+  }
+
   const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${videoId}&select=*`, {
     headers:{
       "apikey": API_KEY,
@@ -288,7 +294,10 @@ async function loadVideo(){
   });
 
   const data = await res.json();
-  if(!data.length) return;
+  if(!data.length) {
+      document.getElementById("vtitle").innerText = "Video Not Found!";
+      return;
+  }
 
   const v = data[0];
 
@@ -305,14 +314,14 @@ async function loadVideo(){
       "Content-Type":"application/json"
     },
     body: JSON.stringify({
-      views:(v.views||0)+1
+      views: (v.views || 0) + 1
     })
   });
 }
 
 // ===== LOAD RECOMMENDED =====
 async function loadRecommended(){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc`, {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc&limit=10`, {
     headers:{
       "apikey": API_KEY,
       "Authorization": "Bearer " + API_KEY
@@ -321,9 +330,9 @@ async function loadRecommended(){
 
   const data = await res.json();
   const box = document.getElementById("recommended");
-  box.innerHTML="";
+  box.innerHTML = "";
 
-  data.forEach(v=>{
+  data.forEach(v => {
     if(v.id == videoId) return;
 
     box.innerHTML += `
@@ -339,41 +348,50 @@ async function loadRecommended(){
 
 // ================= COMMENT SYSTEM =================
 
-// username
+// Random Username generate karna agar nahi hai
 if (!localStorage.getItem("userName")) {
   localStorage.setItem("userName", "User" + Math.floor(Math.random()*9999));
 }
 const username = localStorage.getItem("userName");
 
-// open-close
-window.openComments = ()=> document.getElementById("commentPanel").style.bottom="0";
-window.closeComments = ()=> document.getElementById("commentPanel").style.bottom="-100%";
+// Open/Close functions ko window object mein dalna taaki onclick kaam kare
+window.openComments = () => document.getElementById("commentPanel").style.bottom = "0";
+window.closeComments = () => document.getElementById("commentPanel").style.bottom = "-100%";
 
 // SEND COMMENT
-window.sendComment = async ()=>{
-  const text=document.getElementById("commentText").value.trim();
-  if(!text) return;
+window.sendComment = async () => {
+  const textInput = document.getElementById("commentText");
+  const text = textInput.value.trim();
+  
+  if(!text || !videoId) return;
 
-  await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
     method:"POST",
     headers:{
       "apikey": API_KEY,
       "Authorization": "Bearer " + API_KEY,
-      "Content-Type":"application/json"
+      "Content-Type":"application/json",
+      "Prefer": "return=minimal"
     },
     body: JSON.stringify({
       video_id: videoId,
       user_name: username,
-      text: text
+      content: text // SQL mein 'content' column hai isliye 'content' rakha
     })
   });
 
-  document.getElementById("commentText").value="";
-  loadComments();
+  if(response.ok) {
+      textInput.value = "";
+      loadComments();
+  } else {
+      alert("Error posting comment!");
+  }
 };
 
 // LOAD COMMENTS
 async function loadComments(){
+  if(!videoId) return;
+
   const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${videoId}&select=*&order=created_at.desc`, {
     headers:{
       "apikey": API_KEY,
@@ -382,26 +400,27 @@ async function loadComments(){
   });
 
   const data = await res.json();
-  const list=document.getElementById("commentsList");
-  list.innerHTML="";
+  const list = document.getElementById("commentsList");
+  list.innerHTML = "";
 
   document.getElementById("commentCount").innerText = data.length;
-  document.getElementById("latestComment").innerText = data[0]?.text || "No comments yet...";
+  document.getElementById("latestComment").innerText = data[0] ? data[0].content : "No comments yet...";
 
-  data.forEach(c=>{
+  data.forEach(c => {
     list.innerHTML += `
       <div class="comment-item">
          <div class="user">⭐ ${c.user_name}</div>
-         <div>${c.text}</div>
+         <div style="word-wrap: break-word;">${c.content}</div>
       </div>`;
   });
 }
 
-// INIT
+// Initialization
 loadVideo();
 loadRecommended();
 loadComments();
 
-  </script>
+    </script>
+  
 </body>
 </html>
