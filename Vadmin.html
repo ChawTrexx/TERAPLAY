@@ -43,26 +43,9 @@ label{color:#aaa;font-size:13px;}
 <h2 style="text-align:center;">All Videos</h2>
 <div id="list"></div>
 
-
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
-
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
-  authDomain: "videohosting-13776.firebaseapp.com",
-  databaseURL: "https://videohosting-13776-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "videohosting-13776",
-  storageBucket: "videohosting-13776.appspot.com",
-  messagingSenderId: "992909501546",
-  appId: "1:992909501546:web:3728b48ec4727a5679d613",
-  measurementId: "G-Q0YQVS6QJ6"
-};
-
-// Initialize
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const SUPABASE_URL = "https://emhnjxzenbxsaxdpzltf.supabase.co";
+const API_KEY = "sb_publishable_M5uncURrLhOrH1o5qDgFbQ_zcs97EEc";
 
 // ===== ImgBB Upload + Auto Fill Thumbnail =====
 async function uploadThumbnail() {
@@ -97,18 +80,12 @@ async function uploadThumbnail() {
 
 document.getElementById("imageUpload").addEventListener("change", uploadThumbnail);
 
-
 // ==== Detect Link Type ====
 function convertDropboxURL(url){
     if(url.includes("dropbox.com")) {
         let u = new URL(url);
-
-        // dl=0 ko raw=1 me change karo
         u.searchParams.set("raw", "1");
-
-        // dl parameter hatao
         u.searchParams.delete("dl");
-
         return u.toString();
     }
     return url;
@@ -121,7 +98,7 @@ function detectType(input){
     return {type:"video",url:input};
 }
 
-// ==== Upload to Firebase ====
+// ==== Upload to Supabase ====
 document.getElementById("upload").addEventListener("click", async ()=>{
     const title = document.getElementById("title").value.trim();
     const thumb = document.getElementById("thumb").value.trim();
@@ -132,36 +109,65 @@ document.getElementById("upload").addEventListener("click", async ()=>{
         return;
     }
 
-    const {type, url} = detectType(videoInput);
+    const {url} = detectType(videoInput);
 
-    await set(push(ref(db,"videos")),{
-        title,thumbnail:thumb,type,url,timestamp:Date.now(),views:0
+    await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "apikey": API_KEY,
+            "Authorization": `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+            title: title,
+            thumbnail: thumb,
+            video_link: url,
+            views: 0
+        })
     });
 
     alert("✔ Uploaded Successfully!");
     location.reload();
 });
 
-// ==== Load Data ====
-function loadList(){
-    onValue(ref(db,"videos"), snap=>{
-        const data = snap.val() || {};
-        document.getElementById("list").innerHTML = Object.entries(data).map(([id,v])=>`
-            <div class="video-item">
-                <img src="${v.thumbnail}">
-                <b>${v.title}</b><br>
-                <small>${v.views} views</small><br>
-                <button class="delete-btn" onclick="del('${id}')">DELETE</button>
-            </div>
-        `).join("");
+// ==== Load Data from Supabase ====
+async function loadList(){
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc`, {
+        headers: {
+            "apikey": API_KEY,
+            "Authorization": `Bearer ${API_KEY}`
+        }
     });
+
+    const data = await res.json();
+
+    document.getElementById("list").innerHTML = data.map(v=>`
+        <div class="video-item">
+            <img src="${v.thumbnail}">
+            <b>${v.title}</b><br>
+            <small>${v.views} views</small><br>
+            <button class="delete-btn" onclick="del(${v.id})">DELETE</button>
+        </div>
+    `).join("");
 }
 
+// ==== Delete from Supabase ====
 window.del = async id=>{
-    if(confirm("Delete this video?")) await remove(ref(db,"videos/"+id));
+    if(confirm("Delete this video?")){
+        await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${id}`, {
+            method: "DELETE",
+            headers: {
+                "apikey": API_KEY,
+                "Authorization": `Bearer ${API_KEY}`
+            }
+        });
+        loadList();
+    }
 };
 
 loadList();
 </script>
+
+                
 </body>
 </html>
