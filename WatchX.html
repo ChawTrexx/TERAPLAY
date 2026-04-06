@@ -215,111 +215,142 @@ header{
 
 
 <script type="module">
+const SUPABASE_URL = "https://emhnjxzenbxsaxdpzltf.supabase.co";
+const API_KEY = "PASTE_YOUR_ANON_KEY_HERE";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getDatabase, ref, get, update, push, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyBEo_4YpF_vLH8WtacVKU2YC1BaoIZ7TtI",
-  authDomain:"videohosting-13776.firebaseapp.com",
-  databaseURL:"https://videohosting-13776-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"videohosting-13776",
-  storageBucket:"videohosting-13776.appspot.com",
-  messagingSenderId:"992909501546",
-  appId:"1:992909501546:web:3728b48ec4727a5679d613",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
+// ===== GET VIDEO ID =====
 const videoId = new URLSearchParams(location.search).get("id");
 
+// ===== RENDER VIDEO =====
 function renderVideo(v){
-   return `<iframe src="${v.url}&autoplay=1&muted=1" allowfullscreen loading="lazy"
-   sandbox="allow-scripts allow-same-origin"
-   allow="autoplay"
-   style="width:100%;height:250px;border:0;"></iframe>`;
+  return `<iframe src="${v.video_link}" allowfullscreen
+  style="width:100%;height:250px;border:0;"></iframe>`;
 }
 
+// ===== LOAD VIDEO =====
 async function loadVideo(){
-  const snap = await get(ref(db, "videos/"+videoId));
-  if(!snap.exists()) return;
-  
-  const v=snap.val();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${videoId}&select=*`, {
+    headers:{
+      "apikey": API_KEY,
+      "Authorization": "Bearer " + API_KEY
+    }
+  });
+
+  const data = await res.json();
+  if(!data.length) return;
+
+  const v = data[0];
+
   document.getElementById("player").innerHTML = renderVideo(v);
   document.getElementById("vtitle").innerText = v.title;
-  document.getElementById("vmeta").innerHTML = `${v.views ?? 0} views`;
+  document.getElementById("vmeta").innerText = (v.views || 0) + " views";
 
-  update(ref(db,"videos/"+videoId), { views:(v.views||0)+1 });
+  // 🔥 UPDATE VIEWS
+  await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${videoId}`, {
+    method:"PATCH",
+    headers:{
+      "apikey": API_KEY,
+      "Authorization": "Bearer " + API_KEY,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      views:(v.views||0)+1
+    })
+  });
 }
 
+// ===== LOAD RECOMMENDED =====
 async function loadRecommended(){
-  const snap = await get(ref(db,"videos"));
-  const data=snap.val()||{};
-  const box=document.getElementById("recommended");
-  box.innerHTML="";
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc`, {
+    headers:{
+      "apikey": API_KEY,
+      "Authorization": "Bearer " + API_KEY
+    }
+  });
 
-  Object.entries(data).reverse().forEach(([id,v])=>{
-    if(id===videoId) return;
+  const data = await res.json();
+  const box = document.getElementById("recommended");
+  box.innerHTML = "";
+
+  data.forEach(v=>{
+    if(v.id == videoId) return;
+
     box.innerHTML += `
-      <div class="recommend-item" onclick="location='Watch.html?id=${id}'">
-        <img loading="lazy" src="${v.thumbnail}">
+      <div class="recommend-item" onclick="location='Watch.html?id=${v.id}'">
+        <img src="${v.thumbnail}">
         <div>
           <b>${v.title}</b><br>
-          <small>${v.views ?? 0} views</small>
+          <small>${v.views || 0} views</small>
         </div>
       </div>`;
   });
 }
 
+// ================= COMMENT SYSTEM =================
 
-// ---------- COMMENT SYSTEM ----------
+// 👉 TABLE CREATE KARNA HOGA (SQL RUN KARO)
+async function loadComments(){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${videoId}&select=*`, {
+    headers:{
+      "apikey": API_KEY,
+      "Authorization": "Bearer " + API_KEY
+    }
+  });
 
-const commentsRef = ref(db, "comments/" + videoId);
+  const data = await res.json();
+  const list = document.getElementById("commentsList");
 
+  list.innerHTML = "";
+
+  document.getElementById("commentCount").innerText = data.length;
+  document.getElementById("latestComment").innerText = data[0]?.text || "No comments yet...";
+
+  data.reverse().forEach(c=>{
+    list.innerHTML += `
+      <div class="comment-item">
+         <div class="user">⭐ ${c.user_name}</div>
+         <div>${c.text}</div>
+      </div>`;
+  });
+}
+
+// USER NAME
 if (!localStorage.getItem("userName")) {
   localStorage.setItem("userName", "User" + Math.floor(Math.random()*9999));
 }
 const username = localStorage.getItem("userName");
 
-window.openComments = ()=> document.getElementById("commentPanel").style.bottom="0";
-window.closeComments = ()=> document.getElementById("commentPanel").style.bottom="-100%";
-
+// SEND COMMENT
 window.sendComment = async ()=>{
-  const text=document.getElementById("commentText").value.trim();
+  const text = document.getElementById("commentText").value.trim();
   if(!text) return;
 
-  await push(commentsRef,{
-    user:username,
-    text,
-    time:Date.now()
+  await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+    method:"POST",
+    headers:{
+      "apikey": API_KEY,
+      "Authorization": "Bearer " + API_KEY,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      video_id: videoId,
+      user_name: username,
+      text: text
+    })
   });
 
   document.getElementById("commentText").value="";
+  loadComments();
 };
 
-onValue(commentsRef, snap=>{
-  const data=snap.val()||{};
-  const list=document.getElementById("commentsList");
-  list.innerHTML="";
+// PANEL
+window.openComments = ()=> document.getElementById("commentPanel").style.bottom="0";
+window.closeComments = ()=> document.getElementById("commentPanel").style.bottom="-100%";
 
-  const entries=Object.values(data).reverse();
-
-  document.getElementById("commentCount").innerText = entries.length;
-  document.getElementById("latestComment").innerText = entries[0]?.text || "No comments yet...";
-
-  entries.forEach(c=>{
-    list.innerHTML += `
-      <div class="comment-item">
-         <div class="user">⭐ ${c.user}</div>
-         <div>${c.text}</div>
-      </div>`;
-  });
-});
-
-
+// INIT
 loadVideo();
 loadRecommended();
+loadComments();
 </script>
 </body>
 </html>
