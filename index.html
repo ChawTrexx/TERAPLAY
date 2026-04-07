@@ -224,7 +224,16 @@ window.shareVideo = shareVideo;
 
   const url = `${window.location.origin}/Watch.html?id=${id}`;
   const title = video.title || "Watch this video";
-  const shareData = { title, text: title, url };
+  // 3. Formatting: Title aur URL ke beech mein 2 lines ka gap (\n\n)
+// Isse link neeche dikhega
+const formattedText = `${title}\n\n${url}`;
+
+// 4. Share Data update karein
+// Note: Hum 'url' property ko khali chhod rahe hain kyunki humne use 'text' mein daal diya hai
+const shareData = { 
+  title: title, 
+  text: formattedText 
+};
 
   try {
     // 1. Image fetch karne ki koshish karein
