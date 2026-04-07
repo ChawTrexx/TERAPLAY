@@ -214,22 +214,42 @@ function escapeHtml(s){
                 .replace(/>/g,'&gt;');
 }
 
-// 🔥 SHARE VIDEO
-async function shareVideo(id){
+
+
+window.shareVideo = shareVideo;
+
+  async function shareVideo(id) {
   const video = VIDEOS.find(v => v.id == id);
   if (!video) return alert("Video not found!");
 
   const url = `${window.location.origin}/Watch.html?id=${id}`;
   const title = video.title || "Watch this video";
+  const shareData = { title, text: title, url };
 
-  if (navigator.share){
-    navigator.share({ title, url }).catch(()=>{});
-  } else {
-    prompt("Copy video link:", url);
+  try {
+    // 1. Image fetch karne ki koshish karein
+    const response = await fetch(video.thumbnail, { mode: 'no-cors' }); // no-cors se fetch ho sakti hai par blob shayad na bane
+    
+    // Yahan check karein agar image fetch ho rahi hai
+    const blob = await fetch(video.thumbnail).then(r => r.blob());
+    const file = new File([blob], "thumb.jpg", { type: blob.type });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      shareData.files = [file];
+    }
+    
+    await navigator.share(shareData);
+  } catch (err) {
+    // Agar image fetch fail ho (CORS ki wajah se), toh sirf link share karein
+    console.warn("Image sharing failed, sharing link only...", err);
+    try {
+      await navigator.share({ title, url });
+    } catch (finalErr) {
+      prompt("Copy Link:", url);
+    }
   }
-}
-
-window.shareVideo = shareVideo;
+  }
+  
 
 // 🔥 FETCH FROM SUPABASE
 async function fetchVideos(){
