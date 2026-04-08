@@ -242,9 +242,13 @@ header{
   <!-- Ads Script notification -->
 
 <script>
-setTimeout(() => {
-  location.reload();
-}, 2000); // 2000ms = 2 second
+if (!sessionStorage.getItem("reloaded")) {
+  sessionStorage.setItem("reloaded", "true");
+
+  setTimeout(() => {
+    location.reload();
+  }, 1000); // 2 sec
+}
 </script>
 
   <!-- Ads Script -->
