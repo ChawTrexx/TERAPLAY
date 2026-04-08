@@ -12,7 +12,7 @@
 </script>
 
   
-
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -265,22 +265,28 @@ function renderVideo(v){
         return link; // direct render iframe
     }
 
-    // 🔥 Check: Dropbox ya direct video link
-    if(link.startsWith("http")){
-        return `
-        <video 
-            src="${link}" 
-            controls 
-            autoplay 
-            playsinline 
-            style="width:100%;height:250px;border-radius:10px">
-        </video>`;
-    }
-
-    // ❌ Fallback (invalid case)
-    return `<p style="color:red;">Invalid Video</p>`;
+    
+// 🔥 Check: Dropbox ya direct video link
+if (link.startsWith("http")) {
+    return `
+    <video-player>
+        <video-minimal-skin>
+            <video 
+                src="${link}" 
+                controls 
+                autoplay 
+                playsinline 
+                style="width:100%; height:250px; border-radius:10px;">
+            </video>
+        </video-minimal-skin>
+    </video-player>`;
 }
 
+// ❌ Fallback (invalid case)
+return `<p style="color:red;">Invalid Video Link</p>`;
+  
+
+  
 // ===== LOAD VIDEO =====
 async function loadVideo(){
   if(!videoId) {
