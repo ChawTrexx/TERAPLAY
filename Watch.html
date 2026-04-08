@@ -266,7 +266,14 @@ function renderVideo(v){
     }
 
   if(link.startsWith("http")){
-        return `
+        return ` 
+
+        <video-player>
+  <video-skin>
+    <video src="${link}" playsinline></video>
+  </video-skin>
+</video-player>
+
         <video 
             src="${link}" 
             controls 
