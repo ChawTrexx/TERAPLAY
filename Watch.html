@@ -243,7 +243,7 @@ header{
 
 
   <!-- Ads Script -->
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
     <script type="module">
 
 const SUPABASE_URL = "https://emhnjxzenbxsaxdpzltf.supabase.co";
@@ -268,9 +268,9 @@ function renderVideo(v){
   if (link.startsWith("http")) {
     return `
     <video-player>
-      <video-minimal-skin>
+      <video-skin>
         <video src="${link}" playsinline></video>
-      </video-minimal-skin>
+      </video-skin>
     </video-player>
     `;
 }
