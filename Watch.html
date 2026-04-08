@@ -265,18 +265,23 @@ function renderVideo(v){
         return link; // direct render iframe
     }
 
-  if (link.startsWith("http")) {
-    return `
-    <video-player>
-      <video-skin>
-        <video src="${link}" playsinline></video>
-      </video-skin>
-    </video-player>
-    `;
+  if(link.startsWith("http")){
+        return `
+        <video 
+            src="${link}" 
+            controls 
+            autoplay 
+            playsinline 
+            style="width:100%;height:250px;border-radius:10px">
+        </video>`;
+    }
+
+    // ❌ Fallback (invalid case)
+    return `<p style="color:red;">Invalid Video</p>`;
 }
 
-return `<p style="color:red;">Invalid Video</p>`;
-    
+
+
 
 
   
