@@ -11,10 +11,7 @@
 /*]]>/* */
 </script>
 <!-- CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mediaelement@4.2.17/build/mediaelementplayer.min.css">
-
-<!-- JS -->
-<script src="https://cdn.jsdelivr.net/npm/mediaelement@4.2.17/build/mediaelement-and-player.min.js"></script>
+  
   
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -63,7 +60,7 @@ header{
 @media(max-width:850px){.container{flex-direction:column;}}
 
 .video-box{flex:2;}
-.video-box iframe, .video-box video{
+.video-box iframe{
   width:100%;height:220px;border-radius:10px;background:#000;
 }
 
@@ -247,14 +244,8 @@ header{
 
 
   <!-- Ads Script -->
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    new MediaElementPlayer('player1', {
-        features: ['playpause','progress','current','duration','volume','fullscreen'],
-        stretching: 'responsive'
-    });
-});
-</script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
+
 
   
     <script type="module">
@@ -281,7 +272,14 @@ function renderVideo(v){
 
   
 if(link.startsWith("http")){
-        return `
+        return ` 
+
+        <video-player>
+  <video-skin>
+    <video src="${link}" playsinline></video>
+  </video-skin>
+</video-player>
+
         <video id="player1"
             src="${link}" 
             controls 
