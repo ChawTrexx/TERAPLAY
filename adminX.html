@@ -83,21 +83,7 @@ document.getElementById("imageUpload").addEventListener("change", uploadThumbnai
 // ==== Detect Link Type ====
 
 
-// ==== Upload to Supabase ====
-document.getElementById("upload").addEventListener("click", async ()=>{
-    const title = document.getElementById("title").value.trim();
-    const thumb = document.getElementById("thumb").value.trim();
-    const videoInput = document.getElementById("video").value.trim();
-
-    if(!title || !thumb || !videoInput){
-        alert("⚠ Fill all fields!");
-        return;
-    }
-
-    const {url, type} = detectType(videoInput);
-
-    if(!url){
-  // ==== Dropbox Convert ====
+ // ==== Dropbox Convert ====
 function convertDropboxURL(url){
     try {
         if(url.includes("dropbox.com")) {
@@ -113,7 +99,6 @@ function convertDropboxURL(url){
 // ==== TeraBox Convert ====
 function convertTeraBoxURL(url){
     try {
-        // Match /s/ID format
         const match = url.match(/\/s\/([a-zA-Z0-9_-]+)/);
         if(match){
             const fileId = match[1];
@@ -146,10 +131,8 @@ function makeSafeIframe(url){
 function detectType(input){
     input = input.trim();
 
-    // 🔥 iframe detect + safe convert
     if(input.startsWith("<iframe")){
         const src = extractIframeSrc(input);
-
         if(src){
             return {
                 type: "iframe",
@@ -158,7 +141,6 @@ function detectType(input){
         }
     }
 
-    // 🔥 TeraBox detect
     if(input.includes("terabox.com") || input.includes("1024terabox.com")){
         return {
             type: "iframe",
@@ -166,7 +148,6 @@ function detectType(input){
         };
     }
 
-    // 🔥 Dropbox support
     if(input.includes("dropbox.com")){
         return {
             type: "video",
@@ -174,12 +155,30 @@ function detectType(input){
         };
     }
 
-    // 🔥 Normal link
     return {
         type: "video",
         url: input
     };
-}      alert("❌ Invalid link!");
+}
+
+    
+
+
+// ==== Upload to Supabase ====
+document.getElementById("upload").addEventListener("click", async ()=>{
+    const title = document.getElementById("title").value.trim();
+    const thumb = document.getElementById("thumb").value.trim();
+    const videoInput = document.getElementById("video").value.trim();
+
+    if(!title || !thumb || !videoInput){
+        alert("⚠ Fill all fields!");
+        return;
+    }
+
+    const {url, type} = detectType(videoInput);
+
+    if(!url){
+        alert("❌ Invalid link!");
         return;
     }
 
