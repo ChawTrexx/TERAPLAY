@@ -94,15 +94,23 @@
             font-weight: bold;
             text-transform: uppercase;
         }
-
+.no-select {
+  -webkit-user-select: none; /* Safari/Chrome */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE/Edge */
+  user-select: none;         /* standard */
+  -webkit-touch-callout: none; /* iOS long-press menu off */
+}
     </style>
 </head>
 
-<body>
+<body class="no-select">
 
     <header class="header">
         <div class="logo">TEEN<span>18</span> PLAYER</div>
-        <div class="status-pill">Streaming HD</div>
+        <a href="https://teen18.vercel.app/">
+    <div class="status-pill">Streaming HD</div>
+        </a>
     </header>
 
 
