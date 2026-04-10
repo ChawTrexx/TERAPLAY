@@ -82,11 +82,14 @@ html, body {
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  transition: 0.2s;
-  -webkit-tap-highlight-color: transparent;
+  transition: 0.25s;
 }
-.home-btn:active { background: var(--accent); color: #000; border-color: var(--accent); }
-
+.home-btn:hover, .home-btn:active {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+.home-btn svg { width: 14px; height: 14px; }
 /* ===== REELS FEED ===== */
 #reels-feed {
   position: fixed;
@@ -563,7 +566,10 @@ html, body {
 <!-- HEADER -->
 <header id="header">
   <div class="logo">TEEN18</div>
-  <a href="index.html" class="home-btn">Home</a>
+  <a href="index.html" class="home-btn">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    Home
+  </a>
 </header>
 
 <!-- REELS FEED -->
