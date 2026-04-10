@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Watch - Teen18</title>
+<meta name="referrer" content="no-referrer-when-downgrade">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<!-- Ads pop -->
+<script type="text/javascript" data-cfasync="false">
+/*<![CDATA[/* */
+(function(){var w=window,t="c7c81412ec48f0ae361fb200abc24504",i=[["siteId",696*23*162+433+675+2662045],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],j=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL2ZqcXVlcnkudHlwZWFoZWFkLm1pbi5jc3M=","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvSFZpdkMvc251bWJlcnMubWluLmpz","d3d3Lmpjdndtc3R1LmNvbS9sanF1ZXJ5LnR5cGVhaGVhZC5taW4uY3Nz","d3d3Lml3YWx1andhLmNvbS9MVk9tdC91bnVtYmVycy5taW4uanM="],s=-1,y,e,f=function(){clearTimeout(e);s++;if(j[s]&&!(1801417096000<(new Date).getTime()&&1<s)){y=w.document.createElement("script");y.type="text/javascript";y.async=!0;var l=w.document.getElementsByTagName("script")[0];y.src="https://"+atob(j[s]);y.crossOrigin="anonymous";y.onerror=f;y.onload=function(){clearTimeout(e);w[t.slice(0,16)+t.slice(0,16)]||f()};e=setTimeout(f,5E3);l.parentNode.insertBefore(y,l)}};if(!w[t]){try{Object.freeze(w[t]=i)}catch(e){}f()}})();
+/*]]>/* */
+</script>
+
+<style>
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent: #ff00ff;
+  --accent2: #ff0080;
+  --accent3: #7000ff;
+  --dark: #0a0a0a;
+  --glass: rgba(255,255,255,0.07);
+  --glass-border: rgba(255,255,255,0.12);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--dark);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+
+::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ===== HEADER ===== */
+#header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.88), transparent);
+  pointer-events: none;
+}
+#header > * { pointer-events: auto; }
+
+.logo {
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 8px var(--accent));
+}
+
+.home-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.home-btn:active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+/* ===== REELS FEED ===== */
+#reels-feed {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Desktop cap */
+@media (min-width: 600px) {
+  #reels-feed { left: 50%; transform: translateX(-50%); width: 420px; right: auto; }
+  #header { max-width: 420px; left: 50%; transform: translateX(-50%); right: auto; width: 420px; }
+  .comment-panel { left: 50% !important; transform: translateX(-50%) !important; }
+  .progress-dots { right: calc(50% - 210px + 5px); }
+}
+
+/* ===== REEL ITEM ===== */
+.reel-item {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  will-change: transform;
+}
+
+/* ===== BLURRED THUMBNAIL BACKGROUND ===== */
+.reel-bg {
+  position: absolute;
+  inset: -30px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px) brightness(0.32) saturate(1.3);
+  transform: scale(1.15);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ===== VIDEO WRAP ===== */
+.reel-video-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+/* Native video \u2014 contain so no crop/zoom */
+.reel-native-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+/* Iframe embed */
+.reel-video-wrap iframe {
+  width: 100%; height: 100%;
+  border: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* ===== TAP OVERLAY ===== */
+.video-tap-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== PLAY/PAUSE FLASH ===== */
+.play-pause-icon {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 58px;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,0.95));
+}
+.play-pause-icon.show {
+  animation: ppFlash 0.6s ease forwards;
+}
+@keyframes ppFlash {
+  0%   { opacity:1; transform:translate(-50%,-50%) scale(1.15); }
+  55%  { opacity:1; transform:translate(-50%,-50%) scale(0.95); }
+  100% { opacity:0; transform:translate(-50%,-50%) scale(0.8); }
+}
+
+/* ===== BUFFERING SPINNER ===== */
+.buf-spinner {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 44px; height: 44px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  animation: spin 0.72s linear infinite;
+  z-index: 7;
+  display: none;
+  pointer-events: none;
+}
+.reel-item.buffering .buf-spinner { display: block; }
+@keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+/* ===== SHIMMER ===== */
+.reel-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, #0e0e0e 25%, #1c1c1c 50%, #0e0e0e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 0;
+}
+.reel-item.loaded .reel-shimmer { display: none; }
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===== GRADIENTS ===== */
+.reel-gradient-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 160px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.82), transparent);
+  pointer-events: none;
+  z-index: 8;
+}
+.reel-gradient-bottom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 340px;
+  background: linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.5) 55%, transparent 100%);
+  pointer-events: none;
+  z-index: 8;
+}
+
+/* ===== BOTTOM INFO ===== */
+.reel-info {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: calc(100% - 74px);
+  padding: 18px 16px 32px;
+  z-index: 9;
+  pointer-events: none;
+}
+.reel-username {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.reel-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow: 0 2px 10px rgba(255,0,255,0.4);
+  flex-shrink: 0;
+}
+.reel-uname {
+  font-size: 15px; font-weight: 700;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.95);
+}
+.follow-chip {
+  font-size: 11px; font-weight: 700;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+  padding: 3px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: 0.18s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.follow-chip.active { background: var(--accent); color: #000; }
+.follow-chip:active { opacity: 0.75; }
+
+.reel-title {
+  font-size: 15px; font-weight: 600;
+  line-height: 1.45;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.95);
+  margin-bottom: 7px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.reel-meta {
+  font-size: 12px;
+  color: rgba(255,255,255,0.58);
+  display: flex; align-items: center; gap: 6px;
+}
+.dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.35); }
+
+/* ===== SIDE ACTIONS ===== */
+.reel-actions {
+  position: absolute;
+  right: 10px; bottom: 32px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+}
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.action-icon {
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  border: 1.5px solid rgba(255,255,255,0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 23px;
+  transition: transform 0.14s, background 0.18s;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.55);
+}
+.action-btn:active .action-icon { transform: scale(0.8); }
+.action-btn.liked .action-icon {
+  background: rgba(255,0,100,0.22);
+  border-color: #ff0064;
+  animation: likePop 0.32s ease;
+}
+.action-label {
+  font-size: 11px; font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.95);
+}
+@keyframes likePop {
+  0%  { transform: scale(1); }
+  40% { transform: scale(1.38); }
+  70% { transform: scale(0.88); }
+  100%{ transform: scale(1); }
+}
+
+/* ===== DOUBLE TAP HEART ===== */
+.big-heart {
+  position: absolute;
+  top: 50%; left: 50%;
+  font-size: 90px;
+  pointer-events: none;
+  z-index: 99;
+  animation: bigHeart 0.82s ease forwards;
+}
+@keyframes bigHeart {
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(0); }
+  35%  { opacity:1; transform:translate(-50%,-50%) scale(1.25); }
+  65%  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  100% { opacity:0; transform:translate(-50%,-65px) scale(0.8); }
+}
+
+/* ===== PROGRESS DOTS ===== */
+.progress-dots {
+  position: fixed;
+  right: 5px; top: 50%;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 5px;
+  z-index: 20; pointer-events: none;
+}
+.progress-dot {
+  width: 3px; height: 18px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.18);
+  transition: all 0.28s;
+}
+.progress-dot.active {
+  background: var(--accent);
+  height: 28px;
+  box-shadow: 0 0 7px var(--accent);
+}
+
+/* ===== SWIPE HINT ===== */
+.swipe-hint {
+  position: fixed;
+  bottom: 85px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column;
+  align-items: center; gap: 5px;
+  pointer-events: none; z-index: 30;
+  animation: hintFade 3.2s forwards 1.5s;
+  opacity: 0;
+}
+@keyframes hintFade {
+  0%  { opacity:0; }
+  12% { opacity:1; }
+  80% { opacity:1; }
+  100%{ opacity:0; }
+}
+.swipe-hint-icon { font-size: 26px; animation: hintBounce 0.9s infinite; }
+.swipe-hint-text { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: rgba(255,255,255,0.72); }
+@keyframes hintBounce {
+  0%,100%{ transform:translateY(0); }
+  50%    { transform:translateY(-7px); }
+}
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed;
+  bottom: 115px; left: 50%;
+  transform: translateX(-50%) translateY(14px);
+  background: rgba(16,16,16,0.94);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 26px;
+  font-size: 13px; font-weight: 600;
+  z-index: 99999;
+  opacity: 0;
+  transition: all 0.26s;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 82vw;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ===== BACKDROP ===== */
+.backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.68);
+  z-index: 9980;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.28s;
+  backdrop-filter: blur(3px);
+}
+.backdrop.show { opacity:1; pointer-events:auto; }
+
+/* ===== COMMENT PANEL ===== */
+.comment-panel {
+  position: fixed;
+  left: 0; bottom: -105%;
+  width: 100vw; max-width: 420px;
+  height: 72%;
+  background: #131318;
+  border-radius: 22px 22px 0 0;
+  box-sizing: border-box;
+  transition: bottom 0.38s cubic-bezier(0.25,0.8,0.25,1);
+  z-index: 9999;
+  display: flex; flex-direction: column;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 -14px 55px rgba(0,0,0,0.9);
+}
+.panel-handle {
+  width: 38px; height: 4px;
+  background: rgba(255,255,255,0.16);
+  border-radius: 2px;
+  margin: 12px auto 0; flex-shrink: 0;
+}
+.comment-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 13px 18px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+.comment-header b { font-size: 16px; }
+.close-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 14px;
+  border: none; color: white;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.18s;
+}
+.close-btn:active { background: rgba(255,255,255,0.2); }
+
+.comments-list {
+  overflow-y: auto; flex: 1;
+  padding: 8px 16px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.comment-item {
+  display: flex; gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.comment-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent3), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800;
+  flex-shrink: 0; color: #fff;
+}
+.comment-body { flex: 1; min-width: 0; }
+.comment-user {
+  font-size: 13px; font-weight: 700;
+  color: var(--accent); margin-bottom: 3px;
+}
+.comment-text {
+  font-size: 14px; color: rgba(255,255,255,0.88);
+  line-height: 1.45; word-break: break-word;
+}
+.comment-time {
+  font-size: 11px; color: rgba(255,255,255,0.27);
+  margin-top: 4px;
+}
+.no-comments {
+  text-align: center; color: rgba(255,255,255,0.27);
+  padding: 50px 20px; font-size: 14px;
+}
+.comment-input-wrap {
+  padding: 12px 16px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex; gap: 10px; align-items: center;
+  background: #131318; flex-shrink: 0;
+}
+.comment-input-wrap input {
+  flex: 1; padding: 11px 16px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 24px;
+  color: white; font-size: 14px;
+  outline: none;
+  -webkit-user-select: text; user-select: text;
+  transition: border-color 0.2s;
+}
+.comment-input-wrap input:focus { border-color: var(--accent); background: rgba(255,0,255,0.05); }
+.comment-input-wrap input::placeholder { color: rgba(255,255,255,0.27); }
+.post-btn {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(255,0,255,0.45);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.14s;
+}
+.post-btn:active { transform: scale(0.86); }
+
+/* ===== LOADER ===== */
+.feed-loader {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100%; gap: 14px; color: rgba(255,255,255,0.38);
+}
+.spinner {
+  width: 42px; height: 42px;
+  border: 3px solid rgba(255,255,255,0.08);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.72s linear infinite;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header id="header">
+  <div class="logo">TEEN18</div>
+  <a href="index.html" class="home-btn">\ud83c\udfe0 Home</a>
+</header>
+
+<!-- REELS FEED -->
+<div id="reels-feed">
+  <div class="feed-loader">
+    <div class="spinner"></div>
+    <span>Loading...</span>
+  </div>
+</div>
+
+<!-- PROGRESS DOTS -->
+<div class="progress-dots" id="progressDots"></div>
+
+<!-- SWIPE HINT -->
+<div class="swipe-hint">
+  <div class="swipe-hint-icon">\ud83d\udc46</div>
+  <div class="swipe-hint-text">SWIPE UP</div>
+</div>
+
+<!-- BACKDROP -->
+<div class="backdrop" id="backdrop" onclick="closeAll()"></div>
+
+<!-- COMMENT PANEL -->
+<div id="commentPanel" class="comment-panel">
+  <div class="panel-handle"></div>
+  <div class="comment-header">
+    <b>Comments <span id="commentCount" style="color:rgba(255,255,255,0.38);font-weight:400;font-size:14px;">(0)</span></b>
+    <button class="close-btn" onclick="closeComments()">\u2715</button>
+  </div>
+  <div id="commentsList" class="comments-list"></div>
+  <div class="comment-input-wrap">
+    <input id="commentText" placeholder="Add a comment..." maxlength="200" autocomplete="off">
+    <button class="post-btn" onclick="sendComment()">\u27a4</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- Ads Script -->
+<script>
+(function(jqdy){
+  var d=document,s=d.createElement('script'),l=d.scripts[d.scripts.length-1];
+  s.settings=jqdy||{};
+  s.src="\/\/inferior-stick.com\/b.XXVYsqdsGSlc0rYjWvcT\/Keimg9BuAZWUFlUk\/PETpYM3hM\/T\/I_zgNUjJgAtRNVjkcmxsMCjgM\/2uO\/QP";
+  s.async=true; s.referrerPolicy='no-referrer-when-downgrade';
+  l.parentNode.insertBefore(s,l);
+})({});
+</script>
+
+<!-- Reload once for ads -->
+<script>
+if (!sessionStorage.getItem("reloaded")) {
+  sessionStorage.setItem("reloaded","true");
+  setTimeout(()=>location.reload(),2000);
+}
+</script>
+
+<script type="module">
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   CONFIG
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+const SUPABASE_URL = "https://emhnjxzenbxsaxdpzltf.supabase.co";
+const API_KEY      = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtaG5qeHplbmJ4c2F4ZHB6bHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0Nzk2MzcsImV4cCI6MjA5MTA1NTYzN30.7f0MSHe_UABXWnLhZh0oPYrGzMiiggiBpALuhLnDL1U";
+const HDR          = { "apikey": API_KEY, "Authorization": "Bearer " + API_KEY };
+
+const startId  = (() => { const r = new URLSearchParams(location.search).get("id"); return r ? parseInt(r) : null; })();
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   STATE
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+let allVideos      = [];
+let currentIndex   = 0;
+let currentVideoId = null;
+let globalMuted    = false;   // \ud83d\udd0a Sound ON by default
+let likesMap       = JSON.parse(localStorage.getItem("likes_map") || "{}");
+const viewedSet    = new Set();
+
+if (!localStorage.getItem("userName"))
+  localStorage.setItem("userName", "User" + Math.floor(Math.random()*9999));
+const username = localStorage.getItem("userName");
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   BUILD REEL ELEMENT
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+function buildReel(v, idx) {
+  const isLiked = !!likesMap[v.id];
+  const initial = (v.title || "V")[0].toUpperCase();
+  const uname   = v.uploader || ("Creator" + v.id);
+  const thumb   = v.thumbnail || "";
+  const link    = (v.video_link || "").trim();
+ 
+  const div = document.createElement("div");
+  div.className   = "reel-item";
+  div.dataset.id  = v.id;
+  div.dataset.idx = idx;
+ 
+  /* Blurred BG */
+  const bgStyle = thumb ? `style="background-image:url('${thumb}')"` : "";
+ 
+  /* Video HTML */
+  let videoHTML = "";
+  if (link.startsWith("<iframe") && link.includes("sandbox")) {
+    videoHTML = link;
+  } else if (link.startsWith("http")) {
+    videoHTML = `
+      <video class="reel-native-video"
+        src="${link}"
+        playsinline webkit-playsinline x5-playsinline
+        preload="auto" loop
+      ></video>
+      <div class="video-tap-overlay" onclick="window._reelTap(this)"></div>
+      <div class="play-pause-icon"></div>`;
+  } else {
+    videoHTML = `<div style="color:#555;font-size:13px;padding:20px;">Invalid Video</div>`;
+  }
+ 
+  div.innerHTML = `
+    <div class="reel-bg" ${bgStyle}></div>
+    <div class="reel-shimmer"></div>
+    <div class="reel-video-wrap">${videoHTML}</div>
+    <div class="buf-spinner"></div>
+    <div class="reel-gradient-top"></div>
+    <div class="reel-gradient-bottom"></div>
+ 
+    <div class="reel-info">
+      <div class="reel-username">
+        <div class="reel-avatar">${initial}</div>
+        <span class="reel-uname">@${uname}</span>
+        <span class="follow-chip" id="fc-${v.id}" onclick="window._reelFollow(event,'${v.id}')">Follow</span>
+      </div>
+      <div class="reel-title">${esc(v.title || "Untitled")}</div>
+      <div class="reel-meta">
+        <span>👁 ${fmtNum(v.views||0)}</span>
+        <span class="dot"></span>
+        <span>${timeAgo(v.created_at)}</span>
+      </div>
+    </div>
+ 
+    <div class="reel-actions">
+      <div class="action-btn ${isLiked?"liked":""}" id="lb-${v.id}" onclick="window._reelLike(event,'${v.id}')">
+        <div class="action-icon">${isLiked?"❤️":"🤍"}</div>
+        <span class="action-label" id="lc-${v.id}">${fmtNum(v.likes||0)}</span>
+      </div>
+      <div class="action-btn" onclick="window._reelComment('${v.id}')">
+        <div class="action-icon">💬</div>
+        <span class="action-label" id="cc-${v.id}">0</span>
+      </div>
+      <div class="action-btn" onclick="window._reelMute(event,'${v.id}')">
+        <div class="action-icon" id="vi-${v.id}">🔊</div>
+        <span class="action-label">Sound</span>
+      </div>
+    </div>`;
+ 
+  /* Attach native video events */
+  const vid = div.querySelector(".reel-native-video");
+  if (vid) _attachVidEvents(div, vid, idx);
+ 
+  return div;
+  }
+
+  /* ══════════════════════════════════════
+   VIDEO EVENTS
+══════════════════════════════════════ */
+function _attachVidEvents(reel, vid, idx) {
+  vid.muted = globalMuted;
+ 
+  vid.addEventListener("canplay", () => {
+    reel.classList.add("loaded");
+    reel.classList.remove("buffering");
+    if (idx === currentIndex) _safePlay(vid);
+  }, { once: true });
+ 
+  vid.addEventListener("waiting", () => reel.classList.add("buffering"));
+  vid.addEventListener("playing", () => reel.classList.remove("buffering"));
+  vid.addEventListener("stalled", () => reel.classList.add("buffering"));
+  vid.addEventListener("error",   () => { reel.classList.add("loaded"); reel.classList.remove("buffering"); });
+}
+ 
+function _safePlay(vid) {
+  vid.muted = globalMuted;
+  const p = vid.play();
+  if (p) p.catch(() => {
+    // Browser blocked unmuted autoplay — try muted first
+    vid.muted = true;
+    vid.play().then(() => {
+      if (!globalMuted) {
+        vid.muted = false; // restore sound after play starts
+      }
+    }).catch(() => {});
+  });
+}
+ 
+/* ══════════════════════════════════════
+   LOAD FEED
+══════════════════════════════════════ */
+async function loadFeed() {
+  const feedEl = document.getElementById("reels-feed");
+  let data = [];
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc&limit=20`,
+      { headers: HDR }
+    );
+    data = await res.json();
+  } catch {
+    feedEl.innerHTML = `<div class="feed-loader"><span>⚠️ Connection error</span></div>`;
+    return;
+  }
+ 
+  if (!Array.isArray(data) || !data.length) {
+    feedEl.innerHTML = `<div class="feed-loader"><span>🎬 No videos yet</span></div>`;
+    return;
+  }
+ 
+  allVideos = data;
+ 
+  // Put requested video first
+  if (startId) {
+    const si = allVideos.findIndex(v => v.id === startId);
+    if (si > 0) { const [x] = allVideos.splice(si,1); allVideos.unshift(x); }
+  }
+ 
+  feedEl.innerHTML = "";
+  allVideos.forEach((v,i) => feedEl.appendChild(buildReel(v,i)));
+ 
+  buildDots();
+  _loadAllCommentCounts();
+  _setupTouch();
+  goTo(0, false);
+}
+
+  /* ══════════════════════════════════════
+   TOUCH SWIPE ENGINE (smooth & reliable)
+══════════════════════════════════════ */
+let touchY0   = 0;
+let touchDy   = 0;
+let dragging  = false;
+let animating = false;
+ 
+function _setupTouch() {
+  const feedEl = document.getElementById("reels-feed");
+ 
+  feedEl.addEventListener("touchstart", e => {
+    if (e.target.closest(".comment-panel, .action-btn, .follow-chip, .post-btn, .close-btn")) return;
+    touchY0  = e.touches[0].clientY;
+    touchDy  = 0;
+    dragging = true;
+  }, { passive: true });
+ 
+  feedEl.addEventListener("touchmove", e => {
+    if (!dragging || animating) return;
+    touchDy = e.touches[0].clientY - touchY0;
+ 
+    // Resist if at edges
+    if ((touchDy > 0 && currentIndex === 0) ||
+        (touchDy < 0 && currentIndex === allVideos.length-1)) {
+      touchDy *= 0.28; // rubber-band
+    }
+ 
+    const cur = _getEl(currentIndex);
+    if (cur) {
+      cur.style.transition = "none";
+      cur.style.transform  = `translateY(${touchDy}px)`;
+    }
+    // Peek next/prev
+    const peek = touchDy < 0 ? _getEl(currentIndex+1) : _getEl(currentIndex-1);
+    if (peek) {
+      peek.style.transition = "none";
+      const base = touchDy < 0 ? "100%" : "-100%";
+      peek.style.transform  = `translateY(calc(${base} + ${touchDy}px))`;
+    }
+  }, { passive: true });
+ 
+  feedEl.addEventListener("touchend", () => {
+    if (!dragging) return;
+    dragging = false;
+    const threshold = window.innerHeight * 0.20;
+ 
+    if (touchDy < -threshold && currentIndex < allVideos.length-1) {
+      goTo(currentIndex+1, true);
+    } else if (touchDy > threshold && currentIndex > 0) {
+      goTo(currentIndex-1, true);
+    } else {
+      // Snap back current + peek
+      [_getEl(currentIndex), _getEl(currentIndex+1), _getEl(currentIndex-1)]
+        .filter(Boolean)
+        .forEach(el => {
+          el.style.transition = "transform 0.32s cubic-bezier(0.25,0.8,0.25,1)";
+        });
+      _positionAll(currentIndex);
+    }
+    touchDy = 0;
+  }, { passive: true });
+ 
+  // Mouse wheel for desktop
+  feedEl.addEventListener("wheel", e => {
+    e.preventDefault();
+    if (animating) return;
+    if      (e.deltaY > 50 && currentIndex < allVideos.length-1) goTo(currentIndex+1);
+    else if (e.deltaY < -50 && currentIndex > 0)                  goTo(currentIndex-1);
+  }, { passive: false });
+}
+ 
+function _getEl(i) {
+  return document.querySelector(`.reel-item[data-idx="${i}"]`);
+}
+ 
+function _positionAll(activeIdx) {
+  allVideos.forEach((_, i) => {
+    const el = _getEl(i);
+    if (!el) return;
+    if      (i < activeIdx) el.style.transform = "translateY(-100%)";
+    else if (i === activeIdx) el.style.transform = "translateY(0)";
+    else                    el.style.transform = "translateY(100%)";
+  });
+}
+ 
+function goTo(idx, animate = true) {
+  if (animating && animate) return;
+  animating = true;
+
+  const EASE = "transform 0.38s cubic-bezier(0.25,0.8,0.25,1)";
+  allVideos.forEach((_, i) => {
+    const el = _getEl(i);
+    if (!el) return;
+    el.style.transition = animate ? EASE : "none";
+  });
+  _positionAll(idx);
+  currentIndex   = idx;
+  currentVideoId = allVideos[idx]?.id;
+ 
+  setTimeout(() => { animating = false; }, animate ? 400 : 0);
+ 
+  _playCurrentVideo(idx);
+  _preloadNext(idx);
+  updateDots(idx);
+  _incrementView(allVideos[idx]);
+  _loadCommentCount(allVideos[idx]?.id);
+}
+ 
+/* ══════════════════════════════════════
+   VIDEO PLAY ENGINE
+══════════════════════════════════════ */
+function _playCurrentVideo(idx) {
+  allVideos.forEach((v, i) => {
+    const el  = _getEl(i);
+    if (!el) return;
+    const vid = el.querySelector(".reel-native-video");
+    if (!vid) return;
+    if (i === idx) {
+      _safePlay(vid);
+      _updateVolIcon(v.id, globalMuted);
+    } else {
+      vid.pause();
+      vid.currentTime = 0;
+    }
+  });
+}
+ 
+function _preloadNext(idx) {
+  const next = _getEl(idx+1);
+  if (!next) return;
+  const vid = next.querySelector(".reel-native-video");
+  if (vid && vid.readyState === 0) { vid.preload = "auto"; vid.load(); }
+}
+ 
+/* ══════════════════════════════════════
+   TAP TO PLAY / PAUSE
+══════════════════════════════════════ */
+window._reelTap = (overlay) => {
+  const reel = overlay.closest(".reel-item");
+  const vid  = reel?.querySelector(".reel-native-video");
+  const icon = reel?.querySelector(".play-pause-icon");
+  if (!vid) return;
+ 
+  if (vid.paused) {
+    _safePlay(vid);
+    _flashIcon(icon, "▶");
+  } else {
+    vid.pause();
+    _flashIcon(icon, "⏸");
+  }
+};
+ 
+function _flashIcon(el, txt) {
+  if (!el) return;
+  el.textContent = txt;
+  el.classList.remove("show");
+  void el.offsetWidth;
+  el.classList.add("show");
+}
+ 
+/* ══════════════════════════════════════
+   MUTE TOGGLE
+══════════════════════════════════════ */
+window._reelMute = (e, id) => {
+  e?.stopPropagation();
+  globalMuted = !globalMuted;
+  document.querySelectorAll(".reel-native-video").forEach(v => v.muted = globalMuted);
+  allVideos.forEach(v => _updateVolIcon(v.id, globalMuted));
+  showToast(globalMuted ? "🔇 Muted" : "🔊 Sound On");
+};
+function _updateVolIcon(id, muted) {
+  const el = document.getElementById(`vi-${id}`);
+  if (el) el.textContent = muted ? "🔇" : "🔊";
+}
+ 
+/* ══════════════════════════════════════
+   DOUBLE TAP LIKE
+══════════════════════════════════════ */
+let lastTap = 0;
+document.getElementById("reels-feed").addEventListener("touchend", e => {
+  if (e.target.closest(".action-btn,.follow-chip,.comment-panel,.post-btn")) return;
+  const now = Date.now();
+  if (now - lastTap < 280) {
+    const reel = e.target.closest(".reel-item");
+    if (reel && !likesMap[reel.dataset.id]) {
+      window._reelLike(null, reel.dataset.id);
+      const h = document.createElement("div");
+      h.className = "big-heart"; h.textContent = "❤️";
+      reel.appendChild(h);
+      setTimeout(() => h.remove(), 900);
+    }
+  }
+  lastTap = now;
+}, { passive: true });
+
+  /* ══════════════════════════════════════
+   LIKE
+══════════════════════════════════════ */
+window._reelLike = async (e, id) => {
+  e?.stopPropagation();
+  const btn   = document.getElementById(`lb-${id}`);
+  const cntEl = document.getElementById(`lc-${id}`);
+  const icon  = btn?.querySelector(".action-icon");
+  const v     = allVideos.find(x => String(x.id) === String(id));
+  if (!v) return;
+ 
+  if (likesMap[id]) {
+    delete likesMap[id];
+    v.likes = Math.max(0,(v.likes||1)-1);
+    btn?.classList.remove("liked");
+    if (icon) icon.textContent = "🤍";
+  } else {
+    likesMap[id] = true;
+    v.likes = (v.likes||0)+1;
+    btn?.classList.add("liked");
+    if (icon) icon.textContent = "❤️";
+  }
+  localStorage.setItem("likes_map", JSON.stringify(likesMap));
+  if (cntEl) cntEl.textContent = fmtNum(v.likes);
+ 
+  await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${id}`, {
+    method:"PATCH",
+    headers:{ ...HDR, "Content-Type":"application/json" },
+    body: JSON.stringify({ likes: v.likes })
+  }).catch(()=>{});
+};
+ 
+/* ══════════════════════════════════════
+   FOLLOW
+══════════════════════════════════════ */
+window._reelFollow = (e, id) => {
+  e?.stopPropagation();
+  const chip = document.getElementById(`fc-${id}`);
+  if (!chip) return;
+  chip.classList.toggle("active");
+  chip.textContent = chip.classList.contains("active") ? "Following" : "Follow";
+  showToast(chip.classList.contains("active") ? "✅ Following!" : "Unfollowed");
+};
+ 
+/* ══════════════════════════════════════
+   VIEWS
+══════════════════════════════════════ */
+async function _incrementView(v) {
+  if (!v || viewedSet.has(v.id)) return;
+  viewedSet.add(v.id);
+  await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${v.id}`, {
+    method:"PATCH",
+    headers:{ ...HDR, "Content-Type":"application/json" },
+    body: JSON.stringify({ views:(v.views||0)+1 })
+  }).catch(()=>{});
+}
+
+  /* ══════════════════════════════════════
+   COMMENTS  (original system preserved)
+══════════════════════════════════════ */
+let activeCommentVid = null;
+ 
+window._reelComment = (id) => {
+  activeCommentVid = id || currentVideoId;
+  document.getElementById("commentPanel").style.bottom = "0";
+  document.getElementById("backdrop").classList.add("show");
+  loadComments(activeCommentVid);
+};
+// Keep original aliases
+window.openComments  = () => window._reelComment(currentVideoId);
+window.closeComments = () => {
+  document.getElementById("commentPanel").style.bottom = "-105%";
+  document.getElementById("backdrop").classList.remove("show");
+};
+window.closeAll = window.closeComments;
+ 
+window.sendComment = async () => {
+  const input = document.getElementById("commentText");
+  const text  = input.value.trim();
+  if (!text || !activeCommentVid) return;
+  input.value = ""; input.disabled = true;
+ 
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+    method:"POST",
+    headers:{ ...HDR, "Content-Type":"application/json", "Prefer":"return=minimal" },
+    body: JSON.stringify({ video_id: activeCommentVid, user_name: username, content: text })
+  });
+  input.disabled = false;
+  if (res.ok) { showToast("💬 Comment posted!"); loadComments(activeCommentVid); }
+  else          showToast("❌ Failed to post");
+};
+ 
+async function loadComments(id) {
+  if (!id) return;
+  const res  = await fetch(
+    `${SUPABASE_URL}/rest/v1/comments?video_id=eq.${id}&select=*&order=created_at.desc`,
+    { headers: HDR }
+  );
+  const data = await res.json();
+  const list = document.getElementById("commentsList");
+ 
+  document.getElementById("commentCount").textContent = `(${data.length})`;
+  const ccEl = document.getElementById(`cc-${id}`);
+  if (ccEl) ccEl.textContent = fmtNum(data.length);
+ 
+  list.innerHTML = data.length
+    ? data.map(c=>`
+        <div class="comment-item">
+          <div class="comment-avatar">${(c.user_name||"U")[0].toUpperCase()}</div>
+          <div class="comment-body">
+            <div class="comment-user">⭐ ${esc(c.user_name||"Anonymous")}</div>
+            <div class="comment-text">${esc(c.content||"")}</div>
+            <div class="comment-time">${timeAgo(c.created_at)}</div>
+          </div>
+        </div>`).join("")
+    : `<div class="no-comments">💬 Be the first to comment!</div>`;
+}
+ 
+async function _loadCommentCount(id) {
+  if (!id) return;
+  const res  = await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${id}&select=id`,{ headers:HDR });
+  const data = await res.json();
+  const el   = document.getElementById(`cc-${id}`);
+  if (el) el.textContent = fmtNum(data.length);
+}
+ 
+async function _loadAllCommentCounts() {
+  for (const v of allVideos) await _loadCommentCount(v.id);
+}
+ 
+// Enter key
+document.getElementById("commentText").addEventListener("keydown", e=>{
+  if (e.key==="Enter") window.sendComment();
+});
+
+  
+  /* ══════════════════════════════════════
+   PROGRESS DOTS
+══════════════════════════════════════ */
+function buildDots() {
+  const wrap = document.getElementById("progressDots");
+  wrap.innerHTML = "";
+  const max = Math.min(allVideos.length, 12);
+  for (let i=0; i<max; i++) {
+    const d = document.createElement("div");
+    d.className = "progress-dot" + (i===0?" active":"");
+    wrap.appendChild(d);
+  }
+}
+function updateDots(idx) {
+  const dots = document.querySelectorAll(".progress-dot");
+  dots.forEach((d,i) => d.classList.toggle("active", i === Math.min(idx, dots.length-1)));
+}
+ 
+/* ══════════════════════════════════════
+   KEYBOARD
+══════════════════════════════════════ */
+document.addEventListener("keydown", e => {
+  if (e.key==="ArrowDown" && currentIndex < allVideos.length-1) goTo(currentIndex+1);
+  if (e.key==="ArrowUp"   && currentIndex > 0)                  goTo(currentIndex-1);
+  if (e.key==="Escape")   closeAll();
+  if (e.key===" ") { e.preventDefault(); _getEl(currentIndex)?.querySelector(".video-tap-overlay")?.click(); }
+});
+ 
+/* ══════════════════════════════════════
+   UTILS
+══════════════════════════════════════ */
+function fmtNum(n) {
+  n = parseInt(n)||0;
+  if (n>=1e6) return (n/1e6).toFixed(1)+"M";
+  if (n>=1e3) return (n/1e3).toFixed(1)+"K";
+  return String(n);
+}
+function timeAgo(d) {
+  if (!d) return "";
+  const s=(Date.now()-new Date(d))/1000;
+  if (s<60)     return "just now";
+  if (s<3600)   return Math.floor(s/60)+"m ago";
+  if (s<86400)  return Math.floor(s/3600)+"h ago";
+  if (s<604800) return Math.floor(s/86400)+"d ago";
+  return Math.floor(s/604800)+"w ago";
+}
+function esc(s) {
+  return String(s).replace(/&/g,"&").replace(/</g,"<").replace(/>/g,">");
+}
+window.showToast = (msg, ms=2200) => {
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),ms);
+};
+ 
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+loadFeed();
+ 
+</script>
+</body>
+</html>
+  
+  
