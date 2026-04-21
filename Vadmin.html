@@ -81,6 +81,8 @@ async function uploadThumbnail() {
 document.getElementById("imageUpload").addEventListener("change", uploadThumbnail);
 
 // ==== Detect Link Type ====
+
+ 
 // ==== Dropbox Convert ====
 function convertDropboxURL(url){
     try {
@@ -97,6 +99,12 @@ function convertDropboxURL(url){
 // ==== Extract iframe src ====
 function extractIframeSrc(iframe){
     const match = iframe.match(/src\s*=\s*["']([^"']+)["']/i);
+    return match ? match[1] : null;
+}
+
+// ==== Extract video src (NEW) ====
+function extractVideoSrc(videoTag){
+    const match = videoTag.match(/src\s*=\s*["']([^"']+)["']/i);
     return match ? match[1] : null;
 }
 
@@ -129,6 +137,18 @@ function detectType(input){
         }
     }
 
+    // 🔥 NEW: video tag detect
+    if(input.startsWith("<video")){
+        const src = extractVideoSrc(input);
+
+        if(src){
+            return {
+                type: "video",
+                url: src
+            };
+        }
+    }
+
     // 🔥 Dropbox support (same as before)
     if(input.includes("dropbox.com")){
         return {
@@ -143,6 +163,7 @@ function detectType(input){
         url: input
     };
 }
+    
 
 // ==== Upload to Supabase ====
 document.getElementById("upload").addEventListener("click", async ()=>{
