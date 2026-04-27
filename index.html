@@ -366,7 +366,7 @@ items = items.filter(v => {
 
 window.goPage=function(p){
   currentPage=p;
-  const active=document.querySelector('.chip.active')?.dataset.filter||'trending';
+  const active=document.querySelector('.chip.active')?.dataset.filter||'recent';
   render(active);
 }
 
