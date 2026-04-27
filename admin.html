@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel - Upload</title>
+<title>Advanced Admin Upload</title>
 
 <style>
 body{background:#0b0b0b;color:#fff;font-family:Arial;padding:20px;}
 .box{max-width:600px;margin:auto;background:#111;padding:20px;border-radius:12px;}
 input,textarea{width:100%;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;}
 button{padding:12px;border:0;background:#5b4dff;color:#fff;border-radius:8px;cursor:pointer;width:100%;}
+#addMore{background:#222;border:1px dashed #555;margin-top:10px;}
+.videoInput{margin-top:10px;}
 #result{color:#72ff7e;font-size:13px;}
 </style>
 </head>
@@ -25,7 +27,11 @@ button{padding:12px;border:0;background:#5b4dff;color:#fff;border-radius:8px;cur
 
 <input id="title" placeholder="Video title (Example: Rani Episode)">
 
-<textarea id="video" placeholder="Paste multiple links (1 per line)"></textarea>
+<div id="videoContainer">
+  <textarea class="videoInput" placeholder="Paste video link"></textarea>
+</div>
+
+<button type="button" id="addMore">+ Add More</button>
 
 <button id="upload">UPLOAD ALL</button>
 </div>
@@ -66,6 +72,14 @@ async function uploadThumbnail() {
     };
 }
 document.getElementById("imageUpload").addEventListener("change", uploadThumbnail);
+
+// ➕ Add More textarea
+document.getElementById("addMore").onclick = () => {
+    const box = document.createElement("textarea");
+    box.className = "videoInput";
+    box.placeholder = "Paste video link";
+    document.getElementById("videoContainer").appendChild(box);
+};
 
 // ===== LINK HELPERS =====
 function convertDropboxURL(url){
@@ -122,8 +136,6 @@ function detectType(input){
 
 // ===== TELEGRAM SEND =====
 async function sendTelegram(title, thumb, link){
-    const text = `${title}\n${link}`;
-
     try{
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
             method:"POST",
@@ -131,7 +143,7 @@ async function sendTelegram(title, thumb, link){
             body: JSON.stringify({
                 chat_id: CHAT_ID,
                 photo: thumb,
-                caption: text
+                caption: `${title}\n${link}`
             })
         });
     }catch(e){
@@ -144,14 +156,20 @@ document.getElementById("upload").onclick = async () => {
 
     const title = document.getElementById("title").value.trim();
     const thumb = document.getElementById("thumb").value.trim();
-    const videoInput = document.getElementById("video").value.trim();
 
-    if(!title || !thumb || !videoInput){
+    const inputs = document.querySelectorAll(".videoInput");
+    const links = [];
+
+    inputs.forEach(i=>{
+        if(i.value.trim()){
+            links.push(i.value.trim());
+        }
+    });
+
+    if(!title || !thumb || links.length===0){
         alert("Fill all fields");
         return;
     }
-
-    const links = videoInput.split("\n").filter(x=>x.trim());
 
     let part = 1;
 
@@ -180,7 +198,7 @@ document.getElementById("upload").onclick = async () => {
                 })
             });
 
-            // 🔥 TELEGRAM SEND
+            // Telegram send
             const pageUrl = `${location.origin}/Watch.html?id=latest`;
             sendTelegram(finalTitle, thumb, pageUrl);
 
@@ -193,9 +211,11 @@ document.getElementById("upload").onclick = async () => {
 
     alert("✅ All videos uploaded!");
 
+    // clear
     document.getElementById("title").value="";
-    document.getElementById("video").value="";
     document.getElementById("thumb").value="";
+    document.getElementById("videoContainer").innerHTML =
+      `<textarea class="videoInput" placeholder="Paste video link"></textarea>`;
 };
 </script>
 
