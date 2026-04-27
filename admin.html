@@ -216,7 +216,45 @@ document.getElementById("upload").onclick = async () => {
     document.getElementById("thumb").value="";
     document.getElementById("videoContainer").innerHTML =
       `<textarea class="videoInput" placeholder="Paste video link"></textarea>`;
+}; 
+
+
+  // ==== Load Data from Supabase ====
+async function loadList(){
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc`, {
+        headers: {
+            "apikey": API_KEY,
+            "Authorization": `Bearer ${API_KEY}`
+        }
+    });
+
+    const data = await res.json();
+
+    document.getElementById("list").innerHTML = data.map(v=>`
+        <div class="video-item">
+            <img src="${v.thumbnail}">
+            <b>${v.title}</b><br>
+            <small>${v.views} views</small><br>
+            <button class="delete-btn" onclick="del(${v.id})">DELETE</button>
+        </div>
+    `).join("");
+}
+
+// ==== Delete from Supabase ====
+window.del = async id=>{
+    if(confirm("Delete this video?")){
+        await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${id}`, {
+            method: "DELETE",
+            headers: {
+                "apikey": API_KEY,
+                "Authorization": `Bearer ${API_KEY}`
+            }
+        });
+        loadList();
+    }
 };
+
+loadList();
 </script>
 
 </body>
