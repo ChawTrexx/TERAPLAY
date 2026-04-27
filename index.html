@@ -279,12 +279,30 @@ async function fetchVideos(){
 }
 
 // 🔥 RENDER
+
+
+// 🔥 RENDER
 function render(filter='trending'){
   let items=[...VIDEOS];
 
   if(filter==='recent') items.sort((a,b)=>b.timestamp-a.timestamp);
   else if(filter==='oldest') items.sort((a,b)=>a.timestamp-b.timestamp);
   else items.sort((a,b)=>b.views-a.views);
+
+  // 🔥 ONLY PART-1 FILTER ADD
+  const seen = {};
+  items = items.filter(v => {
+    const title = (v.title || "").toLowerCase();
+    const base = title.split("part")[0].trim();
+
+    if(/part\s*[-]?\s*1/i.test(title) || !/part/i.test(title)){
+      if(!seen[base]){
+        seen[base] = true;
+        return true;
+      }
+    }
+    return false;
+  });
 
   const totalPages=Math.ceil(items.length/ITEMS_PER_PAGE);
   const start=(currentPage-1)*ITEMS_PER_PAGE;
@@ -317,7 +335,18 @@ function render(filter='trending'){
       <div class="page-info">Page ${currentPage} / ${totalPages}</div>
       <button onclick="goPage(${Math.min(totalPages,currentPage+1)})" ${currentPage===totalPages?'disabled':''}>Next ▶</button>
     </div>`;
-}
+          }
+
+
+
+
+
+
+
+
+
+
+  
 
 window.goPage=function(p){
   currentPage=p;
