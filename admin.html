@@ -137,7 +137,7 @@ function detectType(input){
     }
 
     if(input.includes("terabox")){
-        return { type:"iframe", url: makeSafeIframe(convertTeraBoxURL(input)) };
+    return { type:"video", url: convertTeraBoxURL(input) };
     }
 
     if(input.includes("dropbox")){
@@ -221,7 +221,7 @@ document.getElementById("upload").onclick = async () => {
 
             // Telegram send
             const pageUrl = `${location.origin}/Watch.html?id=latest`;
-            sendTelegram(finalTitle, thumb, pageUrl);
+            await sendTelegram(finalTitle, thumb, pageUrl);
 
             part++;
 
