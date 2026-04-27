@@ -203,25 +203,29 @@ document.getElementById("upload").onclick = async () => {
             : title;
 
         try{
-            await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json",
-                    "apikey":API_KEY,
-                    "Authorization":`Bearer ${API_KEY}`
-                },
-                body: JSON.stringify({
-                    title: finalTitle,
-                    thumbnail: thumb,
-                    video_link: url,
-                    type: type,
-                    views: 0
-                })
-            });
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json",
+        "apikey":API_KEY,
+        "Authorization":`Bearer ${API_KEY}`,
+        "Prefer":"return=representation" // 👈 important
+    },
+    body: JSON.stringify({
+        title: finalTitle,
+        thumbnail: thumb,
+        video_link: url,
+        type: type,
+        views: 0
+    })
+});
+
+const data = await res.json();
+const videoId = data[0]?.id;
 
             // Telegram send
-            const pageUrl = `${location.origin}/Watch.html?id=latest`;
-            await sendTelegram(finalTitle, thumb, pageUrl);
+            const pageUrl = `${location.origin}/Watch.html?id=${videoId}`;
+await sendTelegram(finalTitle, thumb, pageUrl);
 
             part++;
 
