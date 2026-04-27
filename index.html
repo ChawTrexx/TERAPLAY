@@ -290,19 +290,35 @@ function render(filter='trending'){
   else items.sort((a,b)=>b.views-a.views);
 
   // 🔥 ONLY PART-1 FILTER ADD
-  const seen = {};
-  items = items.filter(v => {
-    const title = (v.title || "").toLowerCase();
-    const base = title.split("part")[0].trim();
 
-    if(/part\s*[-]?\s*1/i.test(title) || !/part/i.test(title)){
-      if(!seen[base]){
-        seen[base] = true;
-        return true;
-      }
+// 🔥 ONLY FIRST PART / FIRST NUMBER FILTER
+const seen = {};
+items = items.filter(v => {
+  const title = (v.title || "").toLowerCase().trim();
+
+  // base name (number हटाकर)
+  const base = title.replace(/(part\s*[-]?\s*\d+|\d+$)/i, "").trim();
+
+  // check: part 1 OR ending 1 OR no number
+  const isFirst =
+    /part\s*[-]?\s*1/i.test(title) ||   // part 1
+    /\b1$/.test(title) ||              // ending with 1
+    !/\d/.test(title);                 // no number
+
+  if(isFirst){
+    if(!seen[base]){
+      seen[base] = true;
+      return true;
     }
-    return false;
-  });
+  }
+
+  return false;
+});
+
+
+
+
+  
 
   const totalPages=Math.ceil(items.length/ITEMS_PER_PAGE);
   const start=(currentPage-1)*ITEMS_PER_PAGE;
