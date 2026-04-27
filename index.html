@@ -282,7 +282,7 @@ async function fetchVideos(){
 
 
 // 🔥 RENDER
-function render(filter='Recent'){
+function render(filter='recent'){
   let items=[...VIDEOS];
 
   if(filter==='recent') items.sort((a,b)=>b.timestamp-a.timestamp);
