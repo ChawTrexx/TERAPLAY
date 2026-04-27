@@ -82,6 +82,8 @@ document.getElementById("addMore").onclick = () => {
 };
 
 // ===== LINK HELPERS =====
+
+
 function convertDropboxURL(url){
     try {
         if(url.includes("dropbox.com")) {
@@ -96,12 +98,23 @@ function convertDropboxURL(url){
 
 function convertTeraBoxURL(url){
     try {
+        // clean URL (remove params)
+        url = url.split("?")[0];
+
         const match = url.match(/\/s\/([a-zA-Z0-9_-]+)/);
         if(match){
-            return `https://terabox.beer/watch/${match[1]}`;
+            let id = match[1];
+
+            // remove starting "1" only if present
+            if(id.charAt(0) === "1"){
+                id = id.slice(1);
+            }
+
+            return `https://s1.mdiskplay.com/videos/${id}/source.m3u8`;
         }
     } catch(e){}
-    return url;
+
+    return null;
 }
 
 function extractIframeSrc(iframe){
@@ -133,6 +146,14 @@ function detectType(input){
 
     return { type:"video", url: input };
 }
+
+
+
+
+
+
+
+  
 
 // ===== TELEGRAM SEND =====
 async function sendTelegram(title, thumb, link){
