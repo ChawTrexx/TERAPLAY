@@ -91,43 +91,126 @@ document.getElementById("addMore").onclick = () => {
 };
 
 // --- URL Format Helpers ---
-function convertDropboxURL(url) {
+
+
+
+
+// ==== Dropbox Convert ====
+function convertDropboxURL(url){
     try {
-        let u = new URL(url);
-        if (u.hostname.includes("dropbox.com")) {
+        if(url.includes("dropbox.com")) {
+            let u = new URL(url);
             u.searchParams.set("raw", "1");
             u.searchParams.delete("dl");
             return u.toString();
         }
-    } catch (e) {}
+    } catch(e){}
     return url;
 }
 
-function convertTeraBoxURL(url) {
+// 🔥 NEW: TeraBox Convert 🔥
+function convertTeraBoxURL(url){
     try {
+        // URL se extra parameters hatane ke liye
         let cleanUrl = url.split("?")[0];
+        
+        // ID extract karne ka logic (e.g., /s/1abc123...)
         const match = cleanUrl.match(/\/s\/([a-zA-Z0-9_-]+)/);
-        if (match) {
+        if(match){
             let id = match[1];
-            if (id.charAt(0) === "1") id = id.slice(1);
+            // Agar ID '1' se start ho rahi hai toh use remove karna padta hai mdisk ke liye
+            if(id.charAt(0) === "1"){
+                id = id.slice(1);
+            }
+            // Direct streamable link return karega
             return `https://s1.mdiskplay.com/videos/${id}/source.m3u8`;
         }
-    } catch (e) {}
-    return url;
+    } catch(e){}
+    return url; // Agar fail ho jaye toh original link rakhega
 }
 
-function detectType(input) {
+// ==== Extract iframe src ====
+function extractIframeSrc(iframe){
+    const match = iframe.match(/src\s*=\s*["']([^"']+)["']/i);
+    return match ? match[1] : null;
+}
+
+// ==== Extract video src (NEW) ====
+function extractVideoSrc(videoTag){
+    const match = videoTag.match(/src\s*=\s*["']([^"']+)["']/i);
+    return match ? match[1] : null;
+}
+
+// ==== Convert to SAFE iframe ====
+function makeSafeIframe(url){
+    return `<iframe 
+        src="${url}"
+        width="100%"
+        height="100%"
+        frameborder="0"
+        scrolling="no"
+        sandbox="allow-scripts allow-same-origin"
+        allowfullscreen>
+    </iframe>`;
+}
+
+// ==== Detect Link Type (Updated with TeraBox) ====
+function detectType(input){
     input = input.trim();
-    if (input.startsWith("<iframe")) {
-        const match = input.match(/src\s*=\s*["']([^"']+)["']/i);
-        const src = match ? match[1] : "";
-        return { type: "iframe", url: src };
+
+    // 🔥 iframe detect + safe convert
+    if(input.startsWith("<iframe")){
+        const src = extractIframeSrc(input);
+        if(src){
+            return {
+                type: "iframe",
+                url: makeSafeIframe(src)
+            };
+        }
     }
-    if (input.includes("terabox")) return { type: "video", url: convertTeraBoxURL(input) };
-    if (input.includes("dropbox")) return { type: "video", url: convertDropboxURL(input) };
-    return { type: "video", url: input };
+
+    // 🔥 video tag detect
+    if(input.startsWith("<video")){
+        const src = extractVideoSrc(input);
+        if(src){
+            return {
+                type: "video",
+                url: src
+            };
+        }
+    }
+
+    // 🔥 TeraBox detect & convert 🔥
+    if(input.includes("terabox.com") || input.includes("nephobox.com") || input.includes("4shared.com")){
+        return {
+            type: "video",
+            url: convertTeraBoxURL(input)
+        };
+    }
+
+    // 🔥 Dropbox support
+    if(input.includes("dropbox.com")){
+        return {
+            type: "video",
+            url: convertDropboxURL(input)
+        };
+    }
+
+    // 🔥 Normal link
+    return {
+        type: "video",
+        url: input
+    };
 }
 
+
+
+
+
+
+
+
+    
 // --- Notifications ---
 async function sendTelegram(title, thumb, link) {
     try {
