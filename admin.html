@@ -224,10 +224,16 @@ const data = await res.json();
 const videoId = data[0]?.id;
 
             // Telegram send
-            const pageUrl = `${location.origin}/Watch.html?id=${videoId}`;
-await sendTelegram(finalTitle, thumb, pageUrl);
+            const data = await res.json();
+const videoId = data[0]?.id;
 
-            part++;
+// Telegram send (ONLY FIRST PART)
+if(part === 1){
+    const pageUrl = `${location.origin}/Watch.html?id=${videoId}`;
+    await sendTelegram(finalTitle, thumb, pageUrl);
+}
+
+part++;
 
         }catch(err){
             console.log("Upload error", err);
