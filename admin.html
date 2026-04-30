@@ -1,54 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Advanced Admin Upload</title>
-
-<style>
-body{background:#0b0b0b;color:#fff;font-family:Arial;padding:20px;}
-.box{max-width:600px;margin:auto;background:#111;padding:20px;border-radius:12px;}
-input,textarea{width:100%;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;}
-button{padding:12px;border:0;background:#5b4dff;color:#fff;border-radius:8px;cursor:pointer;width:100%;}
-#addMore{background:#222;border:1px dashed #555;margin-top:10px;}
-.videoInput{margin-top:10px;}
-#result{color:#72ff7e;font-size:13px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Admin Upload</title>
+    <style>
+        body{background:#0b0b0b;color:#fff;font-family:Arial;padding:20px;line-height:1.6;}
+        .box{max-width:600px;margin:auto;background:#111;padding:20px;border-radius:12px;box-shadow: 0 4px 15px rgba(0,0,0,0.5);}
+        h2{text-align:center;color:#5b4dff;}
+        input,textarea{width:100%;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;box-sizing: border-box;}
+        button{padding:12px;border:0;background:#5b4dff;color:#fff;border-radius:8px;cursor:pointer;width:100%;font-weight:bold;transition:0.3s;}
+        button:hover{background:#4a3fcf;}
+        #addMore{background:#222;border:1px dashed #555;margin-top:10px;margin-bottom:20px;}
+        .videoInput{margin-top:10px;min-height:60px;}
+        #result{color:#72ff7e;font-size:13px;font-weight:bold;}
+        .video-list{margin-top:30px;max-width:600px;margin-left:auto;margin-right:auto;}
+        .video-item{background:#1a1a1a;padding:15px;margin-bottom:10px;border-radius:8px;display:flex;align-items:center;gap:15px;}
+        .video-item img{width:80px;height:50px;object-fit:cover;border-radius:4px;}
+        .delete-btn{background:#ff4d4d;width:auto;padding:5px 10px;font-size:12px;}
+    </style>
 </head>
 <body>
 
 <div class="box">
-<h2>🚀 Advanced Upload Panel</h2>
+    <h2>🚀 Advanced Upload Panel</h2>
 
-<input type="file" id="imageUpload">
-<p id="result"></p>
+    <label>Thumbnail Upload:</label>
+    <input type="file" id="imageUpload">
+    <p id="result"></p>
 
-<input id="thumb" placeholder="Thumbnail auto fill">
+    <input id="thumb" placeholder="Thumbnail URL (Auto-fills on upload)">
+    <input id="title" placeholder="Video title (Example: Rani Episode)">
 
-<input id="title" placeholder="Video title (Example: Rani Episode)">
+    <div id="videoContainer">
+        <textarea class="videoInput" placeholder="Paste video link or iframe"></textarea>
+    </div>
 
-<div id="videoContainer">
-  <textarea class="videoInput" placeholder="Paste video link"></textarea>
+    <button type="button" id="addMore">+ Add More Parts</button>
+    <button id="upload">UPLOAD ALL</button>
 </div>
 
-<button type="button" id="addMore">+ Add More</button>
-
-<button id="upload">UPLOAD ALL</button>
-</div>
+<div class="video-list" id="list">
+    </div>
 
 <script>
 const SUPABASE_URL = "https://emhnjxzenbxsaxdpzltf.supabase.co";
 const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtaG5qeHplbmJ4c2F4ZHB6bHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0Nzk2MzcsImV4cCI6MjA5MTA1NTYzN30.7f0MSHe_UABXWnLhZh0oPYrGzMiiggiBpALuhLnDL1U";
 
-// 🔥 TELEGRAM CONFIG
 const BOT_TOKEN = "6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
 const CHAT_ID = "-1001966599723";
 
-// ===== ImgBB Upload (UNCHANGED) =====
+// --- Thumbnail Upload to ImgBB ---
 async function uploadThumbnail() {
     const fileInput = document.getElementById("imageUpload");
     if (!fileInput.files.length) return;
 
+    document.getElementById("result").innerText = "Uploading...";
     const file = fileInput.files[0];
     const apiKey = "7ab5e439e36b1db27c7bb264ab7c0516";
 
@@ -57,19 +64,17 @@ async function uploadThumbnail() {
 
     reader.onload = async () => {
         const base64Data = reader.result.split(",")[1];
-
-        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-            method: "POST",
-            body: new URLSearchParams({ image: base64Data }),
-        });
-
-        const result = await response.json();
-
-        if (result.status === 200) {
-            const url = result.data.url;
-            document.getElementById("thumb").value = url;
-            document.getElementById("result").innerText = "✔ Thumbnail uploaded!";
-        } else {
+        try {
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+                method: "POST",
+                body: new URLSearchParams({ image: base64Data }),
+            });
+            const result = await response.json();
+            if (result.status === 200) {
+                document.getElementById("thumb").value = result.data.url;
+                document.getElementById("result").innerText = "✔ Thumbnail uploaded!";
+            }
+        } catch (e) {
             alert("❌ ImgBB Upload Failed!");
         }
     };
@@ -77,7 +82,7 @@ async function uploadThumbnail() {
 
 document.getElementById("imageUpload").addEventListener("change", uploadThumbnail);
 
-// ➕ Add More textarea
+// --- Dynamic Input Management ---
 document.getElementById("addMore").onclick = () => {
     const box = document.createElement("textarea");
     box.className = "videoInput";
@@ -85,205 +90,139 @@ document.getElementById("addMore").onclick = () => {
     document.getElementById("videoContainer").appendChild(box);
 };
 
-// ===== LINK HELPERS =====
-
-
-function convertDropboxURL(url){
+// --- URL Format Helpers ---
+function convertDropboxURL(url) {
     try {
-        if(url.includes("dropbox.com")) {
-            let u = new URL(url);
+        let u = new URL(url);
+        if (u.hostname.includes("dropbox.com")) {
             u.searchParams.set("raw", "1");
             u.searchParams.delete("dl");
             return u.toString();
         }
-    } catch(e){}
+    } catch (e) {}
     return url;
 }
 
-function convertTeraBoxURL(url){
+function convertTeraBoxURL(url) {
     try {
-        // clean URL (remove params)
-        url = url.split("?")[0];
-
-        const match = url.match(/\/s\/([a-zA-Z0-9_-]+)/);
-        if(match){
+        let cleanUrl = url.split("?")[0];
+        const match = cleanUrl.match(/\/s\/([a-zA-Z0-9_-]+)/);
+        if (match) {
             let id = match[1];
-
-            // remove starting "1" only if present
-            if(id.charAt(0) === "1"){
-                id = id.slice(1);
-            }
-
+            if (id.charAt(0) === "1") id = id.slice(1);
             return `https://s1.mdiskplay.com/videos/${id}/source.m3u8`;
         }
-    } catch(e){}
-
-    return null;
+    } catch (e) {}
+    return url;
 }
 
-function extractIframeSrc(iframe){
-    const match = iframe.match(/src\s*=\s*["']([^"']+)["']/i);
-    return match ? match[1] : null;
-}
-
-function makeSafeIframe(url){
-    return `<iframe src="${url}" width="510" height="400" frameborder="0" sandbox="allow-scripts allow-same-origin" allowfullscreen></iframe>`;
-}
-
-function detectType(input){
+function detectType(input) {
     input = input.trim();
-
-    if(input.startsWith("<iframe")){
-        const src = extractIframeSrc(input);
-        if(src){
-            return { type:"iframe", url: makeSafeIframe(src) };
-        }
+    if (input.startsWith("<iframe")) {
+        const match = input.match(/src\s*=\s*["']([^"']+)["']/i);
+        const src = match ? match[1] : "";
+        return { type: "iframe", url: src };
     }
-
-    if(input.includes("terabox")){
-    return { type:"video", url: convertTeraBoxURL(input) };
-    }
-
-    if(input.includes("dropbox")){
-        return { type:"video", url: convertDropboxURL(input) };
-    }
-
-    return { type:"video", url: input };
+    if (input.includes("terabox")) return { type: "video", url: convertTeraBoxURL(input) };
+    if (input.includes("dropbox")) return { type: "video", url: convertDropboxURL(input) };
+    return { type: "video", url: input };
 }
 
-
-
-
-
-
-
-  
-
-// ===== TELEGRAM SEND =====
-async function sendTelegram(title, thumb, link){
-    try{
+// --- Notifications ---
+async function sendTelegram(title, thumb, link) {
+    try {
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 chat_id: CHAT_ID,
                 photo: thumb,
-                caption: `${title}\n${link}`
+                caption: `🎬 *New Upload:* ${title}\n\n🔗 Watch Here: ${link}`,
+                parse_mode: "Markdown"
             })
         });
-    }catch(e){
-        console.log("Telegram error");
-    }
+    } catch (e) { console.error("Telegram error", e); }
 }
 
-// ===== MAIN UPLOAD =====
+// --- Main Upload Logic ---
 document.getElementById("upload").onclick = async () => {
-
     const title = document.getElementById("title").value.trim();
     const thumb = document.getElementById("thumb").value.trim();
-
     const inputs = document.querySelectorAll(".videoInput");
-    const links = [];
+    const links = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== "");
 
-    inputs.forEach(i=>{
-        if(i.value.trim()){
-            links.push(i.value.trim());
-        }
-    });
-
-    if(!title || !thumb || links.length===0){
-        alert("Fill all fields");
+    if (!title || !thumb || links.length === 0) {
+        alert("Please fill in the title, thumbnail, and at least one link.");
         return;
     }
 
-    let part = 1;
+    document.getElementById("upload").innerText = "UPLOADING...";
+    document.getElementById("upload").disabled = true;
 
-    for(const link of links){
+    for (let i = 0; i < links.length; i++) {
+        const { url, type } = detectType(links[i]);
+        const finalTitle = links.length > 1 ? `${title} - Part ${i + 1}` : title;
 
-        const {url, type} = detectType(link);
-
-        const finalTitle = links.length > 1 
-            ? `${title} Part ${part}` 
-            : title;
-
-        try{
+        try {
             const res = await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
-    method:"POST",
-    headers:{
-        "Content-Type":"application/json",
-        "apikey":API_KEY,
-        "Authorization":`Bearer ${API_KEY}`,
-        "Prefer":"return=representation" // 👈 important
-    },
-    body: JSON.stringify({
-        title: finalTitle,
-        thumbnail: thumb,
-        video_link: url,
-        type: type,
-        views: 0
-    })
-});
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": API_KEY,
+                    "Authorization": `Bearer ${API_KEY}`,
+                    "Prefer": "return=representation"
+                },
+                body: JSON.stringify({
+                    title: finalTitle,
+                    thumbnail: thumb,
+                    video_link: url,
+                    type: type,
+                    views: 0
+                })
+            });
 
-const data = await res.json();
-const videoId = data[0]?.id;
+            const responseData = await res.json();
+            const videoId = responseData[0]?.id;
 
-            // Telegram send
-            const data = await res.json();
-const videoId = data[0]?.id;
-
-// Telegram send (ONLY FIRST PART)
-if(part === 1){
-    const pageUrl = `${location.origin}/Watch.html?id=${videoId}`;
-    await sendTelegram(finalTitle, thumb, pageUrl);
-}
-
-part++;
-
-        }catch(err){
-            console.log("Upload error", err);
+            // Send Telegram notification ONLY for the first part
+            if (i === 0 && videoId) {
+                const pageUrl = `${window.location.origin}/Watch.html?id=${videoId}`;
+                await sendTelegram(title, thumb, pageUrl);
+            }
+        } catch (err) {
+            console.error("Upload error", err);
         }
     }
 
-    alert("✅ All videos uploaded!");
+    alert("✅ All videos uploaded successfully!");
+    location.reload(); // Refresh to clear and show list
+};
 
-    // clear
-    document.getElementById("title").value="";
-    document.getElementById("thumb").value="";
-    document.getElementById("videoContainer").innerHTML =
-      `<textarea class="videoInput" placeholder="Paste video link"></textarea>`;
-}; 
-
-
-  // ==== Load Data from Supabase ====
-async function loadList(){
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc`, {
-        headers: {
-            "apikey": API_KEY,
-            "Authorization": `Bearer ${API_KEY}`
-        }
-    });
-
-    const data = await res.json();
-
-    document.getElementById("list").innerHTML = data.map(v=>`
-        <div class="video-item">
-            <img src="${v.thumbnail}">
-            <b>${v.title}</b><br>
-            <small>${v.views} views</small><br>
-            <button class="delete-btn" onclick="del(${v.id})">DELETE</button>
-        </div>
-    `).join("");
+// --- Database Management ---
+async function loadList() {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc`, {
+            headers: { "apikey": API_KEY, "Authorization": `Bearer ${API_KEY}` }
+        });
+        const data = await res.json();
+        document.getElementById("list").innerHTML = "<h3>Recent Uploads</h3>" + data.map(v => `
+            <div class="video-item">
+                <img src="${v.thumbnail}" onerror="this.src='https://via.placeholder.com/80x50?text=No+Img'">
+                <div style="flex-grow:1">
+                    <b>${v.title}</b><br>
+                    <small>${v.views} views • ${v.type}</small>
+                </div>
+                <button class="delete-btn" onclick="del(${v.id})">DELETE</button>
+            </div>
+        `).join("");
+    } catch (e) { console.error("Load error", e); }
 }
 
-// ==== Delete from Supabase ====
-window.del = async id=>{
-    if(confirm("Delete this video?")){
+window.del = async id => {
+    if (confirm("Are you sure you want to delete this video?")) {
         await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${id}`, {
             method: "DELETE",
-            headers: {
-                "apikey": API_KEY,
-                "Authorization": `Bearer ${API_KEY}`
-            }
+            headers: { "apikey": API_KEY, "Authorization": `Bearer ${API_KEY}` }
         });
         loadList();
     }
@@ -291,6 +230,5 @@ window.del = async id=>{
 
 loadList();
 </script>
-
 </body>
 </html>
