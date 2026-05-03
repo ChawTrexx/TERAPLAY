@@ -405,6 +405,7 @@ async function loadRecommended(){
         <video 
           src="${v.thumbnail}"
           muted autoplay playsinline preload="metadata"
+          onloadedmetadata="this.playbackRate=0.5"
           ontimeupdate="if(this.currentTime>=3){this.currentTime=0}"
           style="width:140px;height:80px;object-fit:cover;border-radius:8px;">
         </video>`;
@@ -414,6 +415,7 @@ async function loadRecommended(){
         <video 
           src="${v.video_link}"
           muted autoplay playsinline preload="metadata"
+          onloadedmetadata="this.playbackRate=0.5"
           ontimeupdate="if(this.currentTime>=3){this.currentTime=0}"
           style="width:140px;height:80px;object-fit:cover;border-radius:8px;">
         </video>`;
