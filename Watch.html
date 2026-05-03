@@ -368,11 +368,9 @@ async function loadRecommended(){
 
   // 🔥 helper function (clean title)
   function getBaseTitle(title){
-    return title.toLowerCase()
-      .replace(/(part|video)[\s-]*\d+/ig, '') // remove part/video
-      .replace(/[^\w\s]/g, '') // emoji/symbol remove
-      .replace(/\s+/g, ' ')
-      .trim();
+  return title
+    .replace(/\d+\s*$/,'') // 🔥 sirf last number remove
+    .trim();
   }
 
   // Current video title
