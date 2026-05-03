@@ -366,20 +366,13 @@ async function loadVideo(){
 
 async function loadRecommended(){
 
-  // 🔥 helper function
-  function extractVideoInfo(title){
-  let lower = title.toLowerCase();
-
-  let match = lower.match(/(part|video)[\s-]*(\d+)/i);
-  let number = match ? parseInt(match[2]) : 0;
-
-  let base = lower
-    .replace(/(part|video)[\s-]*\d+/ig, '')
-    .replace(/[^\w\s]/g, '')   // 🔥 emoji + symbols remove
-    .replace(/\s+/g, ' ')      // extra spaces fix
-    .trim();
-
-  return { baseTitle: base, partNumber: number };
+  // 🔥 helper function (clean title)
+  function getBaseTitle(title){
+    return title.toLowerCase()
+      .replace(/(part|video)[\s-]*\d+/ig, '') // remove part/video
+      .replace(/[^\w\s]/g, '') // emoji/symbol remove
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   // Current video title
@@ -394,12 +387,12 @@ async function loadRecommended(){
   if(!currentData.length) return;
 
   let fullTitle = currentData[0].title;
+  let baseTitle = getBaseTitle(fullTitle);
 
-  // 🔥 NEW LOGIC
-  let { baseTitle, partNumber } = extractVideoInfo(fullTitle);
+  console.log("BASE:", baseTitle);
 
-  // Fetch similar videos
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?title=ilike.*${baseTitle}*&select=id,title,thumbnail,video_link,views`, {
+  // 🔥 IMPORTANT: fetch all (no ilike)
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=id,title,thumbnail,video_link,views&limit=200`, {
     headers:{
       "apikey": API_KEY,
       "Authorization": "Bearer " + API_KEY
@@ -408,26 +401,29 @@ async function loadRecommended(){
 
   const data = await res.json();
 
-  // 🔥 FILTER + SORT
-  let filtered = data
-    .map(v => {
-      let info = extractVideoInfo(v.title);
-      return { ...v, part: info.partNumber, base: info.baseTitle };
-    })
-    .filter(v => v.base === baseTitle && v.id != videoId)
-    .sort((a,b) => a.part - b.part);
+  // 🔥 STRICT SAME TITLE MATCH
+  let filtered = data.filter(v => {
+    return v.id != videoId && getBaseTitle(v.title) === baseTitle;
+  });
 
-  // 👉 only next parts (optional but best UX)
-  filtered = filtered.filter(v => v.part > partNumber);
+  console.log("MATCHED:", filtered.length);
 
   const box = document.getElementById("recommended");
   box.innerHTML = "";
+
+  // ❗ fallback (agar same title na mile)
+  if(filtered.length === 0){
+    filtered = data
+      .filter(v => v.id != videoId)
+      .sort((a,b) => (b.views||0) - (a.views||0))
+      .slice(0,10);
+  }
 
   filtered.forEach(v => {
 
     let thumbHTML = "";
 
-    // 🎥 VIDEO PREVIEW (same as your code)
+    // 🎥 VIDEO PREVIEW (UNCHANGED)
     if(v.thumbnail && v.thumbnail.endsWith(".mp4")){
         thumbHTML = `
         <video 
@@ -449,7 +445,7 @@ async function loadRecommended(){
         </video>`;
 
     } else {
-        // 🖼 IMAGE fallback
+        // 🖼 IMAGE fallback (UNCHANGED)
         thumbHTML = `<img src="${v.thumbnail || 'default.jpg'}" style="width:140px;height:80px;object-fit:cover;border-radius:8px;">`;
     }
 
@@ -464,7 +460,6 @@ async function loadRecommended(){
   });
 
 }
-
 
 
 
