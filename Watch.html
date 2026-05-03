@@ -364,14 +364,9 @@ async function loadVideo(){
 
 
 
-async function loadRecommended(){
 
-  // 🔥 helper function (clean title)
-  function getBaseTitle(title){
-  return title
-    .replace(/\d+\s*$/,'') // 🔥 sirf last number remove
-    .trim();
-  }
+
+async function loadRecommended(){
 
   // Current video title
   const currentRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${videoId}&select=title`, {
@@ -385,12 +380,10 @@ async function loadRecommended(){
   if(!currentData.length) return;
 
   let fullTitle = currentData[0].title;
-  let baseTitle = getBaseTitle(fullTitle);
+  let baseTitle = fullTitle.toLowerCase().split("part")[0].trim();
 
-  console.log("BASE:", baseTitle);
-
-  // 🔥 IMPORTANT: fetch all (no ilike)
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=id,title,thumbnail,video_link,views&limit=200`, {
+  // 🔥 IMPORTANT: video_link + thumbnail fetch karo
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?title=ilike.${baseTitle}%25&select=id,title,thumbnail,video_link,views&order=created_at.asc`, {
     headers:{
       "apikey": API_KEY,
       "Authorization": "Bearer " + API_KEY
@@ -398,48 +391,15 @@ async function loadRecommended(){
   });
 
   const data = await res.json();
+  const box = document.getElementById("recommended");
+  box.innerHTML = "";
 
-
-
-// 🔥 SMART SAME TITLE MATCH
-let filtered = data.filter(v => {
-  if(v.id == videoId) return false;
-
-  let base = getBaseTitle(v.title);
-
-  return (
-    base === baseTitle ||               // exact match
-    base.includes(baseTitle) ||         // thoda extra text
-    baseTitle.includes(base)            // reverse case
-  );
-});
-
-console.log("MATCHED:", filtered.length);
-
-const box = document.getElementById("recommended");
-box.innerHTML = "";
-
-// ❗ fallback (IMPORTANT)
-if(filtered.length === 0){
-  filtered = data
-    .filter(v => v.id != videoId)
-    .sort((a,b) => (b.views||0) - (a.views||0))
-    .slice(0,10);
-}
-
-
-
-
-
-
-  
-
-
-  filtered.forEach(v => {
+  data.forEach(v => {
+    if(v.id == videoId) return;
 
     let thumbHTML = "";
 
-    // 🎥 VIDEO PREVIEW (UNCHANGED)
+    // 🎥 VIDEO PREVIEW (priority)
     if(v.thumbnail && v.thumbnail.endsWith(".mp4")){
         thumbHTML = `
         <video 
@@ -461,8 +421,8 @@ if(filtered.length === 0){
         </video>`;
 
     } else {
-        // 🖼 IMAGE fallback (UNCHANGED)
-        thumbHTML = `<img src="${v.thumbnail || 'default.jpg'}" style="width:140px;height:80px;object-fit:cover;border-radius:8px;">`;
+        // 🖼 IMAGE fallback
+        thumbHTML = `<img src="${v.thumbnail || 'default.jpg'}">`;
     }
 
     box.innerHTML += `
@@ -474,8 +434,8 @@ if(filtered.length === 0){
         </div>
       </div>`;
   });
-
 }
+
 
 
 
