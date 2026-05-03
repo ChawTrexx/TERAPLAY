@@ -365,9 +365,10 @@ async function loadVideo(){
 
 
 
+
 async function loadRecommended(){
 
-  // Pehle current video ka title lo
+  // Current video title
   const currentRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${videoId}&select=title`, {
     headers:{
       "apikey": API_KEY,
@@ -379,12 +380,10 @@ async function loadRecommended(){
   if(!currentData.length) return;
 
   let fullTitle = currentData[0].title;
-
-  // 🔥 "part - x" remove karke base name nikalo
   let baseTitle = fullTitle.toLowerCase().split("part")[0].trim();
 
-  // 🔥 Same title wale videos fetch karo
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?title=ilike.${baseTitle}%25&order=created_at.asc`, {
+  // 🔥 IMPORTANT: video_link + thumbnail fetch karo
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?title=ilike.${baseTitle}%25&select=id,title,thumbnail,video_link,views&order=created_at.asc`, {
     headers:{
       "apikey": API_KEY,
       "Authorization": "Bearer " + API_KEY
@@ -398,9 +397,35 @@ async function loadRecommended(){
   data.forEach(v => {
     if(v.id == videoId) return;
 
+    let thumbHTML = "";
+
+    // 🎥 VIDEO PREVIEW (priority)
+    if(v.thumbnail && v.thumbnail.endsWith(".mp4")){
+        thumbHTML = `
+        <video 
+          src="${v.thumbnail}"
+          muted autoplay playsinline preload="metadata"
+          ontimeupdate="if(this.currentTime>=3){this.currentTime=0}"
+          style="width:140px;height:80px;object-fit:cover;border-radius:8px;">
+        </video>`;
+
+    } else if(v.video_link && v.video_link.endsWith(".mp4")){
+        thumbHTML = `
+        <video 
+          src="${v.video_link}"
+          muted autoplay playsinline preload="metadata"
+          ontimeupdate="if(this.currentTime>=3){this.currentTime=0}"
+          style="width:140px;height:80px;object-fit:cover;border-radius:8px;">
+        </video>`;
+
+    } else {
+        // 🖼 IMAGE fallback
+        thumbHTML = `<img src="${v.thumbnail || 'default.jpg'}">`;
+    }
+
     box.innerHTML += `
       <div class="recommend-item" onclick="location='Watch.html?id=${v.id}'">
-        <img src="${v.thumbnail}">
+        ${thumbHTML}
         <div>
           <b>${v.title}</b><br>
           <small>${v.views || 0} views</small>
@@ -408,7 +433,6 @@ async function loadRecommended(){
       </div>`;
   });
 }
-
 
 
 
