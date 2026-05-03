@@ -403,35 +403,39 @@ async function loadRecommended(){
 
 
 
-// 🔥 STRICT + SMART MATCH
+// 🔥 STRICT SAME TITLE MATCH
 let filtered = data
-  .map(v => {
-    let base = getBaseTitle(v.title);
+.map(v => {
+let base = getBaseTitle(v.title);
+return { ...v, base };
+})
+.filter(v => {
+if(v.id == videoId) return false;
 
-    // 🔥 similarity score
-    let score = 0;
+// 🔥 strong match logic  
+return (  
+  v.base === baseTitle ||                     // exact match  
+  v.base.includes(baseTitle) ||               // DB me extra words  
+  baseTitle.includes(v.base)                  // current title chhota hai  
+);
 
-    if(base === baseTitle) score += 100; // exact
-    if(base.includes(baseTitle)) score += 50;
-    if(baseTitle.includes(base)) score += 30;
+});
 
-    return { ...v, base, score };
-  })
-  .filter(v => v.id != videoId && v.score > 0)
-  .sort((a,b) => b.score - a.score); // best match first
+// ❗ fallback (agar same title na mile)
+if(filtered.length === 0){
+filtered = data
+.filter(v => v.id != videoId)
+.sort((a,b) => (b.views||0) - (a.views||0))
+.slice(0,10);
+}
+
+
 
 
 
 
   
 
-  // ❗ fallback (agar same title na mile)
-  if(filtered.length === 0){
-    filtered = data
-      .filter(v => v.id != videoId)
-      .sort((a,b) => (b.views||0) - (a.views||0))
-      .slice(0,10);
-  }
 
   filtered.forEach(v => {
 
