@@ -368,16 +368,18 @@ async function loadRecommended(){
 
   // 🔥 helper function
   function extractVideoInfo(title){
-    let lower = title.toLowerCase();
+  let lower = title.toLowerCase();
 
-    let match = lower.match(/(part|video)[\s-]*(\d+)/i);
-    let number = match ? parseInt(match[2]) : 0;
+  let match = lower.match(/(part|video)[\s-]*(\d+)/i);
+  let number = match ? parseInt(match[2]) : 0;
 
-    let base = lower
-      .replace(/(part|video)[\s-]*\d+/ig, '')
-      .trim();
+  let base = lower
+    .replace(/(part|video)[\s-]*\d+/ig, '')
+    .replace(/[^\w\s]/g, '')   // 🔥 emoji + symbols remove
+    .replace(/\s+/g, ' ')      // extra spaces fix
+    .trim();
 
-    return { baseTitle: base, partNumber: number };
+  return { baseTitle: base, partNumber: number };
   }
 
   // Current video title
