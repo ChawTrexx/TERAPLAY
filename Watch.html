@@ -403,30 +403,30 @@ async function loadRecommended(){
 
 
 
-// 🔥 STRICT SAME TITLE MATCH
-let filtered = data
-.map(v => {
-let base = getBaseTitle(v.title);
-return { ...v, base };
-})
-.filter(v => {
-if(v.id == videoId) return false;
+// 🔥 SMART SAME TITLE MATCH
+let filtered = data.filter(v => {
+  if(v.id == videoId) return false;
 
-// 🔥 strong match logic  
-return (  
-  v.base === baseTitle ||                     // exact match  
-  v.base.includes(baseTitle) ||               // DB me extra words  
-  baseTitle.includes(v.base)                  // current title chhota hai  
-);
+  let base = getBaseTitle(v.title);
 
+  return (
+    base === baseTitle ||                 // exact
+    base.startsWith(baseTitle) ||         // same start
+    baseTitle.startsWith(base)            // reverse match
+  );
 });
 
-// ❗ fallback (agar same title na mile)
+console.log("MATCHED:", filtered.length);
+
+const box = document.getElementById("recommended");
+box.innerHTML = "";
+
+// ❗ fallback (IMPORTANT)
 if(filtered.length === 0){
-filtered = data
-.filter(v => v.id != videoId)
-.sort((a,b) => (b.views||0) - (a.views||0))
-.slice(0,10);
+  filtered = data
+    .filter(v => v.id != videoId)
+    .sort((a,b) => (b.views||0) - (a.views||0))
+    .slice(0,10);
 }
 
 
