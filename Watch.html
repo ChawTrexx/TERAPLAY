@@ -401,15 +401,29 @@ async function loadRecommended(){
 
   const data = await res.json();
 
-  // 🔥 STRICT SAME TITLE MATCH
-  let filtered = data.filter(v => {
-    return v.id != videoId && getBaseTitle(v.title) === baseTitle;
-  });
 
-  console.log("MATCHED:", filtered.length);
 
-  const box = document.getElementById("recommended");
-  box.innerHTML = "";
+// 🔥 STRICT + SMART MATCH
+let filtered = data
+  .map(v => {
+    let base = getBaseTitle(v.title);
+
+    // 🔥 similarity score
+    let score = 0;
+
+    if(base === baseTitle) score += 100; // exact
+    if(base.includes(baseTitle)) score += 50;
+    if(baseTitle.includes(base)) score += 30;
+
+    return { ...v, base, score };
+  })
+  .filter(v => v.id != videoId && v.score > 0)
+  .sort((a,b) => b.score - a.score); // best match first
+
+
+
+
+  
 
   // ❗ fallback (agar same title na mile)
   if(filtered.length === 0){
