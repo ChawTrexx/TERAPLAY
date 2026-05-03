@@ -408,9 +408,9 @@ let filtered = data.filter(v => {
   let base = getBaseTitle(v.title);
 
   return (
-    base === baseTitle ||                 // exact
-    base.startsWith(baseTitle) ||         // same start
-    baseTitle.startsWith(base)            // reverse match
+    base === baseTitle ||               // exact match
+    base.includes(baseTitle) ||         // thoda extra text
+    baseTitle.includes(base)            // reverse case
   );
 });
 
