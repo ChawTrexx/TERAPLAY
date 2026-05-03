@@ -14,7 +14,7 @@
         #addMore{background:#222;border:1px dashed #555;margin-top:10px;margin-bottom:20px;}
         .videoInput{margin-top:10px;min-height:60px;}
         #result{color:#72ff7e;font-size:13px;font-weight:bold;}
-        .video-list{margin-top:30px;max-width:600px;margin-left:auto;margin-right:auto;}
+        .video-list{margin-top:30px;max-width:600px;margin-leftauto;margin-right:auto;}
         .video-item{background:#1a1a1a;padding:15px;margin-bottom:10px;border-radius:8px;display:flex;align-items:center;gap:15px;}
         .video-item img{width:80px;height:50px;object-fit:cover;border-radius:4px;}
         .delete-btn{background:#ff4d4d;width:auto;padding:5px 10px;font-size:12px;}
@@ -33,11 +33,10 @@
     <input id="title" placeholder="Video title (Example: Rani Episode)">
 
     <div id="videoContainer">
-        <div class="videoBlock">
-    <div class="number"></div>
+        
     <textarea class="videoInput" placeholder="Paste video link or iframe"></textarea>
 </div>
-    </div>
+    
 
     <button type="button" id="addMore">+ Add More Parts</button>
     <button id="upload">UPLOAD ALL</button>
@@ -48,62 +47,7 @@
 
 
 
-<script>
-const container = document.getElementById("videoContainer");
-const addBtn = document.getElementById("addMore");
 
-function updateNumbers() {
-    const blocks = document.querySelectorAll(".videoBlock");
-    blocks.forEach((block, index) => {
-        block.querySelector(".number").innerText = index + 1;
-    });
-}
-
-function addNewInput() {
-    const div = document.createElement("div");
-    div.className = "videoBlock";
-
-    div.innerHTML = `
-        <div class="number"></div>
-        <textarea class="videoInput" placeholder="Paste video link or iframe"></textarea>
-    `;
-
-    container.appendChild(div);
-    updateNumbers();
-}
-
-// First input
-addNewInput();
-
-addBtn.addEventListener("click", addNewInput);
-</script>
-
-<style>
-.videoBlock {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.number {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    background: #00ffd5;
-    color: black;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.videoInput {
-    flex: 1;
-    height: 80px;
-}
-</style>
     
 <script>
 const SUPABASE_URL = "https://emhnjxzenbxsaxdpzltf.supabase.co";
