@@ -22,18 +22,15 @@
 </head>
 <body>
 
-
-
-
 <div class="box">
     <h2>🚀 Advanced Upload Panel</h2>
 
-    <label></label>
+    <label>Thumbnail Upload:</label>
     <input type="file" id="imageUpload">
     <p id="result"></p>
 
     <input id="thumb" placeholder="Thumbnail URL (Auto-fills on upload)" hidden>
-    <input id="title" placeholder="Video Title Name ">
+    <input id="title" placeholder="Video title (Example: Rani Episode)">
 
     <div id="videoContainer">
         <div class="videoBlock">
@@ -75,16 +72,12 @@ function addNewInput() {
     updateNumbers();
 }
 
-// ✅ Page load pe numbering fix (existing block ke liye)
-updateNumbers();
+// First input
+addNewInput();
 
-// ✅ ONLY ONE click event
 addBtn.addEventListener("click", addNewInput);
-
 </script>
-    
 
-    
 <style>
 .videoBlock {
     display: flex;
@@ -108,10 +101,9 @@ addBtn.addEventListener("click", addNewInput);
 
 .videoInput {
     flex: 1;
-    height: 40px;
+    height: 80px;
 }
 </style>
-
     
 <script>
 const SUPABASE_URL = "https://emhnjxzenbxsaxdpzltf.supabase.co";
@@ -153,21 +145,13 @@ async function uploadThumbnail() {
 document.getElementById("imageUpload").addEventListener("change", uploadThumbnail);
 
 // --- Dynamic Input Management ---
+document.getElementById("addMore").onclick = () => {
+    const box = document.createElement("textarea");
+    box.className = "videoInput";
+    box.placeholder = "Paste video link";
+    document.getElementById("videoContainer").appendChild(box);
+};
 
-
-
-
-    
-
-
-
-
-
-
-
-
-
-    
 // --- URL Format Helpers ---
 
 
