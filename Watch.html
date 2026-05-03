@@ -364,9 +364,21 @@ async function loadVideo(){
 
 
 
-
-
 async function loadRecommended(){
+
+  // 🔥 helper function
+  function extractVideoInfo(title){
+    let lower = title.toLowerCase();
+
+    let match = lower.match(/(part|video)[\s-]*(\d+)/i);
+    let number = match ? parseInt(match[2]) : 0;
+
+    let base = lower
+      .replace(/(part|video)[\s-]*\d+/ig, '')
+      .trim();
+
+    return { baseTitle: base, partNumber: number };
+  }
 
   // Current video title
   const currentRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${videoId}&select=title`, {
@@ -380,10 +392,12 @@ async function loadRecommended(){
   if(!currentData.length) return;
 
   let fullTitle = currentData[0].title;
-  let baseTitle = fullTitle.toLowerCase().split("part")[0].trim();
 
-  // 🔥 IMPORTANT: video_link + thumbnail fetch karo
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?title=ilike.${baseTitle}%25&select=id,title,thumbnail,video_link,views&order=created_at.asc`, {
+  // 🔥 NEW LOGIC
+  let { baseTitle, partNumber } = extractVideoInfo(fullTitle);
+
+  // Fetch similar videos
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?title=ilike.*${baseTitle}*&select=id,title,thumbnail,video_link,views`, {
     headers:{
       "apikey": API_KEY,
       "Authorization": "Bearer " + API_KEY
@@ -391,15 +405,27 @@ async function loadRecommended(){
   });
 
   const data = await res.json();
+
+  // 🔥 FILTER + SORT
+  let filtered = data
+    .map(v => {
+      let info = extractVideoInfo(v.title);
+      return { ...v, part: info.partNumber, base: info.baseTitle };
+    })
+    .filter(v => v.base === baseTitle && v.id != videoId)
+    .sort((a,b) => a.part - b.part);
+
+  // 👉 only next parts (optional but best UX)
+  filtered = filtered.filter(v => v.part > partNumber);
+
   const box = document.getElementById("recommended");
   box.innerHTML = "";
 
-  data.forEach(v => {
-    if(v.id == videoId) return;
+  filtered.forEach(v => {
 
     let thumbHTML = "";
 
-    // 🎥 VIDEO PREVIEW (priority)
+    // 🎥 VIDEO PREVIEW (same as your code)
     if(v.thumbnail && v.thumbnail.endsWith(".mp4")){
         thumbHTML = `
         <video 
@@ -422,7 +448,7 @@ async function loadRecommended(){
 
     } else {
         // 🖼 IMAGE fallback
-        thumbHTML = `<img src="${v.thumbnail || 'default.jpg'}">`;
+        thumbHTML = `<img src="${v.thumbnail || 'default.jpg'}" style="width:140px;height:80px;object-fit:cover;border-radius:8px;">`;
     }
 
     box.innerHTML += `
@@ -434,6 +460,7 @@ async function loadRecommended(){
         </div>
       </div>`;
   });
+
 }
 
 
