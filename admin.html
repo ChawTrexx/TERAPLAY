@@ -43,6 +43,56 @@
 <div class="video-list" id="list">
     </div>
 
+
+<script>
+const container = document.getElementById("videoContainer");
+const addBtn = document.getElementById("addMore");
+
+// 🔥 Function to update numbering
+function updateNumbers() {
+    const blocks = document.querySelectorAll(".videoBlock");
+    blocks.forEach((block, index) => {
+        block.querySelector(".number").innerText = index + 1;
+    });
+}
+
+// 🔥 Add new textarea
+function addNewInput() {
+    const div = document.createElement("div");
+    div.className = "videoBlock";
+
+    div.innerHTML = `
+        <div class="number"></div>
+        <textarea class="videoInput" placeholder="Paste video link or iframe"></textarea>
+    `;
+
+    container.appendChild(div);
+    updateNumbers();
+}
+
+// First input auto add
+addNewInput();
+
+// Button click
+addBtn.addEventListener("click", addNewInput);
+</script>
+
+<style>
+.videoBlock {
+    margin-bottom: 10px;
+}
+
+.number {
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #00ffcc;
+}
+textarea {
+    width: 100%;
+    height: 70px;
+}
+</style>
+    
 <script>
 const SUPABASE_URL = "https://emhnjxzenbxsaxdpzltf.supabase.co";
 const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtaG5qeHplbmJ4c2F4ZHB6bHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0Nzk2MzcsImV4cCI6MjA5MTA1NTYzN30.7f0MSHe_UABXWnLhZh0oPYrGzMiiggiBpALuhLnDL1U";
