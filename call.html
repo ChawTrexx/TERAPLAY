@@ -41,21 +41,23 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
-  authDomain: "wechat-eee4d.firebaseapp.com",
-  databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "wechat-eee4d",
-  storageBucket: "wechat-eee4d.firebasestorage.app",
-  messagingSenderId: "156838661275",
-  appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
+  apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
+  authDomain: "wechat-34e85.firebaseapp.com",
+  databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wechat-34e85",
+  storageBucket: "wechat-34e85.firebasestorage.app",
+  messagingSenderId: "935799721802",
+  appId: "1:935799721802:web:a151f180fc96c15ef9bbb3",
+  measurementId: "G-11S5VDLB6L"
 };
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
+const analytics = getAnalytics(app);
 const callBtn=document.getElementById('callBtn');
 const hangupBtn=document.getElementById('hangupBtn');
 const muteBtn=document.getElementById('muteBtn');
