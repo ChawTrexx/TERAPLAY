@@ -355,26 +355,48 @@ body{
 
 <script>
 
-/*
-URL Example:
-
-?url=https://terasharefile.com/s/xxxxx
-*/
-
 const params = new URLSearchParams(window.location.search);
 
 const videoUrl = params.get("url");
 
 if(videoUrl){
 
-    // 🔥 iframe source
-    document.getElementById("videoFrame").src =
-        "https://1024teradownloader.in/watch?url=" +
-        encodeURIComponent(videoUrl);
+    // 🔥 Support ALL TeraBox Domains
+    const supportedDomains = [
+        "1024terabox.com",
+        "terabox.com",
+        "teraboxapp.com",
+        "teraboxlink.com",
+        "terasharelink.com",
+        "teraboxshare.com",
+        "terasharefile.com",
+        "nephobox.com",
+        "freeterabox.com",
+        "momerybox.com",
+        "1024tera.com"
+    ];
 
-    // 🔗 footer button
-    document.getElementById("teraLink").href =
-        videoUrl;
+    // ✅ Check valid domain
+    const isValid = supportedDomains.some(domain =>
+        videoUrl.includes(domain)
+    );
+
+    if(isValid){
+
+        // 🎥 iframe player
+        document.getElementById("videoFrame").src =
+            "https://1024teradownloader.in/watch?url=" +
+            encodeURIComponent(videoUrl);
+
+        // 🔗 Footer button
+        document.getElementById("teraLink").href =
+            videoUrl;
+
+    }else{
+
+        alert("Invalid TeraBox URL");
+
+    }
 
 }else{
 
