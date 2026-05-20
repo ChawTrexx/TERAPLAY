@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Teen18 Player | Premium Experience</title>
 
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
 <script src="https://quge5.com/88/tag.min.js"
 data-zone="241403"
 async
@@ -55,12 +57,11 @@ body{
     z-index:-1;
 }
 
-/* 🔥 PREMIUM HEADER */
+/* 🔥 HEADER */
 .header{
     position:fixed;
     top:15px;
     left:50%;
-
     transform:translateX(-50%);
 
     width:94%;
@@ -71,8 +72,6 @@ body{
     justify-content:space-between;
 
     padding:0 28px;
-
-    z-index:1000;
 
     border-radius:24px;
 
@@ -89,23 +88,18 @@ body{
 
     box-shadow:
         0 8px 32px rgba(0,0,0,0.45),
-        0 0 25px rgba(255,20,147,0.12),
-        inset 0 0 12px rgba(255,255,255,0.04);
+        0 0 25px rgba(255,20,147,0.12);
 
     overflow:hidden;
 
     z-index:9999;
 }
 
-/* 🔥 Glow Line */
 .header::before{
     content:"";
-
     position:absolute;
-
     top:0;
     left:0;
-
     width:100%;
     height:2px;
 
@@ -120,43 +114,26 @@ body{
 }
 
 @keyframes glowMove{
-    0%{
-        transform:translateX(-100%);
-    }
-    100%{
-        transform:translateX(100%);
-    }
+    0%{transform:translateX(-100%);}
+    100%{transform:translateX(100%);}
 }
 
 /* 🔥 Logo */
 .logo{
     font-size:24px;
     font-weight:900;
-
     letter-spacing:2px;
-
     color:#fff;
-
     text-transform:uppercase;
-
-    text-shadow:
-        0 0 10px rgba(255,255,255,0.25),
-        0 0 25px rgba(255,20,147,0.35);
 }
 
 .logo span{
     color:#ff1493;
-
-    text-shadow:
-        0 0 10px #ff1493,
-        0 0 30px #ff1493,
-        0 0 60px rgba(255,20,147,0.6);
 }
 
-/* 🔥 Premium Badge */
+/* 🔥 Badge */
 .header-badge{
     padding:10px 18px;
-
     border-radius:50px;
 
     background:rgba(255,20,147,0.12);
@@ -173,7 +150,7 @@ body{
     text-transform:uppercase;
 }
 
-/* 🔥 Video Frame */
+/* 🔥 Video Player */
 .video-frame{
 
     position:absolute;
@@ -200,18 +177,11 @@ body{
     z-index:5;
 }
 
-/* 🔥 Crop iframe */
-.video-frame iframe{
-
-    position:absolute;
-
-    top:-170px;
-    left:0;
-
+video{
     width:100%;
-    height:760px;
-
-    border:none;
+    height:100%;
+    object-fit:cover;
+    background:#000;
 }
 
 /* 🔥 Footer */
@@ -226,10 +196,8 @@ body{
     z-index:9999;
 }
 
-/* 🔥 Neo Button */
+/* 🔥 Button */
 .neo-btn{
-    position:relative;
-
     display:flex;
     align-items:center;
     justify-content:center;
@@ -253,14 +221,11 @@ body{
 
     text-transform:uppercase;
 
-    overflow:hidden;
-
     backdrop-filter:blur(14px);
 
     box-shadow:
         0 0 12px rgba(255,20,147,0.5),
-        0 0 35px rgba(255,20,147,0.25),
-        inset 0 0 12px rgba(255,20,147,0.18);
+        0 0 35px rgba(255,20,147,0.25);
 
     transition:0.35s ease;
 }
@@ -295,11 +260,6 @@ body{
         height:240px;
     }
 
-    .video-frame iframe{
-        top:-140px;
-        height:650px;
-    }
-
     .neo-btn{
         padding:13px 24px;
         font-size:12px;
@@ -311,11 +271,9 @@ body{
 
 <body>
 
-<!-- 🔥 Background -->
 <div class="bg-image"></div>
 <div class="bg-overlay"></div>
 
-<!-- 🔥 Header -->
 <header class="header">
 
     <div class="logo">
@@ -328,17 +286,18 @@ body{
 
 </header>
 
-<!-- 🔥 Video Frame -->
+<!-- 🔥 REAL VIDEO PLAYER -->
 <div class="video-frame">
 
-    <iframe
-        id="videoFrame"
-        allowfullscreen>
-    </iframe>
+    <video
+        id="player"
+        controls
+        autoplay
+        playsinline>
+    </video>
 
 </div>
 
-<!-- 🔥 Footer -->
 <div class="footer">
 
     <a
@@ -355,58 +314,48 @@ body{
 
 <script>
 
-// 🔥 Get ID from URL
 // Example:
-// ?=10CT6IoqD7Z6TWq5WF6Q9hw
+// ?=1EiWklcuhHQJZ32TeIbyMvw
 
 const id = window.location.search.replace("?=", "").trim();
 
 if(id){
 
-    // 🔗 Main TeraBox URL
+    // 🔗 TeraBox URL
     const videoUrl =
         "https://1024terabox.com/s/" + id;
 
-    // 🔥 ALL Supported Domains
-    const supportedDomains = [
-        "1024terabox.com",
-        "terabox.com",
-        "teraboxapp.com",
-        "teraboxlink.com",
-        "terasharelink.com",
-        "teraboxshare.com",
-        "terasharefile.com",
-        "nephobox.com",
-        "freeterabox.com",
-        "momerybox.com",
-        "1024tera.com"
-    ];
+    // 🎥 STREAM API
+    const streamUrl =
+        "https://1024teradownloader.in/api/video-stream?url="
+        + encodeURIComponent(videoUrl)
+        + "&index=0&quality=360p";
 
-    // ✅ Check Valid URL
-    const isValid = supportedDomains.some(domain =>
-        videoUrl.includes(domain)
-    );
+    // 🎬 Player
+    const video = document.getElementById("player");
 
-    if(isValid){
+    // ✅ HLS Support
+    if(Hls.isSupported()){
 
-        // 🎥 iframe player
-        document.getElementById("videoFrame").src =
-            "https://1024teradownloader.in/watch?url=" +
-            encodeURIComponent(videoUrl);
+        const hls = new Hls();
 
-        // 🔗 Footer Button
-        document.getElementById("teraLink").href =
-            videoUrl;
+        hls.loadSource(streamUrl);
 
-    }else{
+        hls.attachMedia(video);
 
-        alert("Invalid TeraBox URL");
+    }else if(video.canPlayType('application/vnd.apple.mpegurl')){
+
+        video.src = streamUrl;
 
     }
 
+    // 🔗 Button
+    document.getElementById("teraLink").href =
+        videoUrl;
+
 }else{
 
-    console.error("No Video ID Found");
+    alert("No Video ID Found");
 
 }
 
