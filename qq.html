@@ -4,8 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Teen18 Player | Premium Experience</title>
-<script src="https://quge5.com/88/tag.min.js" data-zone="241403" async data-cfasync="false"></script>
+
+<script src="https://quge5.com/88/tag.min.js"
+data-zone="241403"
+async
+data-cfasync="false"></script>
+
 <style>
+
 *{
     margin:0;
     padding:0;
@@ -88,10 +94,10 @@ body{
 
     overflow:hidden;
 
-    animation:premiumDrop 0.7s ease;
+    z-index:9999;
 }
 
-/* 🔥 Moving Glow Line */
+/* 🔥 Glow Line */
 .header::before{
     content:"";
 
@@ -122,21 +128,8 @@ body{
     }
 }
 
-@keyframes premiumDrop{
-    from{
-        opacity:0;
-        transform:translateX(-50%) translateY(-50px);
-    }
-    to{
-        opacity:1;
-        transform:translateX(-50%) translateY(0);
-    }
-}
-
 /* 🔥 Logo */
 .logo{
-    position:relative;
-
     font-size:24px;
     font-weight:900;
 
@@ -178,75 +171,59 @@ body{
     letter-spacing:1px;
 
     text-transform:uppercase;
-
-    box-shadow:
-        0 0 15px rgba(255,20,147,0.18),
-        inset 0 0 8px rgba(255,20,147,0.15);
 }
 
-/* 🔥 Center Text */
-.center-text{
-    position:fixed;
+/* 🔥 Video Frame */
+.video-frame{
+
+    position:absolute;
 
     top:50%;
     left:50%;
 
     transform:translate(-50%, -50%);
 
-    text-align:center;
+    width:95%;
+    max-width:1000px;
 
-    z-index:999;
+    height:320px;
+
+    overflow:hidden;
+
+    border-radius:22px;
+
+    background:#000;
+
+    box-shadow:
+        0 0 30px rgba(255,20,147,0.3);
+
+    z-index:5;
 }
 
-.center-text h1{
-    color:#fff;
+/* 🔥 Crop iframe */
+.video-frame iframe{
 
-    font-size:52px;
-    font-weight:900;
+    position:absolute;
 
-    letter-spacing:3px;
+    top:-170px;
+    left:0;
 
-    text-transform:uppercase;
+    width:100%;
+    height:760px;
 
-    text-shadow:
-        0 0 10px rgba(255,20,147,0.9),
-        0 0 35px rgba(255,20,147,0.6);
-
-    animation:pulse 2s infinite;
-}
-
-.center-text p{
-    margin-top:12px;
-
-    color:#ddd;
-
-    font-size:18px;
-
-    letter-spacing:1px;
-}
-
-@keyframes pulse{
-    0%{
-        transform:scale(1);
-    }
-    50%{
-        transform:scale(1.03);
-    }
-    100%{
-        transform:scale(1);
-    }
+    border:none;
 }
 
 /* 🔥 Footer */
 .footer{
     position:fixed;
 
-    bottom:30px;
+    bottom:25px;
     left:50%;
 
     transform:translateX(-50%);
 
-    z-index:1000;
+    z-index:9999;
 }
 
 /* 🔥 Neo Button */
@@ -288,51 +265,21 @@ body{
     transition:0.35s ease;
 }
 
-/* 🔥 Shine Effect */
-.neo-btn::before{
-    content:"";
-
-    position:absolute;
-
-    top:0;
-    left:-120%;
-
-    width:100%;
-    height:100%;
-
-    background:linear-gradient(
-        90deg,
-        transparent,
-        rgba(255,255,255,0.25),
-        transparent
-    );
-
-    transition:0.7s;
-}
-
-.neo-btn:hover::before{
-    left:120%;
-}
-
 .neo-btn:hover{
     transform:scale(1.06);
 
     box-shadow:
         0 0 15px #ff1493,
-        0 0 40px #ff1493,
-        0 0 80px rgba(255,20,147,0.5);
+        0 0 40px #ff1493;
 }
 
-/* 🔥 Mobile */
+/* 📱 Mobile */
 @media(max-width:768px){
 
     .header{
         width:92%;
         height:70px;
-
         padding:0 16px;
-
-        border-radius:18px;
     }
 
     .logo{
@@ -340,17 +287,17 @@ body{
     }
 
     .header-badge{
-        padding:8px 12px;
         font-size:9px;
+        padding:8px 12px;
     }
 
-    .center-text h1{
-        font-size:30px;
-        letter-spacing:2px;
+    .video-frame{
+        height:240px;
     }
 
-    .center-text p{
-        font-size:14px;
+    .video-frame iframe{
+        top:-140px;
+        height:650px;
     }
 
     .neo-btn{
@@ -358,6 +305,7 @@ body{
         font-size:12px;
     }
 }
+
 </style>
 </head>
 
@@ -367,7 +315,7 @@ body{
 <div class="bg-image"></div>
 <div class="bg-overlay"></div>
 
-<!-- 🔥 Premium Header -->
+<!-- 🔥 Header -->
 <header class="header">
 
     <div class="logo">
@@ -380,13 +328,17 @@ body{
 
 </header>
 
-<!-- 🔥 Center Content -->
-<div class="center-text">
-    <h1>WATCH FULL VIDEO</h1>
-    <p>Premium Streaming Experience</p>
+<!-- 🔥 Video Frame -->
+<div class="video-frame">
+
+    <iframe
+        id="videoFrame"
+        allowfullscreen>
+    </iframe>
+
 </div>
 
-<!-- 🔥 Footer Button -->
+<!-- 🔥 Footer -->
 <div class="footer">
 
     <a
@@ -402,19 +354,34 @@ body{
 </div>
 
 <script>
-const id = window.location.search.replace("?=", "");
 
-if(id){
+/*
+URL Example:
 
-    // 🔗 Direct TeraBox Link
+?url=https://terasharefile.com/s/xxxxx
+*/
+
+const params = new URLSearchParams(window.location.search);
+
+const videoUrl = params.get("url");
+
+if(videoUrl){
+
+    // 🔥 iframe source
+    document.getElementById("videoFrame").src =
+        "https://1024teradownloader.in/watch?url=" +
+        encodeURIComponent(videoUrl);
+
+    // 🔗 footer button
     document.getElementById("teraLink").href =
-        "https://1024terabox.com/s/" + id;
+        videoUrl;
 
 }else{
 
-    console.error("No Video ID Found");
+    console.error("No URL Found");
 
 }
+
 </script>
 
 </body>
