@@ -150,7 +150,18 @@ body{
     text-transform:uppercase;
 }
 
-/* 🔥 Video Player */
+
+
+/* 🔥 Footer */
+.footer{
+    position:fixed;
+
+    bottom:25px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+ /* 🔥 Video Player */
 .video-frame{
 
     position:absolute;
@@ -161,9 +172,9 @@ body{
     transform:translate(-50%, -50%);
 
     width:95%;
-    max-width:1000px;
+    max-width:1200px;
 
-    height:320px;
+    height:78vh;
 
     overflow:hidden;
 
@@ -180,20 +191,27 @@ body{
 video{
     width:100%;
     height:100%;
-    object-fit:cover;
+
+    /* ✅ Full Original Video */
+    object-fit:contain;
+
     background:#000;
 }
 
-/* 🔥 Footer */
-.footer{
-    position:fixed;
+/* 📱 Mobile */
+@media(max-width:768px){
 
-    bottom:25px;
-    left:50%;
+    .video-frame{
+        width:100%;
+        height:100vh;
+        border-radius:0;
+    }
 
-    transform:translateX(-50%);
-
-    z-index:9999;
+    video{
+        object-fit:contain;
+    }
+}
+   z-index:9999;
 }
 
 /* 🔥 Button */
