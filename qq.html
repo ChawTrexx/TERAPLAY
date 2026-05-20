@@ -355,13 +355,19 @@ body{
 
 <script>
 
-const params = new URLSearchParams(window.location.search);
+// 🔥 Get ID from URL
+// Example:
+// ?=10CT6IoqD7Z6TWq5WF6Q9hw
 
-const videoUrl = params.get("url");
+const id = window.location.search.replace("?=", "").trim();
 
-if(videoUrl){
+if(id){
 
-    // 🔥 Support ALL TeraBox Domains
+    // 🔗 Main TeraBox URL
+    const videoUrl =
+        "https://1024terabox.com/s/" + id;
+
+    // 🔥 ALL Supported Domains
     const supportedDomains = [
         "1024terabox.com",
         "terabox.com",
@@ -376,7 +382,7 @@ if(videoUrl){
         "1024tera.com"
     ];
 
-    // ✅ Check valid domain
+    // ✅ Check Valid URL
     const isValid = supportedDomains.some(domain =>
         videoUrl.includes(domain)
     );
@@ -388,7 +394,7 @@ if(videoUrl){
             "https://1024teradownloader.in/watch?url=" +
             encodeURIComponent(videoUrl);
 
-        // 🔗 Footer button
+        // 🔗 Footer Button
         document.getElementById("teraLink").href =
             videoUrl;
 
@@ -400,7 +406,7 @@ if(videoUrl){
 
 }else{
 
-    console.error("No URL Found");
+    console.error("No Video ID Found");
 
 }
 
