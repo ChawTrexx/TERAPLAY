@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teen18 Player | Premium Experience</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
+<title>Teen18 Premium Player</title>
+
+<!-- 🔥 VideoJS Web Components -->
+<script type="module"
+src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js">
+</script>
+
+<!-- 🔥 HLS -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
-<script src="https://quge5.com/88/tag.min.js"
-data-zone="241403"
-async
-data-cfasync="false"></script>
-
-   
 
 <style>
 
@@ -20,170 +20,204 @@ data-cfasync="false"></script>
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
 }
 
 body{
-    overflow:hidden;
-    background:#000;
+    width:100%;
     height:100vh;
+
+    overflow:hidden;
+
+    background:#000;
+
+    font-family:
+    'Segoe UI',
+    sans-serif;
 }
 
 /* 🔥 Background */
-.bg-image{
+.bg{
+
     position:fixed;
+
     inset:0;
 
-    background:url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1920&auto=format&fit=crop')
-    center center/cover no-repeat;
+    background:
+    url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1920&auto=format&fit=crop')
+    center/cover no-repeat;
 
-    filter:blur(2px) brightness(0.35);
+    filter:
+    blur(10px)
+    brightness(.35);
 
-    transform:scale(1.05);
+    transform:scale(1.1);
 
     z-index:-2;
 }
 
 /* 🔥 Overlay */
-.bg-overlay{
+.overlay{
+
     position:fixed;
+
     inset:0;
 
-    background:linear-gradient(
+    background:
+    linear-gradient(
         to bottom,
-        rgba(0,0,0,0.82),
-        rgba(0,0,0,0.45),
-        rgba(0,0,0,0.92)
+        rgba(0,0,0,.75),
+        rgba(0,0,0,.35),
+        rgba(0,0,0,.92)
     );
 
     z-index:-1;
 }
 
-/* 🔥 HEADER */
+/* 🔥 Header */
 .header{
+
     position:fixed;
-    top:15px;
+
+    top:18px;
     left:50%;
+
     transform:translateX(-50%);
 
     width:94%;
-    height:82px;
+
+    height:78px;
+
+    border-radius:24px;
+
+    padding:0 25px;
 
     display:flex;
     align-items:center;
     justify-content:space-between;
 
-    padding:0 28px;
-
-    border-radius:24px;
+    backdrop-filter:blur(20px);
 
     background:
-        linear-gradient(
-            135deg,
-            rgba(255,255,255,0.08),
-            rgba(255,255,255,0.02)
-        );
+    rgba(255,255,255,.05);
 
-    backdrop-filter:blur(18px);
-
-    border:1px solid rgba(255,255,255,0.08);
+    border:
+    1px solid rgba(255,255,255,.08);
 
     box-shadow:
-        0 8px 32px rgba(0,0,0,0.45),
-        0 0 25px rgba(255,20,147,0.12);
+    0 0 30px rgba(255,20,147,.15);
 
-    overflow:hidden;
-
-    z-index:9999;
+    z-index:999;
 }
 
-.header::before{
-    content:"";
-    position:absolute;
-    top:0;
-    left:0;
-    width:100%;
-    height:2px;
-
-    background:linear-gradient(
-        90deg,
-        transparent,
-        #ff1493,
-        transparent
-    );
-
-    animation:glowMove 4s linear infinite;
-}
-
-@keyframes glowMove{
-    0%{
-        transform:translateX(-100%);
-    }
-    100%{
-        transform:translateX(100%);
-    }
-}
-
-/* 🔥 Logo */
 .logo{
-    font-size:24px;
-    font-weight:900;
-    letter-spacing:2px;
+
     color:#fff;
-    text-transform:uppercase;
+
+    font-size:24px;
+
+    font-weight:900;
+
+    letter-spacing:2px;
 }
 
 .logo span{
     color:#ff1493;
 }
 
-/* 🔥 Badge */
-.header-badge{
-    padding:10px 18px;
-    border-radius:50px;
+.badge{
 
-    background:rgba(255,20,147,0.12);
-
-    border:1px solid rgba(255,20,147,0.35);
-
-    color:#ff4db8;
+    color:#ff5ab5;
 
     font-size:11px;
+
     font-weight:700;
 
     letter-spacing:1px;
 
-    text-transform:uppercase;
+    padding:10px 16px;
+
+    border-radius:999px;
+
+    border:
+    1px solid rgba(255,20,147,.45);
+
+    background:
+    rgba(255,20,147,.08);
 }
 
-/* 🔥 Video Player */
-.video-frame{
+/* 🔥 Player Box */
+.player-wrap{
 
     position:absolute;
 
     top:50%;
     left:50%;
 
-    transform:translate(-50%, -50%);
+    transform:translate(-50%,-50%);
 
-    width:95%;
-    max-width:1200px;
+    width:94%;
 
-    height:50vh;
+    max-width:1250px;
+
+    height:74vh;
+
+    border-radius:30px;
 
     overflow:hidden;
-
-    border-radius:22px;
 
     background:#000;
 
     box-shadow:
-        0 0 30px rgba(255,20,147,0.3);
+    0 0 35px rgba(255,20,147,.25),
+    0 25px 80px rgba(0,0,0,.7);
 
-    z-index:5;
+    border:
+    1px solid rgba(255,255,255,.08);
 }
 
+/* 🔥 Glow */
+.player-wrap::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    border-radius:30px;
+
+    padding:2px;
+
+    background:
+    linear-gradient(
+        135deg,
+        #ff1493,
+        transparent,
+        #00bfff
+    );
+
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+
+    -webkit-mask-composite:xor;
+
+    pointer-events:none;
+
+    z-index:2;
+}
+
+/* 🔥 VideoJS Component */
+video-player,
+video-skin{
+
+    width:100%;
+    height:100%;
+}
+
+/* 🔥 Actual Video */
 video{
+
     width:100%;
     height:100%;
 
@@ -192,180 +226,111 @@ video{
     background:#000;
 }
 
-/* 🔥 Footer */
-.footer{
-    position:fixed;
-
-    bottom:25px;
-    left:50%;
-
-    transform:translateX(-50%);
-
-    z-index:9999;
-}
-
-/* 🔥 Button */
-.neo-btn{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    padding:15px 34px;
-
-    border-radius:60px;
-
-    background:rgba(15,15,15,0.55);
-
-    border:1px solid rgba(255,20,147,0.7);
-
-    color:#fff;
-
-    text-decoration:none;
-
-    font-size:14px;
-    font-weight:700;
-
-    letter-spacing:1px;
-
-    text-transform:uppercase;
-
-    backdrop-filter:blur(14px);
-
-    box-shadow:
-        0 0 12px rgba(255,20,147,0.5),
-        0 0 35px rgba(255,20,147,0.25);
-
-    transition:0.35s ease;
-}
-
-.neo-btn:hover{
-    transform:scale(1.06);
-
-    box-shadow:
-        0 0 15px #ff1493,
-        0 0 40px #ff1493;
-}
-
 /* 📱 Mobile */
 @media(max-width:768px){
 
+    .player-wrap{
+
+        width:100%;
+        height:100vh;
+
+        border-radius:0;
+    }
+
     .header{
+
         width:92%;
-        height:70px;
-        padding:0 16px;
+        height:68px;
     }
 
     .logo{
         font-size:18px;
     }
 
-    .header-badge{
+    .badge{
         font-size:9px;
-        padding:8px 12px;
-    }
-
-    .video-frame{
-        width:100%;
-        height:100vh;
-        border-radius:0;
-    }
-
-    .neo-btn{
-        padding:13px 24px;
-        font-size:12px;
     }
 }
 
 </style>
-
-
-
-    
 </head>
 
 <body>
 
-<div class="bg-image"></div>
-<div class="bg-overlay"></div>
+<div class="bg"></div>
+<div class="overlay"></div>
 
-<header class="header">
+<!-- 🔥 Header -->
+<div class="header">
 
     <div class="logo">
-        TEEN<span>18</span> PLAYER
+        TEEN<span>18</span>
     </div>
 
-    <div class="header-badge">
-        Ultra HD Streaming
+    <div class="badge">
+        PREMIUM STREAM
     </div>
-
-</header>
-
-<!-- 🔥 REAL VIDEO PLAYER -->
-<div class="video-frame">
-
-    <video
-        id="player"
-        controls
-        autoplay
-        playsinline>
-    </video>
 
 </div>
 
-<div class="footer">
+<!-- 🔥 Player -->
+<div class="player-wrap">
 
-    <a
-        id="teraLink"
-        class="neo-btn"
-        href="#"
-        target="_blank">
+    <video-player>
 
-        🚀 TERABOX LINK 🚀
+        <video-skin>
 
-    </a>
+            <video
+                id="player"
+                autoplay
+                controls
+                playsinline>
+            </video>
+
+        </video-skin>
+
+    </video-player>
 
 </div>
 
 <script>
 
-// Example:
+// 🔥 Example:
 // ?=1EiWklcuhHQJZ32TeIbyMvw
 
-const id = window.location.search.replace("?=", "").trim();
+const id =
+window.location.search.replace("?=","").trim();
 
 if(id){
 
-    // 🔗 TeraBox URL
-    const videoUrl =
-        "https://1024terabox.com/s/" + id;
+    // 🔗 TeraBox Link
+    const teraUrl =
+    "https://1024terabox.com/s/" + id;
 
-    // 🎥 STREAM API
+    // 🎥 Stream URL
     const streamUrl =
-        "https://1024teradownloader.in/api/video-stream?url="
-        + encodeURIComponent(videoUrl)
-        + "&index=0&quality=360p";
+    "https://1024teradownloader.in/api/video-stream?url="
+    + encodeURIComponent(teraUrl)
+    + "&index=0&quality=360p";
 
-    // 🎬 Player
-    const video = document.getElementById("player");
+    const video =
+    document.getElementById("player");
 
-    // ✅ HLS Support
+    // 🔥 HLS Support
     if(Hls.isSupported()){
 
-        const hls = new Hls();
+        const hls =
+        new Hls();
 
         hls.loadSource(streamUrl);
 
         hls.attachMedia(video);
 
-    }else if(video.canPlayType('application/vnd.apple.mpegurl')){
+    }else{
 
-        video.src = streamUrl;
-
+        video.src =
+        streamUrl;
     }
-
-    // 🔗 Button
-    document.getElementById("teraLink").href =
-        videoUrl;
 
 }else{
 
