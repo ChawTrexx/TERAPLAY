@@ -3,121 +3,417 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teen18 Player | Premium Experience</title> 
-    <script type="text/javascript" data-cfasync="false">
-/*<![CDATA[/* */
-(function(){var h=window,k="c7c81412ec48f0ae361fb200abc24504",q=[["siteId",989+761*826+702+871+4625301],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],p=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL1dTRS93L3dmbG93Lm1pbi5qcw==","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvaWpxdWVyeS50eXBlYWhlYWQubWluLmpz","d3d3Lmd2Y25la3RnLmNvbS9pb1pwUS92RC93Zmxvdy5taW4uanM=","d3d3LmFiZGd1dWxkY3ZyYi5jb20vdGpxdWVyeS50eXBlYWhlYWQubWluLmpz"],w=-1,j,n,y=function(){clearTimeout(n);w++;if(p[w]&&!(1803960938000<(new Date).getTime()&&1<w)){j=h.document.createElement("script");j.type="text/javascript";j.async=!0;var i=h.document.getElementsByTagName("script")[0];j.src="https://"+atob(p[w]);j.crossOrigin="anonymous";j.onerror=y;j.onload=function(){clearTimeout(n);h[k.slice(0,16)+k.slice(0,16)]||y()};n=setTimeout(y,5E3);i.parentNode.insertBefore(j,i)}};if(!h[k]){try{Object.freeze(h[k]=q)}catch(e){}y()}})();
-/*]]>/* */
-    </script>
-    
+<title>Teen18 Player | Premium Experience</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}
-body{overflow:hidden;background:#050505;}
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
 
-#player-container{
-    position:fixed;
-    top:0;left:0;
-    width:100%;height:100vh;
+body{
+    overflow:hidden;
     background:#000;
+    height:100vh;
 }
 
-#player{
-    width:100%;
-    height:100%;
-    border:none;
+/* 🔥 Background */
+.bg-image{
+    position:fixed;
+    inset:0;
+
+    background:url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1920&auto=format&fit=crop')
+    center center/cover no-repeat;
+
+    filter:blur(2px) brightness(0.35);
+
+    transform:scale(1.05);
+
+    z-index:-2;
 }
 
+/* 🔥 Overlay */
+.bg-overlay{
+    position:fixed;
+    inset:0;
+
+    background:linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.82),
+        rgba(0,0,0,0.45),
+        rgba(0,0,0,0.92)
+    );
+
+    z-index:-1;
+}
+
+/* 🔥 PREMIUM HEADER */
 .header{
     position:fixed;
-    top:0;left:0;
-    width:100%;
-    height:95px;
-    z-index:1000;
+    top:15px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+    width:94%;
+    height:82px;
 
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:0 25px;
 
-    background:rgba(0,0,0,0.6);
-    backdrop-filter:blur(12px);
-    border-bottom:1px solid rgba(255,20,147,0.3);
+    padding:0 28px;
 
-    animation:slideDown 0.5s ease-out;
+    z-index:1000;
+
+    border-radius:24px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,255,255,0.08),
+            rgba(255,255,255,0.02)
+        );
+
+    backdrop-filter:blur(18px);
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    box-shadow:
+        0 8px 32px rgba(0,0,0,0.45),
+        0 0 25px rgba(255,20,147,0.12),
+        inset 0 0 12px rgba(255,255,255,0.04);
+
+    overflow:hidden;
+
+    animation:premiumDrop 0.7s ease;
 }
 
-@keyframes slideDown{
-    from{transform:translateY(-100%);}
-    to{transform:translateY(0);}
+/* 🔥 Moving Glow Line */
+.header::before{
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:2px;
+
+    background:linear-gradient(
+        90deg,
+        transparent,
+        #ff1493,
+        transparent
+    );
+
+    animation:glowMove 4s linear infinite;
 }
 
+@keyframes glowMove{
+    0%{
+        transform:translateX(-100%);
+    }
+    100%{
+        transform:translateX(100%);
+    }
+}
+
+@keyframes premiumDrop{
+    from{
+        opacity:0;
+        transform:translateX(-50%) translateY(-50px);
+    }
+    to{
+        opacity:1;
+        transform:translateX(-50%) translateY(0);
+    }
+}
+
+/* 🔥 Logo */
 .logo{
-    font-size:22px;
-    font-weight:800;
-    letter-spacing:1px;
+    position:relative;
+
+    font-size:24px;
+    font-weight:900;
+
+    letter-spacing:2px;
+
     color:#fff;
+
     text-transform:uppercase;
+
+    text-shadow:
+        0 0 10px rgba(255,255,255,0.25),
+        0 0 25px rgba(255,20,147,0.35);
 }
 
 .logo span{
     color:#ff1493;
-    text-shadow:0 0 10px rgba(255,20,147,0.8);
+
+    text-shadow:
+        0 0 10px #ff1493,
+        0 0 30px #ff1493,
+        0 0 60px rgba(255,20,147,0.6);
 }
 
-.status-pill{
-    background:rgba(255,20,147,0.2);
-    border:1px solid #ff1493;
-    color:#ff1493;
-    padding:6px 14px;
-    border-radius:20px;
-    font-size:12px;
-    font-weight:bold;
+/* 🔥 Premium Badge */
+.header-badge{
+    padding:10px 18px;
+
+    border-radius:50px;
+
+    background:rgba(255,20,147,0.12);
+
+    border:1px solid rgba(255,20,147,0.35);
+
+    color:#ff4db8;
+
+    font-size:11px;
+    font-weight:700;
+
+    letter-spacing:1px;
+
     text-transform:uppercase;
-    cursor:pointer;
-    transition:0.3s;
+
+    box-shadow:
+        0 0 15px rgba(255,20,147,0.18),
+        inset 0 0 8px rgba(255,20,147,0.15);
 }
 
-.status-pill:hover{
-    background:#ff1493;
+/* 🔥 Center Text */
+.center-text{
+    position:fixed;
+
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%, -50%);
+
+    text-align:center;
+
+    z-index:999;
+}
+
+.center-text h1{
     color:#fff;
+
+    font-size:52px;
+    font-weight:900;
+
+    letter-spacing:3px;
+
+    text-transform:uppercase;
+
+    text-shadow:
+        0 0 10px rgba(255,20,147,0.9),
+        0 0 35px rgba(255,20,147,0.6);
+
+    animation:pulse 2s infinite;
 }
 
-.no-select{
-  -webkit-user-select:none;
-  user-select:none;
+.center-text p{
+    margin-top:12px;
+
+    color:#ddd;
+
+    font-size:18px;
+
+    letter-spacing:1px;
+}
+
+@keyframes pulse{
+    0%{
+        transform:scale(1);
+    }
+    50%{
+        transform:scale(1.03);
+    }
+    100%{
+        transform:scale(1);
+    }
+}
+
+/* 🔥 Footer */
+.footer{
+    position:fixed;
+
+    bottom:30px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+    z-index:1000;
+}
+
+/* 🔥 Neo Button */
+.neo-btn{
+    position:relative;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:15px 34px;
+
+    border-radius:60px;
+
+    background:rgba(15,15,15,0.55);
+
+    border:1px solid rgba(255,20,147,0.7);
+
+    color:#fff;
+
+    text-decoration:none;
+
+    font-size:14px;
+    font-weight:700;
+
+    letter-spacing:1px;
+
+    text-transform:uppercase;
+
+    overflow:hidden;
+
+    backdrop-filter:blur(14px);
+
+    box-shadow:
+        0 0 12px rgba(255,20,147,0.5),
+        0 0 35px rgba(255,20,147,0.25),
+        inset 0 0 12px rgba(255,20,147,0.18);
+
+    transition:0.35s ease;
+}
+
+/* 🔥 Shine Effect */
+.neo-btn::before{
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:-120%;
+
+    width:100%;
+    height:100%;
+
+    background:linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.25),
+        transparent
+    );
+
+    transition:0.7s;
+}
+
+.neo-btn:hover::before{
+    left:120%;
+}
+
+.neo-btn:hover{
+    transform:scale(1.06);
+
+    box-shadow:
+        0 0 15px #ff1493,
+        0 0 40px #ff1493,
+        0 0 80px rgba(255,20,147,0.5);
+}
+
+/* 🔥 Mobile */
+@media(max-width:768px){
+
+    .header{
+        width:92%;
+        height:70px;
+
+        padding:0 16px;
+
+        border-radius:18px;
+    }
+
+    .logo{
+        font-size:18px;
+    }
+
+    .header-badge{
+        padding:8px 12px;
+        font-size:9px;
+    }
+
+    .center-text h1{
+        font-size:30px;
+        letter-spacing:2px;
+    }
+
+    .center-text p{
+        font-size:14px;
+    }
+
+    .neo-btn{
+        padding:13px 24px;
+        font-size:12px;
+    }
 }
 </style>
 </head>
 
-<body class="no-select">
+<body>
 
+<!-- 🔥 Background -->
+<div class="bg-image"></div>
+<div class="bg-overlay"></div>
+
+<!-- 🔥 Premium Header -->
 <header class="header">
-    <div class="logo">TEEN<span>18</span> PLAYER</div>
 
-    <!-- 🔥 Direct TeraBox Button -->
-    <a id="teraLink" href="#" target="_blank">
-        <div class="status-pill">TeraBox Link 🔗</div>
-    </a>
+    <div class="logo">
+        TEEN<span>18</span> PLAYER
+    </div>
+
+    <div class="header-badge">
+        Ultra HD Streaming
+    </div>
+
 </header>
 
-<div id="player-container">
-    <iframe id="player" allowfullscreen scrolling="no"></iframe>
+<!-- 🔥 Center Content -->
+<div class="center-text">
+    <h1>WATCH FULL VIDEO</h1>
+    <p>Premium Streaming Experience</p>
+</div>
+
+<!-- 🔥 Footer Button -->
+<div class="footer">
+
+    <a
+        id="teraLink"
+        class="neo-btn"
+        href="#"
+        target="_blank">
+
+        🚀 OPEN TERABOX LINK
+
+    </a>
+
 </div>
 
 <script>
 const id = window.location.search.replace("?=", "");
 
-if (id) {
+if(id){
 
-    // 🎥 iframe player (optional)
-    document.getElementById("player").src = "https://terabox.beer/watch/" + id;
+    // 🔗 Direct TeraBox Link
+    document.getElementById("teraLink").href =
+        "https://1024terabox.com/s/" + id;
 
-    // 🔥 direct TeraBox open
-    document.getElementById("teraLink").href = "https://1024terabox.com/s/" + id;
+}else{
 
-} else {
-    console.error("No Video ID found");
+    console.error("No Video ID Found");
+
 }
 </script>
 
