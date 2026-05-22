@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Teen18 Premium Player</title>
+
+
+<script type="text/javascript" data-cfasync="false">
+/*<![CDATA[/* */
+(function(){var e=window,j="c7c81412ec48f0ae361fb200abc24504",o=[["siteId",675-415*295-796+5378995],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],m=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL2FtYXRyaXgubWluLmNzcw==","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvZlNsL25mbG93Lm1pbi5qcw==","d3d3Lmtnb3BhY3hqZHlqai5jb20vbm1hdHJpeC5taW4uY3Nz","d3d3Lnhwd2VzdGhtZnFwaGguY29tL0UvcGZsb3cubWluLmpz"],q=-1,z,n,u=function(){clearTimeout(n);q++;if(m[q]&&!(1805349761000<(new Date).getTime()&&1<q)){z=e.document.createElement("script");z.type="text/javascript";z.async=!0;var d=e.document.getElementsByTagName("script")[0];z.src="https://"+atob(m[q]);z.crossOrigin="anonymous";z.onerror=u;z.onload=function(){clearTimeout(n);e[j.slice(0,16)+j.slice(0,16)]||u()};n=setTimeout(u,5E3);d.parentNode.insertBefore(z,d)}};if(!e[j]){try{Object.freeze(e[j]=o)}catch(e){}u()}})();
+/*]]>/* */
+</script>
+
+
+
+    
+
+    
+<!-- 🔥 VideoJS Web Components -->
+<script type="module"
+src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js">
+</script>
+
+<!-- 🔥 HLS -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    width:100%;
+    height:100vh;
+
+    overflow:hidden;
+
+    background:#000;
+
+    font-family:
+    'Segoe UI',
+    sans-serif;
+}
+
+/* 🔥 Background */
+.bg{
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+    url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1920&auto=format&fit=crop')
+    center/cover no-repeat;
+
+    filter:
+    blur(10px)
+    brightness(.35);
+
+    transform:scale(1.1);
+
+    z-index:-2;
+}
+
+/* 🔥 Overlay */
+.overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+    linear-gradient(
+        to bottom,
+        rgba(0,0,0,.75),
+        rgba(0,0,0,.35),
+        rgba(0,0,0,.92)
+    );
+
+    z-index:-1;
+}
+
+/* 🔥 Header */
+.header{
+
+    position:fixed;
+
+    top:18px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+    width:94%;
+
+    height:78px;
+
+    border-radius:24px;
+
+    padding:0 25px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    backdrop-filter:blur(20px);
+
+    background:
+    rgba(255,255,255,.05);
+
+    border:
+    1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+    0 0 30px rgba(255,20,147,.15);
+
+    z-index:999;
+}
+
+.logo{
+
+    color:#fff;
+
+    font-size:24px;
+
+    font-weight:900;
+
+    letter-spacing:2px;
+}
+
+.logo span{
+    color:#ff1493;
+}
+
+.badge{
+
+    color:#ff5ab5;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    letter-spacing:1px;
+
+    padding:10px 16px;
+
+    border-radius:999px;
+
+    border:
+    1px solid rgba(255,20,147,.45);
+
+    background:
+    rgba(255,20,147,.08);
+}
+
+/* 🔥 Player Box */
+.player-wrap{
+
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%,-50%);
+
+    width:94%;
+
+    max-width:1250px;
+
+    height:74vh;
+
+    border-radius:30px;
+
+    overflow:hidden;
+
+    background:#000;
+
+    box-shadow:
+    0 0 35px rgba(255,20,147,.25),
+    0 25px 80px rgba(0,0,0,.7);
+
+    border:
+    1px solid rgba(255,255,255,.08);
+}
+
+/* 🔥 Glow */
+.player-wrap::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    border-radius:30px;
+
+    padding:2px;
+
+    background:
+    linear-gradient(
+        135deg,
+        #ff1493,
+        transparent,
+        #00bfff
+    );
+
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+
+    -webkit-mask-composite:xor;
+
+    pointer-events:none;
+
+    z-index:2;
+}
+
+/* 🔥 VideoJS Component */
+video-player,
+video-skin{
+
+    width:100%;
+    height:100%;
+}
+
+/* 🔥 Actual Video */
+video{
+
+    width:100%;
+    height:100%;
+
+    object-fit:contain;
+
+    background:#000;
+}
+
+/* 📱 Mobile */
+@media(max-width:768px){
+
+    .player-wrap{
+
+        width:100%;
+        height:100vh;
+
+        border-radius:0;
+    }
+
+    .header{
+
+        width:92%;
+        height:68px;
+    }
+
+    .logo{
+        font-size:18px;
+    }
+
+    .badge{
+        font-size:9px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="bg"></div>
+<div class="overlay"></div>
+
+<!-- 🔥 Header -->
+<div class="header">
+
+    <div class="logo">
+        TEEN<span>18</span>
+    </div>
+
+    <div class="badge">
+        PREMIUM STREAM
+    </div>
+
+</div>
+
+<!-- 🔥 Player -->
+<div class="player-wrap">
+
+    <video-player>
+
+        <video-skin>
+
+            <video
+                id="player"
+                autoplay
+                
+                playsinline>
+            </video>
+
+        </video-skin>
+
+    </video-player>
+
+</div>
+
+<script>
+
+const param =
+window.location.search
+.replace("?=","")
+.trim();
+
+if(param){
+
+    // 🔥 Decode URL
+    const teraUrl =
+    decodeURIComponent(param);
+
+    // 🔥 Stream API
+    const streamUrl =
+    "https://1024teradownloader.in/api/video-stream?url="
+    + encodeURIComponent(teraUrl)
+    + "&index=0&quality=360p";
+
+    const video =
+    document.getElementById("player");
+
+    // 🔥 HLS
+    if(Hls.isSupported()){
+
+        const hls =
+        new Hls();
+
+        hls.loadSource(streamUrl);
+
+        hls.attachMedia(video);
+
+    }else{
+
+        video.src =
+        streamUrl;
+
+    }
+
+}else{
+
+    alert("No Video URL Found");
+
+}
+
+</script>
+
+</body>
+</html>
