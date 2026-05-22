@@ -1,24 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8"/>
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0"/>
 
 <title>Teen18 Premium Player</title>
 
+<!-- 🔥 Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
 
-<script type="text/javascript" data-cfasync="false">
-/*<![CDATA[/* */
-(function(){var e=window,j="c7c81412ec48f0ae361fb200abc24504",o=[["siteId",675-415*295-796+5378995],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],m=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL2FtYXRyaXgubWluLmNzcw==","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvZlNsL25mbG93Lm1pbi5qcw==","d3d3Lmtnb3BhY3hqZHlqai5jb20vbm1hdHJpeC5taW4uY3Nz","d3d3Lnhwd2VzdGhtZnFwaGguY29tL0UvcGZsb3cubWluLmpz"],q=-1,z,n,u=function(){clearTimeout(n);q++;if(m[q]&&!(1805349761000<(new Date).getTime()&&1<q)){z=e.document.createElement("script");z.type="text/javascript";z.async=!0;var d=e.document.getElementsByTagName("script")[0];z.src="https://"+atob(m[q]);z.crossOrigin="anonymous";z.onerror=u;z.onload=function(){clearTimeout(n);e[j.slice(0,16)+j.slice(0,16)]||u()};n=setTimeout(u,5E3);d.parentNode.insertBefore(z,d)}};if(!e[j]){try{Object.freeze(e[j]=o)}catch(e){}u()}})();
-/*]]>/* */
-</script>
-
-
-
-    
-
-    
-<!-- 🔥 VideoJS Web Components -->
+<!-- 🔥 VideoJS -->
 <script type="module"
 src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js">
 </script>
@@ -28,206 +20,17 @@ src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js">
 
 <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
 body{
-    width:100%;
-    height:100vh;
-
-    overflow:hidden;
-
-    background:#000;
-
-    font-family:
-    'Segoe UI',
-    sans-serif;
+    font-family:'Segoe UI',sans-serif;
 }
 
-/* 🔥 Background */
-.bg{
-
-    position:fixed;
-
-    inset:0;
+.bg-blur{
 
     background:
     url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1920&auto=format&fit=crop')
     center/cover no-repeat;
-
-    filter:
-    blur(10px)
-    brightness(.35);
-
-    transform:scale(1.1);
-
-    z-index:-2;
 }
 
-/* 🔥 Overlay */
-.overlay{
-
-    position:fixed;
-
-    inset:0;
-
-    background:
-    linear-gradient(
-        to bottom,
-        rgba(0,0,0,.75),
-        rgba(0,0,0,.35),
-        rgba(0,0,0,.92)
-    );
-
-    z-index:-1;
-}
-
-/* 🔥 Header */
-.header{
-
-    position:fixed;
-
-    top:18px;
-    left:50%;
-
-    transform:translateX(-50%);
-
-    width:94%;
-
-    height:78px;
-
-    border-radius:24px;
-
-    padding:0 25px;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-
-    backdrop-filter:blur(20px);
-
-    background:
-    rgba(255,255,255,.05);
-
-    border:
-    1px solid rgba(255,255,255,.08);
-
-    box-shadow:
-    0 0 30px rgba(255,20,147,.15);
-
-    z-index:999;
-}
-
-.logo{
-
-    color:#fff;
-
-    font-size:24px;
-
-    font-weight:900;
-
-    letter-spacing:2px;
-}
-
-.logo span{
-    color:#ff1493;
-}
-
-.badge{
-
-    color:#ff5ab5;
-
-    font-size:11px;
-
-    font-weight:700;
-
-    letter-spacing:1px;
-
-    padding:10px 16px;
-
-    border-radius:999px;
-
-    border:
-    1px solid rgba(255,20,147,.45);
-
-    background:
-    rgba(255,20,147,.08);
-}
-
-/* 🔥 Player Box */
-.player-wrap{
-
-    position:absolute;
-
-    top:50%;
-    left:50%;
-
-    transform:translate(-50%,-50%);
-
-    width:94%;
-
-    max-width:1250px;
-
-    height:74vh;
-
-    border-radius:30px;
-
-    overflow:hidden;
-
-    background:#000;
-
-    box-shadow:
-    0 0 35px rgba(255,20,147,.25),
-    0 25px 80px rgba(0,0,0,.7);
-
-    border:
-    1px solid rgba(255,255,255,.08);
-}
-
-/* 🔥 Glow */
-.player-wrap::before{
-
-    content:"";
-
-    position:absolute;
-
-    inset:0;
-
-    border-radius:30px;
-
-    padding:2px;
-
-    background:
-    linear-gradient(
-        135deg,
-        #ff1493,
-        transparent,
-        #00bfff
-    );
-
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-
-    -webkit-mask-composite:xor;
-
-    pointer-events:none;
-
-    z-index:2;
-}
-
-/* 🔥 VideoJS Component */
-video-player,
-video-skin{
-
-    width:100%;
-    height:100%;
-}
-
-/* 🔥 Actual Video */
 video{
 
     width:100%;
@@ -238,65 +41,138 @@ video{
     background:#000;
 }
 
-/* 📱 Mobile */
-@media(max-width:768px){
-
-    .player-wrap{
-
-        width:100%;
-        height:100vh;
-
-        border-radius:0;
-    }
-
-    .header{
-
-        width:92%;
-        height:68px;
-    }
-
-    .logo{
-        font-size:18px;
-    }
-
-    .badge{
-        font-size:9px;
-    }
-}
-
 </style>
 </head>
 
-<body>
+<body class="w-full h-screen overflow-hidden bg-black">
 
-<div class="bg"></div>
-<div class="overlay"></div>
+<!-- 🔥 Background -->
+<div class="fixed inset-0
+bg-blur
+scale-110
+blur-xl
+brightness-50
+-z-20">
+</div>
+
+<!-- 🔥 Overlay -->
+<div class="fixed inset-0
+bg-gradient-to-b
+from-black/80
+via-black/40
+to-black/95
+-z-10">
+</div>
 
 <!-- 🔥 Header -->
-<div class="header">
+<div class="fixed
+top-4
+left-1/2
+-translate-x-1/2
 
-    <div class="logo">
-        TEEN<span>18</span>
+w-[94%]
+h-[78px]
+
+rounded-3xl
+
+px-6
+
+flex
+items-center
+justify-between
+
+backdrop-blur-2xl
+
+bg-white/5
+
+border
+border-white/10
+
+shadow-[0_0_30px_rgba(255,20,147,.15)]
+
+z-50">
+
+    <!-- 🔥 Logo -->
+    <div class="text-white
+    text-2xl
+    font-black
+    tracking-[2px]">
+
+        TEEN<span class="text-pink-500">18</span>
+
     </div>
 
-    <div class="badge">
+    <!-- 🔥 Badge -->
+    <div class="text-pink-300
+    text-[11px]
+    font-bold
+    tracking-[1px]
+
+    px-4
+    py-2
+
+    rounded-full
+
+    border
+    border-pink-500/40
+
+    bg-pink-500/10">
+
         PREMIUM STREAM
+
     </div>
 
 </div>
 
 <!-- 🔥 Player -->
-<div class="player-wrap">
+<div class="fixed
 
-    <video-player>
+top-[110px]
+left-1/2
 
-        <video-skin>
+-translate-x-1/2
+
+w-[94%]
+
+h-[calc(100vh-130px)]
+
+rounded-[30px]
+
+overflow-hidden
+
+bg-black
+
+border
+border-white/10
+
+backdrop-blur-2xl
+
+shadow-[0_0_35px_rgba(255,20,147,.25),0_25px_80px_rgba(0,0,0,.7)]">
+
+    <!-- 🔥 Glow -->
+    <div class="absolute
+    inset-0
+
+    rounded-[30px]
+
+    border
+    border-pink-500/20
+
+    pointer-events-none
+
+    z-10">
+    </div>
+
+    <!-- 🔥 Video -->
+    <video-player class="w-full h-full">
+
+        <video-skin class="w-full h-full">
 
             <video
-                id="player"
-                autoplay
-                
-                playsinline>
+            id="player"
+            autoplay
+            controls
+            playsinline>
             </video>
 
         </video-skin>
@@ -307,6 +183,7 @@ video{
 
 <script>
 
+// 🔥 URL Param
 const param =
 window.location.search
 .replace("?=","")
@@ -318,7 +195,7 @@ if(param){
     const teraUrl =
     decodeURIComponent(param);
 
-    // 🔥 Stream API
+    // 🔥 Stream URL
     const streamUrl =
     "https://1024teradownloader.in/api/video-stream?url="
     + encodeURIComponent(teraUrl)
@@ -327,7 +204,7 @@ if(param){
     const video =
     document.getElementById("player");
 
-    // 🔥 HLS
+    // 🔥 HLS Support
     if(Hls.isSupported()){
 
         const hls =
