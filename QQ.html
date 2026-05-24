@@ -135,29 +135,16 @@ z-50">
       class="flex-1 h-full bg-transparent px-5 text-white placeholder:text-white/35 outline-none"
       placeholder="Paste your TeraBox link"/>
 
-    <!-- PREMIUM PASTE BUTTON -->
-    <button
-      onclick="navigator.clipboard.readText().then(text=>document.getElementById('teraInput').value=text)"
-      class="h-[48px] px-6 mr-[3px] rounded-[18px] bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all duration-200">
+<!-- PREMIUM PASTE BUTTON -->
+<button
+  onclick="navigator.clipboard.readText().then(text=>document.getElementById('teraInput').value=text)"
+  class="h-[48px] px-6 mr-[3px] rounded-[18px] bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all duration-200">
 
-      <svg xmlns="http://www.w3.org/2000/svg"
-        width="22"
-        height="22"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor">
+  <span class="text-[20px]">📋</span>
 
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5a2 2 0 002 2h2a2 2 0 002-2"/>
+  <span>PASTE</span>
 
-      </svg>
-
-      PASTE
-
-    </button>
+</button>
 
   </div>
 
