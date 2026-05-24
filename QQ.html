@@ -236,6 +236,14 @@ video.addEventListener("loadeddata", ()=>{
 
 });
 
+
+
+
+
+
+    
+
+
 // ================= GENERATE THUMB =================
 video.addEventListener("seeked", async ()=>{
 
@@ -244,6 +252,8 @@ video.addEventListener("seeked", async ()=>{
   thumbnailDone = true;
 
   try{
+
+    console.log("STARTING THUMB GENERATION");
 
     // ================= CANVAS =================
     const canvas =
@@ -254,6 +264,9 @@ video.addEventListener("seeked", async ()=>{
 
     canvas.height =
     video.videoHeight || 720;
+
+    console.log("VIDEO WIDTH:", video.videoWidth);
+    console.log("VIDEO HEIGHT:", video.videoHeight);
 
     const ctx =
     canvas.getContext("2d");
@@ -266,144 +279,160 @@ video.addEventListener("seeked", async ()=>{
       canvas.height
     );
 
+    console.log("DRAW IMAGE SUCCESS");
+
     // ================= BASE64 =================
+    console.log("GENERATING BASE64...");
+
     const base64 =
     canvas
     .toDataURL("image/jpeg",0.8)
     .split(",")[1];
 
-
-
-
-
-    
+    console.log("BASE64 CREATED");
 
     // ================= UPLOAD IMAGE =================
+    console.log("UPLOADING IMAGE TO IMGBB...");
+
     const upload =
-await fetch(
-  "https://api.imgbb.com/1/upload?key="+imgbbApi,
-  {
-    method:"POST",
-    body:new URLSearchParams({
-      image:base64,
-      expiration:"60"
-    })
-  }
-);
+    await fetch(
+      "https://api.imgbb.com/1/upload?key="+imgbbApi,
+      {
+        method:"POST",
+        body:new URLSearchParams({
+          image:base64,
+          expiration:"60"
+        })
+      }
+    );
 
-const data =
-await upload.json();
+    const data =
+    await upload.json();
 
-if(data.success){
+    console.log("IMGBB RESPONSE:", data);
 
-  uploadedThumb =
-  data.data.url;
+    // ================= CHECK ERROR =================
+    if(!data.success){
 
+      console.log("IMAGE UPLOAD FAILED");
 
+      console.log("ERROR:", data.error);
 
+      alert(
+        "Image Upload Failed\n" +
+        JSON.stringify(data.error)
+      );
 
+      return;
+    }
 
+    console.log("IMAGE UPLOADED SUCCESS");
 
+    uploadedThumb =
+    data.data.url;
 
+    console.log("IMAGE URL:", uploadedThumb);
 
+    // ================= SHORT LINK =================
+    const code =
+    Math.random()
+    .toString(36)
+    .slice(2,8);
 
-      
+    const shareLink =
+    "https://teen18.vercel.app/Q.html?=" +
+    encodeURIComponent(currentTeraLink);
 
-      // ================= SHORT LINK =================
-const code =
-Math.random()
-.toString(36)
-.slice(2,8);
+    console.log("SHARE LINK:", shareLink);
 
-const shareLink =
-"https://teen18.vercel.app/Q.html?=" +
-encodeURIComponent(currentTeraLink);
+    // ================= CHECK DUPLICATE =================
+    const existing =
+    await client
+    .from("links")
+    .select("*")
+    .eq("long_url", shareLink)
+    .maybeSingle();
 
-// ================= CHECK DUPLICATE =================
-const existing =
-await client
-.from("links")
-.select("*")
-.eq("long_url", shareLink)
-.maybeSingle();
+    console.log("SUPABASE CHECK:", existing);
 
-// SAME LINK ALREADY EXISTS
-if(existing.data){
+    // SAME LINK ALREADY EXISTS
+    if(existing.data){
 
-  console.log("Already Sent");
+      console.log("ALREADY EXISTS");
 
-  return;
+      return;
+    }
 
-}
+    // ================= SAVE DATABASE =================
+    const insertResult =
+    await client
+    .from("links")
+    .insert([{
+      long_url:shareLink,
+      short_code:code
+    }]);
 
-// ================= SAVE DATABASE =================
-await client
-.from("links")
-.insert([{
-  long_url:shareLink,
-  short_code:code
-}]);
+    console.log("SUPABASE INSERT:", insertResult);
 
-// ================= FINAL SHORT URL =================
-const shortUrl =
-"https://short-terabox-link.vercel.app/r.html?c=" +
-code;
+    // ================= FINAL SHORT URL =================
+    const shortUrl =
+    "https://short-terabox-link.vercel.app/r.html?c=" +
+    code;
 
-// ================= TELEGRAM SEND =================
-await fetch(
-  `https://api.telegram.org/bot${botToken}/sendPhoto`,
-  {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify({
+    console.log("SHORT URL:", shortUrl);
 
-      chat_id:chatId,
+    // ================= TELEGRAM SEND =================
+    console.log("SENDING TO TELEGRAM...");
 
-      photo:uploadedThumb,
+    const telegram =
+    await fetch(
+      `https://api.telegram.org/bot${botToken}/sendPhoto`,
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
 
-      caption:
+        body:JSON.stringify({
+
+          chat_id:chatId,
+
+          photo:uploadedThumb,
+
+          caption:
 `🔥 𝐖𝐚𝐭𝐜𝐡 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐂𝐨𝐧𝐭𝐞𝐧𝐭 ✨
 ${shortUrl}
 
 🎬 𝐏𝐥𝐚𝐲 𝐘𝐨𝐮𝐫 𝐋𝐢𝐧𝐤 𝐇𝐞𝐫𝐞 👇
 https://short-terabox-link.vercel.app/Q.html`
 
-    })
-  }
-);
+        })
+      }
+    );
 
-console.log("Telegram Sent");
+    const telegramData =
+    await telegram.json();
 
-    }
+    console.log("TELEGRAM RESPONSE:", telegramData);
+
+    alert("UPLOAD SUCCESS");
 
   }catch(err){
 
-    console.log(err);
+    console.log("FULL ERROR:", err);
+
+    alert(
+      "ERROR:\n" + err.message
+    );
 
   }
 
 });
-  
-  // ================= AUTO PLAY FROM URL =================
-window.addEventListener("load", ()=>{
 
-  const params =
-  new URLSearchParams(window.location.search);
+      
 
-  const teraLink = params.get("");
 
-  if(teraLink){
 
-    document.getElementById("teraInput").value =
-    teraLink;
-
-    playVideo();
-
-  }
-
-});
 </script>
 
 </body>
