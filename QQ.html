@@ -121,32 +121,60 @@ z-50">
 
 </div>
 
+
+
+  
 <!-- INPUT -->
 <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[94%] flex gap-3">
 
-  <input
-    id="teraInput"
-    class="flex-1 h-14 rounded-xl px-4 bg-white/10 text-white outline-none"
-    placeholder="Paste TeraBox Link"/>
+  <!-- PREMIUM INPUT -->
+  <div class="flex-1 h-14 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-xl flex items-center overflow-hidden shadow-[0_0_25px_rgba(255,255,255,0.03)]">
 
-  <!-- PASTE BUTTON -->
-  <button
-    onclick="navigator.clipboard.readText().then(text=>document.getElementById('teraInput').value=text)"
-    class="w-[120px] bg-blue-600 text-white rounded-xl flex items-center justify-center gap-2">
+    <input
+      id="teraInput"
+      class="flex-1 h-full bg-transparent px-5 text-white placeholder:text-white/35 outline-none"
+      placeholder="Paste your TeraBox link"/>
 
-    📋 PASTE
+    <!-- PREMIUM PASTE BUTTON -->
+    <button
+      onclick="navigator.clipboard.readText().then(text=>document.getElementById('teraInput').value=text)"
+      class="h-[48px] px-6 mr-[3px] rounded-[18px] bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all duration-200">
 
-  </button>
+      <svg xmlns="http://www.w3.org/2000/svg"
+        width="22"
+        height="22"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5a2 2 0 002 2h2a2 2 0 002-2"/>
+
+      </svg>
+
+      PASTE
+
+    </button>
+
+  </div>
 
   <!-- PLAY BUTTON -->
   <button
     onclick="playVideo()"
-    class="w-[140px] bg-pink-500 text-white rounded-xl">
+    class="w-[140px] rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold shadow-[0_0_30px_rgba(236,72,153,0.35)] active:scale-95 transition-all duration-200">
     PLAY
   </button>
 
 </div>
 
+
+
+
+
+  
 <script>
 
 // ================= PLAYER =================
