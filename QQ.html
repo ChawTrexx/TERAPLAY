@@ -129,6 +129,16 @@ z-50">
     class="flex-1 h-14 rounded-xl px-4 bg-white/10 text-white outline-none"
     placeholder="Paste TeraBox Link"/>
 
+  <!-- PASTE BUTTON -->
+  <button
+    onclick="navigator.clipboard.readText().then(text=>document.getElementById('teraInput').value=text)"
+    class="w-[120px] bg-blue-600 text-white rounded-xl flex items-center justify-center gap-2">
+
+    📋 PASTE
+
+  </button>
+
+  <!-- PLAY BUTTON -->
   <button
     onclick="playVideo()"
     class="w-[140px] bg-pink-500 text-white rounded-xl">
