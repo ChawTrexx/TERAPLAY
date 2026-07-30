@@ -3,14 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Tera Player</title>
+<title>Teen18 Player</title>
 
-<script type="text/javascript" data-cfasync="false">
-/*<![CDATA[/* */
-(function(){var v=window,e="c7c81412ec48f0ae361fb200abc24504",g=[["siteId",659-239+413-45-943+5256604],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],b=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL3RDYUZrdi9aL2d0aW1lYWdvLm1pbi5qcw==","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvbGwyMG4ubWluLmpz","d3d3LmZpaG1ndGVpa3BzdG9iLmNvbS9XTS9kdm1kVFUvdXRpbWVhZ28ubWluLmpz","d3d3Lnp4eWVtdXVybWtqY2VsLmNvbS9kbDIwbi5taW4uanM="],r=-1,j,z,c=function(){clearTimeout(z);r++;if(b[r]&&!(1811361136000<(new Date).getTime()&&1<r)){j=v.document.createElement("script");j.type="text/javascript";j.async=!0;var w=v.document.getElementsByTagName("script")[0];j.src="https://"+atob(b[r]);j.crossOrigin="anonymous";j.onerror=c;j.onload=function(){clearTimeout(z);v[e.slice(0,16)+e.slice(0,16)]||c()};z=setTimeout(c,5E3);w.parentNode.insertBefore(j,w)}};if(!v[e]){try{Object.freeze(v[e]=g)}catch(e){}c()}})();
-/*]]>/* */
-</script>
-  
+<meta name="monetag" content="41e692a6b5c0b59b151f300b5cef7bd3">
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -69,10 +64,12 @@ video {
   user-select: none;
 }
 
-/* Custom styling for disabled input state */
+/* Extra Bright Styling for Disabled State */
 input:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+  color: #d1d5db !important; /* Bright readable text color */
+  -webkit-text-fill-color: #d1d5db !important;
 }
 </style>
 </head>
@@ -103,18 +100,18 @@ input:disabled {
       </div>
     </div>
 
-    <!-- INPUT BOX SECTION -->
-    <div id="inputBoxWrapper" class="w-full bg-[#0e101a] border border-white/10 rounded-2xl p-2 flex items-center shadow-lg focus-within:border-purple-500/60 transition-all">
+    <!-- INPUT BOX SECTION WITH BRIGHT PURPLE GLOW BORDER -->
+    <div id="inputBoxWrapper" class="w-full bg-[#0c0d16] border-1 border-[#8b5cf6] rounded-2xl p-1 flex items-center shadow-[0_0_10px_rgba(139,92,246,0.3)] transition-all">
       <input
         id="teraInput"
         type="text"
         class="flex-1 bg-transparent px-3 py-1.5 text-sm text-gray-200 placeholder:text-gray-500 outline-none min-w-0"
-        placeholder="https://teraboxlink.com/xcofxph7iy5..."/>
+        placeholder="https://1024terabox.com/s/1j1Ycm0GRY4TbcwU..."/>
 
       <button
         id="playBtn"
         onclick="playVideo()"
-        class="shrink-0 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00b4db] to-[#0083b0] hover:from-[#00c6ff] hover:to-[#0072ff] text-white font-semibold text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(0,180,219,0.3)] active:scale-95 transition-all">
+        class="shrink-0 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00c6ff] to-[#0072ff] hover:from-[#00d2ff] hover:to-[#0088ff] text-white font-bold text-sm flex items-center gap-2 shadow-[0_0_20px_rgba(0,198,255,0.5)] active:scale-95 transition-all">
         <i class="fa-solid fa-caret-right text-base"></i> Play
       </button>
     </div>
@@ -145,7 +142,7 @@ input:disabled {
         </video-player>
       </div>
 
-      <!-- Action Buttons (Both same size) -->
+      <!-- Action Buttons -->
       <div class="w-full flex items-center gap-3">
         <button
           onclick="openTelegram()"
@@ -211,7 +208,7 @@ input:disabled {
   <!-- FOOTER -->
   <footer class="w-full text-center mt-8 py-2">
     <p class="text-[10px] tracking-widest text-gray-500 font-semibold uppercase">
-      POWERED BY TAI AHOM · FAST & SECURE
+      POWERED BY GITHUB · FAST & SECURE
     </p>
   </footer>
 
@@ -254,7 +251,7 @@ function playVideo() {
     // Disable input box & play button
     teraInput.disabled = true;
     playBtn.disabled = true;
-    playBtn.classList.add("opacity-50", "pointer-events-none");
+    playBtn.classList.add("pointer-events-none");
 
     mediaContainer.style.setProperty("display", "none", "important");
     loaderCard.style.setProperty("display", "flex", "important");
@@ -354,7 +351,7 @@ function resetPlayer() {
     teraInput.value = "";
     teraInput.disabled = false;
     playBtn.disabled = false;
-    playBtn.classList.remove("opacity-50", "pointer-events-none");
+    playBtn.classList.remove("pointer-events-none");
     
     teraInput.focus();
 
