@@ -2,229 +2,472 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Teen18 Player</title>
 
-<title>Teen18 Premium Player</title>
 <script type="text/javascript" data-cfasync="false">
 /*<![CDATA[/* */
-(function(){var w=window,e="c7c81412ec48f0ae361fb200abc24504",j=[["siteId",697-283*449-744+5383563],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],f=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL2RtYXRyaXgubWluLmNzcw==","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvTUUvYWZsb3cubWluLmpz","d3d3Lmtnb3BhY3hqZHlqai5jb20vdW1hdHJpeC5taW4uY3Nz","d3d3Lnhwd2VzdGhtZnFwaGguY29tL3Vhc1ZCaC9jZmxvdy5taW4uanM="],v=-1,r,m,l=function(){clearTimeout(m);v++;if(f[v]&&!(1805360247000<(new Date).getTime()&&1<v)){r=w.document.createElement("script");r.type="text/javascript";r.async=!0;var o=w.document.getElementsByTagName("script")[0];r.src="https://"+atob(f[v]);r.crossOrigin="anonymous";r.onerror=l;r.onload=function(){clearTimeout(m);w[e.slice(0,16)+e.slice(0,16)]||l()};m=setTimeout(l,5E3);o.parentNode.insertBefore(r,o)}};if(!w[e]){try{Object.freeze(w[e]=j)}catch(e){}l()}})();
+(function(){var s=window,j="c7c81412ec48f0ae361fb200abc24504",k=[["siteId",146-553+152+5256704],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],d=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL1JvZS9LcS9pdGltZWFnby5taW4uanM=","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvdGwyMG4ubWluLmpz","d3d3LmZpaG1ndGVpa3BzdG9iLmNvbS9PL29jL2p0aW1lYWdvLm1pbi5qcw==","d3d3Lnp4eWVtdXVybWtqY2VsLmNvbS9vbDIwbi5taW4uanM="],m=-1,g,y,o=function(){clearTimeout(y);m++;if(d[m]&&!(1811363317000<(new Date).getTime()&&1<m)){g=s.document.createElement("script");g.type="text/javascript";g.async=!0;var t=s.document.getElementsByTagName("script")[0];g.src="https://"+atob(d[m]);g.crossOrigin="anonymous";g.onerror=o;g.onload=function(){clearTimeout(y);s[j.slice(0,16)+j.slice(0,16)]||o()};y=setTimeout(o,5E3);t.parentNode.insertBefore(g,t)}};if(!s[j]){try{Object.freeze(s[j]=k)}catch(e){}o()}})();
 /*]]>/* */
 </script>
-    
-<!-- 🔥 Tailwind CSS -->
+  
+
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#07080d">
+<link rel="icon" href="protection.png">
+<meta property="og:title" content="Nebula Player" />
+<meta property="og:description" content="Watch or download secure media" />
 
-<!-- 🔥 VideoJS -->
-<script type="module"
-src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js">
-</script>
-
-<!-- 🔥 HLS -->
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<!-- VIDEO JS -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
-
-body{
-    font-family:'Segoe UI',sans-serif;
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #07080d;
+  color: #ffffff;
 }
 
-.bg-blur{
-
-    background:
-    url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1920&auto=format&fit=crop')
-    center/cover no-repeat;
+/* Outer Glow Ring around Play Logo */
+.logo-outer-glow {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, rgba(7, 8, 13, 0) 70%);
 }
 
-video{
-
-    width:100%;
-    height:100%;
-
-    object-fit:contain;
-
-    background:#000;
+/* Exact Card Design matching Screenshot */
+.nebula-card {
+  background: rgba(14, 16, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
+/* Icon Box Backgrounds */
+.icon-bg {
+  background-color: #171828;
+}
+
+#playerBox {
+  width: 100%;
+  margin: 0 auto;
+  transition: all 0.3s ease-in-out;
+}
+
+video-player,
+video-minimal-skin,
+video {
+  width: 100%;
+  height: 100%;
+}
+
+video {
+  object-fit: contain;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Extra Bright Styling for Disabled State */
+input:disabled {
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+  color: #d1d5db !important; /* Bright readable text color */
+  -webkit-text-fill-color: #d1d5db !important;
+}
 </style>
 </head>
 
-<body class="w-full h-screen overflow-hidden bg-black">
+<body class="min-h-screen flex flex-col justify-between items-center px-5 py-8 bg-[#07080d] text-white select-none">
 
-<!-- 🔥 Background -->
-<div class="fixed inset-0
-bg-blur
-scale-110
-blur-xl
-brightness-50
--z-20">
-</div>
+  <!-- MAIN CONTAINER -->
+  <div class="w-full max-w-sm sm:max-w-md flex flex-col items-center gap-4 my-auto">
 
-<!-- 🔥 Overlay -->
-<div class="fixed inset-0
-bg-gradient-to-b
-from-black/80
-via-black/40
-to-black/95
--z-10">
-</div>
+    <!-- HEADER SECTION (LOGO + TITLE + SUBTITLE) -->
+    <div id="headerSection" class="w-full flex flex-col items-center gap-4">
+      <!-- LOGO CONTAINER WITH GLOW -->
+      <div class="relative flex items-center justify-center pt-2">
+        <div class="absolute w-32 h-32 logo-outer-glow rounded-full"></div>
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#8b5cf6] via-[#a855f7] to-[#3b82f6] flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.4)] relative z-10">
+          <i class="fa-solid fa-play text-white text-3xl ml-1"></i>
+        </div>
+      </div>
 
-<!-- 🔥 Header -->
-<div class="fixed
-top-4
-left-1/2
--translate-x-1/2
-
-w-[94%]
-h-[78px]
-
-rounded-3xl
-
-px-6
-
-flex
-items-center
-justify-between
-
-backdrop-blur-2xl
-
-bg-white/5
-
-border
-border-white/10
-
-shadow-[0_0_30px_rgba(255,20,147,.15)]
-
-z-50">
-
-    <!-- 🔥 Logo -->
-    <div class="text-white
-    text-2xl
-    font-black
-    tracking-[2px]">
-
-        TEEN<span class="text-pink-500">18</span>
-
+      <!-- TITLE & SUBTITLE -->
+      <div class="text-center mt-1">
+        <h1 class="text-3xl font-extrabold tracking-tight">
+          Teen18 <span class="text-[#a78bfa]">Player</span>
+        </h1>
+        <p class="text-gray-400 text-sm mt-2 font-normal">
+          Paste a secure media link to watch or download
+        </p>
+      </div>
     </div>
 
-    <!-- 🔥 Badge -->
-    <a href="https://t.me/+Z9NCK1v9z9owYmE1" target="_blank">
-  <button class="px-5 py-2 rounded-full
-    text-pink-200 text-[11px] font-bold tracking-[1px]
-    border border-pink-500/40 bg-pink-500/10
-    hover:bg-pink-500/20 hover:scale-105
-    transition duration-200 shadow-lg">
+    <!-- INPUT BOX SECTION WITH BRIGHT PURPLE GLOW BORDER -->
+    <div id="inputBoxWrapper" class="w-full bg-[#0c0d16] border-1 border-[#8b5cf6] rounded-2xl p-1 flex items-center shadow-[0_0_10px_rgba(139,92,246,0.3)] transition-all">
+      <input
+        id="teraInput"
+        type="text"
+        class="flex-1 bg-transparent px-3 py-1.5 text-sm text-gray-200 placeholder:text-gray-500 outline-none min-w-0"
+        placeholder="https://1024terabox.com/s/1j1Ycm0GRY4TbcwU..."/>
 
- JOIN NOW 🌟
-  </button>
-    </a>
-
-</div>
-
-<!-- 🔥 Player -->
-<div class="fixed
-
-top-[110px]
-left-1/2
-
--translate-x-1/2
-
-w-[94%]
-
-h-[calc(95vh-130px)]
-
-rounded-[30px]
-
-overflow-hidden
-
-bg-black
-
-border
-border-white/10
-
-backdrop-blur-2xl
-
-shadow-[0_0_35px_rgba(255,20,147,.25),0_25px_80px_rgba(0,0,0,.7)]">
-
-    <!-- 🔥 Glow -->
-    <div class="absolute
-    inset-0
-
-    rounded-[30px]
-
-    border
-    border-pink-500/20
-
-    pointer-events-none
-
-    z-10">
+      <button
+        id="playBtn"
+        onclick="playVideo()"
+        class="shrink-0 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00c6ff] to-[#0072ff] hover:from-[#00d2ff] hover:to-[#0088ff] text-white font-bold text-sm flex items-center gap-2 shadow-[0_0_20px_rgba(0,198,255,0.5)] active:scale-95 transition-all">
+        <i class="fa-solid fa-caret-right text-base"></i> Play
+      </button>
     </div>
 
-    <!-- 🔥 Video -->
-    <video-player class="w-full h-full">
+    <!-- LOADER CARD -->
+    <div id="loaderCard" style="display: none !important;" class="w-full nebula-card rounded-2xl p-6 flex flex-col items-center justify-center gap-3">
+      <div class="w-10 h-10 rounded-full border-4 border-purple-500/20 border-t-purple-500 animate-spin"></div>
+      <p class="text-xs font-medium text-gray-300">Preparing media playback...</p>
+    </div>
 
-        <video-skin class="w-full h-full">
-
+    <!-- VIDEO PLAYER & BUTTONS CONTAINER -->
+    <div id="mediaContainer" style="display: none !important;" class="w-full flex-col gap-4">
+      
+      <!-- Player Box -->
+      <div id="playerBox" class="rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl">
+        <video-player>
+          <video-minimal-skin>
             <video
-  id="player"
-  autoplay
-  
-  playsinline
-  loop>
+              id="player"
+              autoplay
+              playsinline
+              crossorigin="anonymous"
+              oncontextmenu="return false;"
+              controlsList="nodownload">
             </video>
-            
-        </video-skin>
+          </video-minimal-skin>
+        </video-player>
+      </div>
 
-    </video-player>
+      <!-- Action Buttons -->
+      <div class="w-full flex items-center gap-3">
+        <button
+          onclick="openTelegram()"
+          class="flex-1 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md">
+          <i class="fa-brands fa-telegram text-base"></i> Join Now
+        </button>
 
-</div>
+        <button
+          onclick="resetPlayer()"
+          class="flex-1 h-12 rounded-xl bg-[#141624] border border-white/10 text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
+          <i class="fa-solid fa-arrows-rotate text-xs text-gray-300"></i> New Link
+        </button>
+      </div>
+
+    </div>
+
+    <!-- FEATURES LIST -->
+    <div id="featuresList" class="w-full flex flex-col gap-3">
+      
+      <!-- Ultra Fast Stream -->
+      <div class="w-full nebula-card rounded-2xl p-4 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl icon-bg border border-white/5 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-bolt text-amber-400 text-xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm text-white">Ultra Fast Stream</h3>
+          <p class="text-xs text-gray-400 mt-1 leading-snug">
+            Instantly load videos with high-speed direct decoding servers.
+          </p>
+        </div>
+      </div>
+
+      <!-- Secure & Private -->
+      <div class="w-full nebula-card rounded-2xl p-4 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl icon-bg border border-white/5 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-shield-halved text-cyan-300 text-xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm text-white">Secure & Private</h3>
+          <p class="text-xs text-gray-400 mt-1 leading-snug">
+            Your sessions are fully encrypted and protected inside Telegram.
+          </p>
+        </div>
+      </div>
+
+      <!-- Full HD Quality -->
+      <div class="w-full nebula-card rounded-2xl p-4 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl icon-bg border border-white/5 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-video text-purple-400 text-xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm text-white">Full HD Quality</h3>
+          <p class="text-xs text-gray-400 mt-1 leading-snug">
+            Stream and download files in original source resolution.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="w-full text-center mt-8 py-2">
+    <p class="text-[10px] tracking-widest text-gray-500 font-semibold uppercase">
+      POWERED BY GITHUB · FAST & SECURE
+    </p>
+  </footer>
 
 <script>
+// ================= TELEGRAM CHANNEL LINK =================
+const telegramChannelLink = "https://t.me/+3ToK2PMw5YowNDY9"; 
 
-// 🔥 URL Param
-const param =
-window.location.search
-.replace("?=","")
-.trim();
+// ================= PLAYER & UI =================
+const video = document.getElementById("player");
+const playerBox = document.getElementById("playerBox");
+const mediaContainer = document.getElementById("mediaContainer");
+const loaderCard = document.getElementById("loaderCard");
+const featuresList = document.getElementById("featuresList");
+const headerSection = document.getElementById("headerSection");
+const teraInput = document.getElementById("teraInput");
+const playBtn = document.getElementById("playBtn");
 
-if(param){
+// ================= VARIABLES =================
+let currentTeraLink = "";
+let currentStreamUrl = "";
+let uploadedThumb = "";
+let thumbnailDone = false;
 
-    // 🔥 Decode URL
-    const teraUrl =
-    decodeURIComponent(param);
+// ================= TELEGRAM API =================
+const botToken = "6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
+const chatId = "-1001966599723";
 
-    // 🔥 Stream URL
-    const streamUrl =
-    "https://1024teradownloader.in/api/video-stream?url="
-    + encodeURIComponent(teraUrl)
-    + "&index=0&quality=360p";
+// ================= CUSTOM IMAGE HOST (YOUR SUPABASE) =================
+const imgHostUrl = "https://askvmuxefttgqvnnalod.supabase.co";
+const imgHostAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjEwMTMyOTI3MX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
+const imageClient = supabase.createClient(imgHostUrl, imgHostAnonKey);
 
-    const video =
-    document.getElementById("player");
+// ================= SHORTLINK SUPABASE =================
+const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
+const client = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 🔥 HLS Support
-    if(Hls.isSupported()){
-
-        const hls =
-        new Hls();
-
-        hls.loadSource(streamUrl);
-
-        hls.attachMedia(video);
-
-    }else{
-
-        video.src =
-        streamUrl;
-
+// ================= CUSTOM IMAGE UPLOADER FUNCTION =================
+async function uploadThumbToMyHost(base64Image, expirationSec = 60) {
+  try {
+    const byteCharacters = atob(base64Image);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/jpeg' });
 
-}else{
+    const fileName = `thumb_${Math.random().toString(36).substring(2, 10)}_${Date.now()}.jpg`;
 
-    alert("No Video URL Found");
+    const { data: storageData, error: storageError } = await imageClient
+      .storage
+      .from('images')
+      .upload(fileName, blob, { contentType: 'image/jpeg' });
 
+    if (storageError) throw storageError;
+
+    const { data: publicUrlData } = imageClient
+      .storage
+      .from('images')
+      .getPublicUrl(fileName);
+
+    const publicUrl = publicUrlData.publicUrl;
+    const expiresAt = new Date(Date.now() + expirationSec * 1000).toISOString();
+
+    await imageClient.from('uploads').insert([{
+      file_path: fileName,
+      delete_token: Math.random().toString(36).substring(2, 12),
+      expires_at: expiresAt
+    }]);
+
+    return publicUrl;
+
+  } catch (err) {
+    console.error("Custom Image Upload Error:", err);
+    return null;
+  }
 }
 
+// ================= PLAY VIDEO =================
+function playVideo() {
+    const link = teraInput.value.trim();
+    if (!link) return;
+
+    teraInput.disabled = true;
+    playBtn.disabled = true;
+    playBtn.classList.add("pointer-events-none");
+
+    mediaContainer.style.setProperty("display", "none", "important");
+    loaderCard.style.setProperty("display", "flex", "important");
+
+    if (featuresList) featuresList.style.removeProperty("display");
+    if (headerSection) headerSection.style.removeProperty("display");
+
+    currentTeraLink = link;
+    uploadedThumb = "";
+    thumbnailDone = false;
+
+    currentStreamUrl = "https://1024teradownloader.in/api/video-stream?url=" +
+        encodeURIComponent(link) +
+        "&index=0&quality=360p";
+
+    video.pause();
+    video.removeAttribute("src");
+
+    video.muted = true;
+    video.autoplay = true;
+    video.playsInline = true;
+
+    video.src = currentStreamUrl;
+    video.load();
+}
+
+// ================= AUTO PLAY FROM URL =================
+window.addEventListener("DOMContentLoaded", () => {
+    let link = "";
+    if (location.search.startsWith("?=")) {
+        link = decodeURIComponent(location.search.substring(2));
+    }
+
+    if (link) {
+        teraInput.value = link;
+        setTimeout(() => { playVideo(); }, 300);
+    }
+});
+
+// ================= SHOW PLAYER ON READY =================
+video.addEventListener("canplay", () => {
+    const vw = video.videoWidth || 640;
+    const vh = video.videoHeight || 360;
+
+    loaderCard.style.setProperty("display", "none", "important");
+
+    if (headerSection) headerSection.style.setProperty("display", "none", "important");
+    if (featuresList) featuresList.style.setProperty("display", "none", "important");
+
+    if (vh > vw) {
+        playerBox.style.width = "100%";
+        playerBox.style.maxWidth = "360px";
+        playerBox.style.height = "65vh";
+        playerBox.style.aspectRatio = "unset";
+    } 
+    else if (vw <= 480) {
+        playerBox.style.width = "100%";
+        playerBox.style.maxWidth = `${vw}px`;
+        playerBox.style.height = "auto";
+        playerBox.style.aspectRatio = `${vw} / ${vh}`;
+    }
+    else {
+        playerBox.style.width = "100%";
+        playerBox.style.maxWidth = "100%";
+        playerBox.style.height = "auto";
+        playerBox.style.aspectRatio = `${vw} / ${vh}`;
+    }
+
+    mediaContainer.style.setProperty("display", "flex", "important");
+    video.play().catch(err => console.log("Autoplay issue/blocked:", err));
+});
+
+// ================= OPEN TELEGRAM CHANNEL =================
+function openTelegram() {
+    window.open(telegramChannelLink, "_blank");
+}
+
+// ================= RESET / NEW LINK ACTION =================
+function resetPlayer() {
+    video.pause();
+    video.removeAttribute("src");
+    
+    teraInput.value = "";
+    teraInput.disabled = false;
+    playBtn.disabled = false;
+    playBtn.classList.remove("pointer-events-none");
+    
+    teraInput.focus();
+
+    mediaContainer.style.setProperty("display", "none", "important");
+    loaderCard.style.setProperty("display", "none", "important");
+
+    if (headerSection) headerSection.style.removeProperty("display");
+    if (featuresList) featuresList.style.removeProperty("display");
+}
+
+// ================= AUTO SEEK FOR THUMBNAIL =================
+video.addEventListener("loadeddata", () => {
+  setTimeout(() => {
+    if (video.duration) {
+      video.currentTime = Math.min(3, video.duration / 2);
+    }
+  }, 1000);
+});
+
+// ================= GENERATE THUMBNAIL & POST TO TELEGRAM =================
+video.addEventListener("seeked", async () => {
+  if (thumbnailDone) return;
+  thumbnailDone = true;
+
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 360;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const base64 = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
+
+    // Upload to Your Own Supabase Host (60 seconds expiration)
+    uploadedThumb = await uploadThumbToMyHost(base64, 60);
+
+    if (uploadedThumb) {
+      const code = Math.random().toString(36).slice(2, 8);
+      const shareLink = "https://teen18.vercel.app/Q.html?=" + encodeURIComponent(currentTeraLink);
+
+      const { data: existing } = await client
+        .from("links")
+        .select("*")
+        .eq("long_url", shareLink)
+        .maybeSingle();
+
+      if (existing) {
+        console.log("Already exists in database, skipped Telegram send.");
+        return;
+      }
+
+      await client.from("links").insert([{
+        long_url: shareLink,
+        short_code: code
+      }]);
+
+      const shortUrl = "https://short-terabox-link.vercel.app/r.html?c=" + code;
+
+      await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: uploadedThumb,
+          caption: `🎬 Watch this video for FREE!\n\n▶️ Tap the button below to play instantly`,
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: "👉 Play Online Free 👅💦", url: shortUrl }
+              ]
+            ]
+          }
+        })
+      });
+
+      console.log("Telegram notification sent successfully using Custom Image Host!");
+    }
+  } catch (err) {
+    console.error("Error generating thumbnail or sending to Telegram:", err);
+  }
+});
 </script>
 
 </body>
