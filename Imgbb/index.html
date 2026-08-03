@@ -4,161 +4,22 @@
 <meta charset="UTF-8">
 <title>Temporary Image Host</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0f172a;
-  color: #f3f4f6;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 20px;
-}
-
-.card {
-  background: #111827;
-  border: 1px solid #1f2937;
-  padding: 24px;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-}
-
-h2 {
-  text-align: center;
-  font-size: 1.5rem;
-  margin-bottom: 20px;
-  color: #38bdf8;
-}
-
-.group {
-  margin-bottom: 14px;
-}
-
-label {
-  display: block;
-  font-size: 0.85rem;
-  color: #9ca3af;
-  margin-bottom: 6px;
-}
-
-input, select {
-  width: 100%;
-  padding: 10px 12px;
-  background: #1f2937;
-  border: 1px solid #374151;
-  color: white;
-  border-radius: 8px;
-  outline: none;
-  font-size: 0.95rem;
-}
-
-input[type="file"] {
-  cursor: pointer;
-}
-
-input:focus, select:focus {
-  border-color: #38bdf8;
-}
-
-button {
-  width: 100%;
-  padding: 12px;
-  background: #22c55e;
-  border: none;
-  color: white;
-  font-weight: bold;
-  font-size: 1rem;
-  cursor: pointer;
-  border-radius: 8px;
-  margin-top: 10px;
-  transition: background 0.2s, transform 0.1s;
-}
-
-button:hover {
-  background: #16a34a;
-}
-
-button:active {
-  transform: scale(0.98);
-}
-
-#result {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #374151;
-  display: none;
-}
-
-.status-badge {
-  display: inline-block;
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  margin-bottom: 12px;
-}
-
-.preview-container {
-  width: 100%;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 12px;
-  text-align: center;
-}
-
-.img-preview {
-  max-width: 100%;
-  max-height: 200px;
-  object-fit: contain;
-}
-
-.url-box {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.url-box input {
-  font-size: 0.85rem;
-}
-
-.copy-btn {
-  width: auto;
-  padding: 0 14px;
-  margin-top: 0;
-  background: #0284c7;
-  font-size: 0.85rem;
-}
-
-.copy-btn:hover {
-  background: #0369a1;
-}
-
-pre {
-  background: #030712;
-  border: 1px solid #1f2937;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  color: #a7f3d0;
-  max-height: 140px;
-  overflow-y: auto;
-  margin-top: 6px;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+.card { background: #111827; border: 1px solid #1f2937; padding: 24px; border-radius: 16px; width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+h2 { text-align: center; margin-bottom: 20px; color: #38bdf8; }
+.group { margin-bottom: 14px; }
+label { display: block; font-size: 0.85rem; color: #9ca3af; margin-bottom: 6px; }
+input, select { width: 100%; padding: 10px; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 8px; outline: none; }
+button { width: 100%; padding: 12px; background: #22c55e; border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px; }
+button:hover { background: #16a34a; }
+#result { margin-top: 20px; padding-top: 16px; border-top: 1px solid #374151; display: none; }
+.preview-container { width: 100%; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 12px; text-align: center; }
+.img-preview { max-width: 100%; max-height: 200px; object-fit: contain; }
+pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem; color: #a7f3d0; max-height: 140px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
 </style>
 </head>
 <body>
@@ -168,7 +29,7 @@ pre {
 
   <div class="group">
     <label>API Key</label>
-    <input type="text" id="apiKey" value="a6a11d5e51efceba81e080a069ed9556" placeholder="Enter API key">
+    <input type="text" id="apiKey" value="a6a11d5e51efceba81e080a069ed9556">
   </div>
 
   <div class="group">
@@ -187,44 +48,35 @@ pre {
 
   <button onclick="uploadImage()" id="uploadBtn">Upload Image</button>
 
-  <!-- RESULT SECTION -->
   <div id="result">
-    <span class="status-badge">✅ Upload Successful</span>
-
-    <div class="preview-container">
-      <img id="preview" class="img-preview" src="" alt="Uploaded Image Preview">
+    <span style="color:#4ade80;">✅ Upload Successful</span>
+    <div class="preview-container" style="margin-top:10px;">
+      <img id="preview" class="img-preview" src="">
     </div>
 
     <div class="group">
-      <label>Public URL (Auto Delete Enabled)</label>
-      <div class="url-box">
-        <input type="text" id="publicUrlInput" readonly>
-        <button class="copy-btn" onclick="copyUrl()">Copy</button>
-      </div>
+      <label>Public URL</label>
+      <input type="text" id="publicUrlInput" readonly>
     </div>
 
     <div class="group">
-      <label>ImgBB-Style JSON Response</label>
+      <label>ImgBB-Style Response</label>
       <pre id="jsonOutput"></pre>
     </div>
   </div>
 </div>
 
 <script>
-  // Aapka Supabase Edge Function URL
-  const SUPABASE_FUNCTION_URL = "https://askvmuxefttgqvnnalod.supabase.co/functions/v1/upload";
+  const supabaseUrl = "https://askvmuxefttgqvnnalod.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjA5NTAxNDIxNX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
+  
+  const client = supabase.createClient(supabaseUrl, supabaseKey);
 
   async function uploadImage() {
     const apiKey = document.getElementById("apiKey").value.trim();
-    const expiration = document.getElementById("expiration").value;
+    const expiration = parseInt(document.getElementById("expiration").value);
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
-    const resultDiv = document.getElementById("result");
-
-    if (!apiKey) {
-      alert("Please enter API Key!");
-      return;
-    }
 
     if (!fileInput.files[0]) {
       alert("Please select an image file!");
@@ -234,41 +86,77 @@ pre {
     uploadBtn.innerText = "Uploading...";
     uploadBtn.disabled = true;
 
-    const formData = new FormData();
-    formData.append("image", fileInput.files[0]);
-
     try {
-      const response = await fetch(`${SUPABASE_FUNCTION_URL}?key=${apiKey}&expiration=${expiration}`, {
-        method: "POST",
-        body: formData
-      });
+      // 1. Verify API Key
+      const { data: keyData, error: keyError } = await client
+        .from('api_keys')
+        .select('id')
+        .eq('key_value', apiKey)
+        .single();
 
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        resultDiv.style.display = "block";
-        document.getElementById("preview").src = result.data.url;
-        document.getElementById("publicUrlInput").value = result.data.url;
-        document.getElementById("jsonOutput").innerText = JSON.stringify(result, null, 2);
-      } else {
-        alert("Upload Failed: " + (result.error || "Unknown Error"));
+      if (keyError || !keyData) {
+        alert("Invalid API Key!");
+        uploadBtn.innerText = "Upload Image";
+        uploadBtn.disabled = false;
+        return;
       }
+
+      // 2. Upload file to Storage Bucket
+      const file = fileInput.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 10)}_${Date.now()}.${fileExt}`;
+
+      const { data: storageData, error: storageError } = await client
+        .storage
+        .from('images')
+        .upload(fileName, file);
+
+      if (storageError) throw storageError;
+
+      // 3. Get Public URL
+      const { data: publicUrlData } = client
+        .storage
+        .from('images')
+        .getPublicUrl(fileName);
+
+      const publicUrl = publicUrlData.publicUrl;
+      const expiresAt = new Date(Date.now() + expiration * 1000).toISOString();
+
+      // 4. Record in uploads table for auto-delete track
+      await client.from('uploads').insert([{
+        file_path: fileName,
+        delete_token: Math.random().toString(36).substring(2, 12),
+        expires_at: expiresAt
+      }]);
+
+      // 5. Render ImgBB Style Output
+      const responsePayload = {
+        data: {
+          id: fileName.split('.')[0],
+          title: file.name,
+          url: publicUrl,
+          display_url: publicUrl,
+          size: file.size,
+          expiration: expiration,
+          image: { filename: file.name, url: publicUrl }
+        },
+        success: true,
+        status: 200
+      };
+
+      document.getElementById("result").style.display = "block";
+      document.getElementById("preview").src = publicUrl;
+      document.getElementById("publicUrlInput").value = publicUrl;
+      document.getElementById("jsonOutput").innerText = JSON.stringify(responsePayload, null, 2);
+
     } catch (err) {
       console.error(err);
-      alert("Error connecting to server. Make sure Edge Function is deployed!");
+      alert("Upload Failed: " + err.message);
     } finally {
       uploadBtn.innerText = "Upload Image";
       uploadBtn.disabled = false;
     }
   }
-
-  function copyUrl() {
-    const urlInput = document.getElementById("publicUrlInput");
-    urlInput.select();
-    navigator.clipboard.writeText(urlInput.value);
-    alert("Public URL Copied!");
-  }
 </script>
-
 </body>
 </html>
