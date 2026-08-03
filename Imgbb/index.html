@@ -23,11 +23,13 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
 
 /* GALLERY SECTION STYLES */
 .gallery-card { background: #111827; border: 1px solid #1f2937; padding: 20px; border-radius: 16px; width: 100%; max-width: 800px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-.gallery-title { color: #38bdf8; font-size: 1.2rem; margin-bottom: 16px; border-bottom: 1px solid #1f2937; padding-bottom: 8px; }
+.gallery-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #1f2937; padding-bottom: 8px; }
+.gallery-title { color: #38bdf8; font-size: 1.2rem; font-weight: bold; }
+.image-count { font-size: 0.85rem; color: #34d399; font-weight: 600; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
 .grid-item { background: #1f2937; border: 1px solid #374151; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; align-items: center; }
 .grid-item img { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; background: #000; }
-.copy-btn { width: 100%; padding: 6px; background: #0284c7; font-size: 0.75rem; margin-top: auto; }
+.copy-btn { width: 100%; padding: 6px; background: #0284c7; border: none; color: white; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold; margin-top: auto; transition: 0.2s; }
 .copy-btn:hover { background: #0369a1; }
 </style>
 </head>
@@ -75,11 +77,14 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
   </div>
 </div>
 
-<!-- NEW GALLERY CONTAINER FOR UPLOADED IMAGES -->
+<!-- GALLERY CONTAINER FOR ALL SAVED IMAGES -->
 <div class="gallery-card">
-  <div class="gallery-title">📁 Uploaded Images History</div>
+  <div class="gallery-header">
+    <div class="gallery-title">📁 All Database Images</div>
+    <div class="image-count" id="imageCount">Total: 0</div>
+  </div>
   <div class="grid" id="imageGrid">
-    <p style="color:#9ca3af; font-size:0.85rem;" id="noImagesText">Loading images...</p>
+    <p style="color:#9ca3af; font-size:0.85rem;" id="loadingText">Loading all images from database...</p>
   </div>
 </div>
 
@@ -89,13 +94,15 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
   
   const client = supabase.createClient(supabaseUrl, supabaseAnonKey);
 
-  // Page open hone par uploaded images fetch karein
+  // Page load hone par database se saari images fetch hongi
   window.onload = loadUploadedImages;
 
   async function loadUploadedImages() {
     const grid = document.getElementById("imageGrid");
+    const countEl = document.getElementById("imageCount");
+
     try {
-      // Database se recent uploads fetch karein
+      // Database se SABA'I records fetch karein (newest first)
       const { data, error } = await client
         .from('uploads')
         .select('*')
@@ -104,38 +111,36 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        grid.innerHTML = '<p style="color:#9ca3af; font-size:0.85rem;">No active images found.</p>';
+        grid.innerHTML = '<p style="color:#9ca3af; font-size:0.85rem;">Database me koi image nahi mila.</p>';
+        countEl.innerText = "Total: 0";
         return;
       }
 
       grid.innerHTML = "";
+      countEl.innerText = `Total: ${data.length}`;
+
+      // Sabhi images ko render karein
       data.forEach(item => {
-        const publicUrl = `${supabaseUrl}/storage/v1/object/public/images/${item.file_path}`;
-        addImageToGrid(publicUrl);
+        const { data: publicData } = client.storage.from('images').getPublicUrl(item.file_path);
+        const card = createGridCard(publicData.publicUrl);
+        grid.appendChild(card); // Newest list element comes first
       });
 
     } catch (err) {
       console.error(err);
-      grid.innerHTML = '<p style="color:#ef4444; font-size:0.85rem;">Failed to load images.</p>';
+      grid.innerHTML = '<p style="color:#ef4444; font-size:0.85rem;">Images load karne me error aaya.</p>';
     }
   }
 
-  function addImageToGrid(url) {
-    const grid = document.getElementById("imageGrid");
-    
-    // Agar default loading/empty text hai toh saaf karein
-    const noImagesText = document.getElementById("noImagesText");
-    if (noImagesText) noImagesText.remove();
-
+  // HTML Element Element Generator for Grid
+  function createGridCard(url) {
     const item = document.createElement("div");
     item.className = "grid-item";
     item.innerHTML = `
-      <img src="${url}" alt="Uploaded Image" loading="lazy">
+      <img src="${url}" alt="Database Image" loading="lazy">
       <button class="copy-btn" onclick="copyToClipboard('${url}', this)">Copy Link</button>
     `;
-    
-    // New images ko sabse upar dikhane ke liye
-    grid.prepend(item);
+    return item;
   }
 
   function copyToClipboard(text, btnElement) {
@@ -191,7 +196,7 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
         expires_at: expiresAt
       }]);
 
-      // 4. ImgBB Style Response
+      // 4. Response Payload
       const responsePayload = {
         data: {
           id: fileName.split('.')[0],
@@ -211,8 +216,18 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
       document.getElementById("publicUrlInput").value = publicUrl;
       document.getElementById("jsonOutput").innerText = JSON.stringify(responsePayload, null, 2);
 
-      // 5. Nayi Image ko Niche Gallery Grid me Add karein
-      addImageToGrid(publicUrl);
+      // 5. Instantly top par add karein new image ko
+      const grid = document.getElementById("imageGrid");
+      const loadingText = document.getElementById("loadingText");
+      if (loadingText) loadingText.remove();
+
+      const newCard = createGridCard(publicUrl);
+      grid.prepend(newCard);
+
+      // Update Total Counter
+      const countEl = document.getElementById("imageCount");
+      const currentCount = parseInt(countEl.innerText.replace(/\D/g, '') || 0);
+      countEl.innerText = `Total: ${currentCount + 1}`;
 
     } catch (err) {
       console.error(err);
