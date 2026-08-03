@@ -28,7 +28,7 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
   <h2>🖼️ Image Host</h2>
 
   <div class="group">
-    <label>API Key</label>
+    <label>API Key (Optional)</label>
     <input type="text" id="apiKey" value="a6a11d5e51efceba81e080a069ed9556">
   </div>
 
@@ -68,12 +68,12 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
 
 <script>
   const supabaseUrl = "https://askvmuxefttgqvnnalod.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjA5NTAxNDIxNX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
+  // Updated Anon Key
+  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjEwMTMyOTI3MX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
   
-  const client = supabase.createClient(supabaseUrl, supabaseKey);
+  const client = supabase.createClient(supabaseUrl, supabaseAnonKey);
 
   async function uploadImage() {
-    const apiKey = document.getElementById("apiKey").value.trim();
     const expiration = parseInt(document.getElementById("expiration").value);
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
@@ -87,21 +87,7 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
     uploadBtn.disabled = true;
 
     try {
-      // 1. Verify API Key
-      const { data: keyData, error: keyError } = await client
-        .from('api_keys')
-        .select('id')
-        .eq('key_value', apiKey)
-        .single();
-
-      if (keyError || !keyData) {
-        alert("Invalid API Key!");
-        uploadBtn.innerText = "Upload Image";
-        uploadBtn.disabled = false;
-        return;
-      }
-
-      // 2. Upload file to Storage Bucket
+      // 1. Upload file to Storage Bucket 'images'
       const file = fileInput.files[0];
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 10)}_${Date.now()}.${fileExt}`;
@@ -113,7 +99,7 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
 
       if (storageError) throw storageError;
 
-      // 3. Get Public URL
+      // 2. Get Public URL
       const { data: publicUrlData } = client
         .storage
         .from('images')
@@ -122,14 +108,14 @@ pre { background: #030712; padding: 10px; border-radius: 8px; font-size: 0.75rem
       const publicUrl = publicUrlData.publicUrl;
       const expiresAt = new Date(Date.now() + expiration * 1000).toISOString();
 
-      // 4. Record in uploads table for auto-delete track
+      // 3. Save entry in database for auto-delete track
       await client.from('uploads').insert([{
         file_path: fileName,
         delete_token: Math.random().toString(36).substring(2, 12),
         expires_at: expiresAt
       }]);
 
-      // 5. Render ImgBB Style Output
+      // 4. ImgBB Style Response
       const responsePayload = {
         data: {
           id: fileName.split('.')[0],
